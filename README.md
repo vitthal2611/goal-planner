@@ -34,6 +34,7 @@ npm start
 - 💡 **Auto-Generated Insights** - Smart recommendations based on your data
 - 🌙 **Dark Mode** - Beautiful light and dark themes
 - 💾 **Offline-First** - Works without internet, data saved locally
+- 🔄 **Cross-Device Sync** - Sign in with Google to sync across all devices
 - 📱 **Mobile-Friendly** - Responsive design with large touch targets
 - ⚡ **Zero Friction** - One tap to mark habits done
 
@@ -63,6 +64,7 @@ Auto-generated insights, planned vs actual comparison, habit adherence summary.
 | Document | Description |
 |----------|-------------|
 | [QUICK_START.md](QUICK_START.md) | Get started in 30 seconds |
+| [FIREBASE_SETUP.md](FIREBASE_SETUP.md) | Enable cross-device sync (5 min setup) |
 | [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | Complete 11-step implementation details |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and data flow |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
@@ -90,9 +92,10 @@ Auto-generated insights, planned vs actual comparison, habit adherence summary.
 - **Material UI v5.15** - Component library
 - **date-fns 2.30** - Date calculations
 - **React Context API** - State management
-- **localStorage** - Data persistence
+- **Firebase** - Authentication & cross-device sync
+- **localStorage** - Offline-first data persistence
 
-**No backend required!** Works completely offline.
+**Works offline!** Syncs when online.
 
 ---
 

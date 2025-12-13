@@ -1,11 +1,33 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { getInitialData } from '../data/sampleData';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
 
 const initialData = getInitialData();
 
 export const useGoals = (deleteHabitFn, habits) => {
+  const { user } = useAuth();
   const [goals, setGoals] = useLocalStorage('goals', initialData.goals);
+
+  // Sync to Firestore when goals change
+  useEffect(() => {
+    if (user && goals.length > 0) {
+      setDoc(doc(db, 'users', user.uid), { goals }, { merge: true });
+    }
+  }, [goals, user]);
+
+  // Listen to Firestore changes
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+      if (doc.exists() && doc.data().goals) {
+        setGoals(doc.data().goals);
+      }
+    });
+    return unsubscribe;
+  }, [user]);
   
   const addGoal = useCallback((newGoal) => {
     setGoals(prev => [...prev, newGoal]);

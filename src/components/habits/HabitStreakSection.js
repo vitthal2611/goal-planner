@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
+import { Card, CardHeader, CardContent, Typography, Box, Chip } from '@mui/material';
 import { LocalFireDepartment, CheckCircle } from '@mui/icons-material';
 import { calculateHabitConsistency, formatDate } from '../../utils/calculations';
 
@@ -11,13 +11,14 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
 
   if (habits.length === 0) {
     return (
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Habit Streaks
+      <Card elevation={0} sx={{ border: '2px dashed', borderColor: 'divider', bgcolor: 'grey.50' }}>
+        <CardContent sx={{ py: 8, textAlign: 'center' }}>
+          <Box sx={{ fontSize: '2.5rem', mb: 2, opacity: 0.6 }}>🔥</Box>
+          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+            No habits yet
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-            No habits created yet. Add habits to track your daily actions!
+          <Typography variant="body2" color="text.secondary">
+            Create habits to track streaks and consistency
           </Typography>
         </CardContent>
       </Card>
@@ -25,32 +26,40 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
   }
 
   return (
-    <Card sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        <Typography variant="h2" sx={{ mb: 4 }}>
-          Habit Streaks
-        </Typography>
-        
+    <Card 
+      elevation={0}
+      sx={{ 
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
+        '&:hover': { boxShadow: 3 }
+      }}
+    >
+      <CardHeader 
+        title="Habit Streaks"
+        titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+      />
+      <CardContent sx={{ pt: 0 }}>
         {habits.map(habit => {
           const consistency = calculateHabitConsistency(habit, habitLogs);
           const todaysLog = getTodaysLog(habit.id);
           
           return (
             <Card 
-              key={habit.id} 
-              variant="outlined" 
+              key={habit.id}
+              elevation={0}
               sx={{ 
-                mb: 2.5,
-                borderRadius: 2,
-                borderColor: 'grey.200',
-                transition: 'all 0.2s ease',
+                mb: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: 'all 0.2s',
                 '&:hover': {
-                  borderColor: 'primary.light',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                  borderColor: 'primary.main',
+                  boxShadow: 2
                 }
               }}
             >
-              <CardContent sx={{ p: 2.5 }}>
+              <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -92,6 +101,7 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
                     ) : (
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Chip
+                          icon={<CheckCircle />}
                           label="Done"
                           size="small"
                           clickable

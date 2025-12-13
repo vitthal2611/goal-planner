@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Container, Typography, Divider } from '@mui/material';
 import { GoalForm } from './GoalForm';
 import { GoalList } from './GoalList';
 import { useAppContext } from '../../context/AppContext';
@@ -7,20 +7,30 @@ import { useAppContext } from '../../context/AppContext';
 export const GoalManagement = () => {
   const { goals, addGoal, updateGoal, deleteGoal } = useAppContext();
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 600 }}>
-        Goal Management
-      </Typography>
+    <Container maxWidth="xl" sx={{ py: 5 }}>
+      {/* Header */}
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>Goals</Typography>
+        <Typography variant="body1" color="text.secondary">Set and track your yearly objectives</Typography>
+      </Box>
 
-      <Box sx={{ mb: 4 }}>
+      {/* Primary Action - Create Goal */}
+      <Box sx={{ mb: 7 }}>
         <GoalForm onAddGoal={addGoal} />
       </Box>
 
+      <Divider sx={{ mb: 6 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ px: 2 }}>
+          Your Goals ({goals.length})
+        </Typography>
+      </Divider>
+
+      {/* Goal List */}
       <GoalList 
         goals={goals} 
         onUpdateGoal={updateGoal}
         onDeleteGoal={deleteGoal}
       />
-    </Box>
+    </Container>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip, IconButton, LinearProgress, Grid } from '@mui/material';
+import { Card, CardHeader, CardContent, CardActions, Typography, Box, Chip, IconButton, LinearProgress, Grid, Avatar } from '@mui/material';
 import { LocalFireDepartment, CheckCircle, Cancel, Delete } from '@mui/icons-material';
 import { calculateHabitConsistency, formatDate } from '../../utils/calculations';
 
@@ -20,96 +20,59 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
   };
 
   return (
-    <Card>
+    <Card 
+      elevation={0}
+      sx={{ 
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
+        '&:hover': { 
+          elevation: 4,
+          boxShadow: 3,
+          borderColor: 'primary.main'
+        }
+      }}
+    >
+      <CardHeader
+        avatar={
+          <Avatar sx={{ bgcolor: consistency.currentStreak > 0 ? 'warning.main' : 'grey.300', width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 } }}>
+            <LocalFireDepartment sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          </Avatar>
+        }
+        action={
+          <IconButton onClick={() => onDeleteHabit(habit.id)} color="error" sx={{ minWidth: 44, minHeight: 44 }}>
+            <Delete />
+          </IconButton>
+        }
+        title={habit.name}
+        subheader={`Goal: ${goal?.title || 'Unknown'}`}
+        titleTypographyProps={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' } }}
+      />
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {habit.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Goal: {goal?.title || 'Unknown'}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <LocalFireDepartment
-                  sx={{
-                    fontSize: 20,
-                    mr: 0.5,
-                    color: consistency.currentStreak > 0 ? 'warning.main' : 'grey.400'
-                  }}
-                />
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                  {consistency.currentStreak}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                day streak
-              </Typography>
-            </Box>
-            <IconButton size="small" onClick={() => onDeleteHabit(habit.id)} color="error">
-              <Delete />
-            </IconButton>
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+          <Chip label={`${consistency.currentStreak} day streak`} icon={<LocalFireDepartment />} color={consistency.currentStreak > 0 ? 'warning' : 'default'} />
+          <Chip label={`${consistency.consistency}%`} color="primary" />
         </Box>
 
-        {/* Context Info */}
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
-          <Grid container spacing={1}>
+        <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+          <Grid container spacing={2}>
             <Grid item xs={4}>
-              <Typography variant="caption" color="text.secondary">Trigger</Typography>
+              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Trigger</Typography>
               <Typography variant="body2">{habit.trigger}</Typography>
             </Grid>
             <Grid item xs={4}>
-              <Typography variant="caption" color="text.secondary">Time</Typography>
+              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Time</Typography>
               <Typography variant="body2">{habit.time}</Typography>
             </Grid>
             <Grid item xs={4}>
-              <Typography variant="caption" color="text.secondary">Location</Typography>
+              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Location</Typography>
               <Typography variant="body2">{habit.location}</Typography>
             </Grid>
           </Grid>
         </Box>
 
-        {/* Today's Status */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            Today's Status:
-          </Typography>
-          {todaysLog ? (
-            <Chip
-              icon={todaysLog.status === 'done' ? <CheckCircle /> : <Cancel />}
-              label={todaysLog.status === 'done' ? 'Completed' : 'Skipped'}
-              color={todaysLog.status === 'done' ? 'success' : 'default'}
-              sx={{ mr: 1 }}
-            />
-          ) : (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Chip
-                icon={<CheckCircle />}
-                label="Mark Done"
-                clickable
-                color="success"
-                variant="outlined"
-                onClick={() => handleLog('done')}
-              />
-              <Chip
-                icon={<Cancel />}
-                label="Mark Skipped"
-                clickable
-                variant="outlined"
-                onClick={() => handleLog('skipped')}
-              />
-            </Box>
-          )}
-        </Box>
-
-        {/* Consistency Stats */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="body2">30-Day Consistency</Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {consistency.consistency}%
@@ -123,11 +86,12 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
               borderRadius: 1,
               bgcolor: 'grey.200',
               '& .MuiLinearProgress-bar': {
-                bgcolor: getConsistencyColor(consistency.consistency)
+                bgcolor: getConsistencyColor(consistency.consistency),
+                transition: 'transform 0.4s ease'
               }
             }}
           />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="caption" color="text.secondary">
               {consistency.completed}/{consistency.expected} completed
             </Typography>
@@ -137,6 +101,34 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
           </Box>
         </Box>
       </CardContent>
+      <CardActions sx={{ p: 3, pt: 0, gap: 1, flexWrap: 'wrap' }}>
+        {todaysLog ? (
+          <Chip
+            icon={todaysLog.status === 'done' ? <CheckCircle /> : <Cancel />}
+            label={todaysLog.status === 'done' ? 'Completed' : 'Skipped'}
+            color={todaysLog.status === 'done' ? 'success' : 'default'}
+          />
+        ) : (
+          <>
+            <Chip
+              icon={<CheckCircle />}
+              label="Done"
+              clickable
+              color="success"
+              variant="outlined"
+              onClick={() => handleLog('done')}
+              sx={{ '&:hover': { bgcolor: 'success.50' } }}
+            />
+            <Chip
+              label="Skip"
+              clickable
+              variant="outlined"
+              onClick={() => handleLog('skipped')}
+              sx={{ '&:hover': { bgcolor: 'grey.100' } }}
+            />
+          </>
+        )}
+      </CardActions>
     </Card>
   );
 };

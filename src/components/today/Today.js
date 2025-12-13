@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Card, CardContent } from '@mui/material';
+import { Box, Container, Typography, Card, CardContent, Divider } from '@mui/material';
 import { WbSunny, LightMode, Brightness3, NightsStay } from '@mui/icons-material';
 import { formatDate } from '../../utils/calculations';
 import { HabitTimeGroup } from './HabitTimeGroup';
@@ -52,33 +52,35 @@ export const Today = () => {
   ];
 
   return (
-    <Box>
-      {/* Header - Primary screen intent */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h1" sx={{ mb: 1 }}>
-          Today
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {currentDate}
-        </Typography>
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      {/* Header */}
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>Today</Typography>
+        <Typography variant="body1" color="text.secondary">{currentDate}</Typography>
       </Box>
 
-      {/* Progress Summary - Encouraging feedback */}
+      {/* Progress Summary Card - Elevated */}
       <Card 
+        elevation={completedToday === totalHabits && totalHabits > 0 ? 3 : 0}
         sx={{ 
-          mb: 5, 
-          bgcolor: completedToday === totalHabits && totalHabits > 0 ? 'success.50' : 'primary.50',
-          borderRadius: 3,
-          transition: 'all 0.3s ease'
+          mb: 7,
+          border: '1px solid',
+          borderColor: completedToday === totalHabits && totalHabits > 0 ? 'success.main' : 'divider',
+          transition: 'all 0.2s',
+          '&:hover': { boxShadow: 4 }
         }}
       >
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: { xs: 3, sm: 4 } }}>
             <Box>
+              <Typography variant="overline" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
+                Progress
+              </Typography>
               <Typography 
                 variant="h1" 
                 sx={{ 
-                  fontWeight: 700, 
+                  fontWeight: 800, 
+                  fontSize: { xs: '3rem', sm: '4rem' },
                   color: completedToday === totalHabits && totalHabits > 0 ? 'success.main' : 'primary.main',
                   mb: 1
                 }}
@@ -91,26 +93,33 @@ export const Today = () => {
                   : 'Habits completed today'}
               </Typography>
             </Box>
-            <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ textAlign: { xs: 'left', sm: 'right' }, width: { xs: '100%', sm: 'auto' } }}>
+              <Typography variant="overline" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
+                Completion Rate
+              </Typography>
               <Typography 
                 variant="h2" 
                 sx={{ 
-                  fontWeight: 700, 
+                  fontWeight: 800,
+                  fontSize: { xs: '2.5rem', sm: '3rem' },
                   color: completedToday === totalHabits && totalHabits > 0 ? 'success.main' : 'primary.main',
                   mb: 1
                 }}
               >
                 {totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0}%
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Completion rate
-              </Typography>
             </Box>
           </Box>
         </CardContent>
       </Card>
 
-      {/* Time-based Groups - One primary action per habit */}
+      <Divider sx={{ mb: 6 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ px: 2 }}>
+          Your Habits
+        </Typography>
+      </Divider>
+
+      {/* Time-based Groups */}
       {timeGroups.map(({ key, label, icon, color }) => (
         <HabitTimeGroup
           key={key}
@@ -125,14 +134,14 @@ export const Today = () => {
         />
       ))}
 
-      {/* Empty state - Encouraging */}
       {habits.length === 0 && (
-        <Card sx={{ borderRadius: 3, textAlign: 'center' }}>
-          <CardContent sx={{ p: 6 }}>
-            <Typography variant="h3" sx={{ mb: 2, color: 'text.secondary' }}>
-              ✨ Ready to start?
+        <Card elevation={0} sx={{ textAlign: 'center', border: '2px dashed', borderColor: 'divider', bgcolor: 'grey.50' }}>
+          <CardContent sx={{ py: 12, px: 4 }}>
+            <Box sx={{ fontSize: '3rem', mb: 3, opacity: 0.6 }}>✨</Box>
+            <Typography variant="h5" sx={{ mb: 2.5, fontWeight: 600 }}>
+              Ready to start?
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2, maxWidth: 400, mx: 'auto' }}>
               Create your first habit to begin tracking your daily progress.
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -141,6 +150,6 @@ export const Today = () => {
           </CardContent>
         </Card>
       )}
-    </Box>
+    </Container>
   );
 };

@@ -8,22 +8,26 @@ export const EmptyState = ({
   action 
 }) => {
   return (
-    <Card sx={{ borderRadius: 3, textAlign: 'center' }}>
-      <CardContent sx={{ p: 6 }}>
-        <Box sx={{ fontSize: '3rem', mb: 2 }}>
+    <Card 
+      elevation={0}
+      sx={{ 
+        border: '2px dashed',
+        borderColor: 'divider',
+        textAlign: 'center',
+        bgcolor: 'grey.50'
+      }}
+    >
+      <CardContent sx={{ py: 8, px: 4 }}>
+        <Box sx={{ fontSize: '3rem', mb: 2, opacity: 0.6 }}>
           {icon}
         </Box>
-        <Typography variant="h3" sx={{ mb: 2, color: 'text.primary' }}>
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
           {title}
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: action ? 3 : 0 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: action ? 3 : 0, maxWidth: 400, mx: 'auto' }}>
           {message}
         </Typography>
-        {action && (
-          <Box sx={{ mt: 3 }}>
-            {action}
-          </Box>
-        )}
+        {action && action}
       </CardContent>
     </Card>
   );

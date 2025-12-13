@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Grid, LinearProgress, Chip } from '@mui/material';
+import { Box, Typography, Card, CardHeader, CardContent, Grid, LinearProgress, Chip, Container, Divider } from '@mui/material';
 import { TrendingUp, TrendingDown, CheckCircle, Warning, Info } from '@mui/icons-material';
 import { calculateGoalProgress } from '../../utils/goalUtils';
 import { calculateHabitConsistency } from '../../utils/habitUtils';
@@ -121,19 +121,35 @@ export const Review = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 600 }}>
-        Monthly Review
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 5 }}>
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+          Review
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Monthly insights and progress analysis
+        </Typography>
+      </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 6 }}>
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: 'primary.50' }}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              border: '1px solid',
+              borderColor: 'primary.main',
+              transition: 'all 0.2s',
+              '&:hover': { boxShadow: 3 }
+            }}
+          >
+            <CardHeader 
+              title="Average Goal Progress"
+              titleTypographyProps={{ variant: 'subtitle2', color: 'text.secondary' }}
+              sx={{ pb: 0 }}
+            />
             <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Average Goal Progress
-              </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
                 {Math.round(avgGoalProgress)}%
               </Typography>
@@ -145,7 +161,8 @@ export const Review = () => {
                   borderRadius: 1,
                   bgcolor: 'grey.300',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: avgGoalProgress >= 70 ? 'success.main' : 'primary.main'
+                    bgcolor: avgGoalProgress >= 70 ? 'success.main' : 'primary.main',
+                    transition: 'transform 0.4s ease'
                   }
                 }}
               />
@@ -154,11 +171,21 @@ export const Review = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: 'success.50' }}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              border: '1px solid',
+              borderColor: 'success.main',
+              transition: 'all 0.2s',
+              '&:hover': { boxShadow: 3 }
+            }}
+          >
+            <CardHeader 
+              title="Average Habit Consistency"
+              titleTypographyProps={{ variant: 'subtitle2', color: 'text.secondary' }}
+              sx={{ pb: 0 }}
+            />
             <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Average Habit Consistency
-              </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, color: 'success.main', mb: 2 }}>
                 {Math.round(avgHabitConsistency)}%
               </Typography>
@@ -170,7 +197,8 @@ export const Review = () => {
                   borderRadius: 1,
                   bgcolor: 'grey.300',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: avgHabitConsistency >= 80 ? 'success.main' : 'warning.main'
+                    bgcolor: avgHabitConsistency >= 80 ? 'success.main' : 'warning.main',
+                    transition: 'transform 0.4s ease'
                   }
                 }}
               />
@@ -179,12 +207,28 @@ export const Review = () => {
         </Grid>
       </Grid>
 
+      <Divider sx={{ mb: 5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ px: 2 }}>
+          INSIGHTS & ANALYSIS
+        </Typography>
+      </Divider>
+
       {/* Insights */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Key Insights
-          </Typography>
+      <Card 
+        elevation={0}
+        sx={{ 
+          mb: 5,
+          border: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 0.2s',
+          '&:hover': { boxShadow: 3 }
+        }}
+      >
+        <CardHeader 
+          title="Key Insights"
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
           <Grid container spacing={2}>
             {insights.map((insight, index) => (
               <Grid item xs={12} key={index}>
@@ -209,11 +253,21 @@ export const Review = () => {
       </Card>
 
       {/* Goal Comparison */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Goal Progress: Planned vs Actual
-          </Typography>
+      <Card 
+        elevation={0}
+        sx={{ 
+          mb: 5,
+          border: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 0.2s',
+          '&:hover': { boxShadow: 3 }
+        }}
+      >
+        <CardHeader 
+          title="Goal Progress: Planned vs Actual"
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
           {goalStats.map(({ goal, progress }) => (
             <Box key={goal.id} sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -259,7 +313,8 @@ export const Review = () => {
                   borderRadius: 1,
                   bgcolor: 'grey.200',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: progress.onTrack ? 'success.main' : 'warning.main'
+                    bgcolor: progress.onTrack ? 'success.main' : 'warning.main',
+                    transition: 'transform 0.4s ease'
                   }
                 }}
               />
@@ -277,11 +332,20 @@ export const Review = () => {
       </Card>
 
       {/* Habit Adherence */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Habit Adherence (Last 30 Days)
-          </Typography>
+      <Card 
+        elevation={0}
+        sx={{ 
+          border: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 0.2s',
+          '&:hover': { boxShadow: 3 }
+        }}
+      >
+        <CardHeader 
+          title="Habit Adherence (Last 30 Days)"
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
           {habitStats.map(({ habit, consistency }) => (
             <Box key={habit.id} sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -301,7 +365,8 @@ export const Review = () => {
                   borderRadius: 1,
                   bgcolor: 'grey.200',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: consistency.consistency >= 80 ? 'success.main' : consistency.consistency >= 60 ? 'primary.main' : 'warning.main'
+                    bgcolor: consistency.consistency >= 80 ? 'success.main' : consistency.consistency >= 60 ? 'primary.main' : 'warning.main',
+                    transition: 'transform 0.4s ease'
                   }
                 }}
               />
@@ -318,6 +383,6 @@ export const Review = () => {
           ))}
         </CardContent>
       </Card>
-    </Box>
+    </Container>
   );
 };

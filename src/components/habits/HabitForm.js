@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, TextField, Button, Box, Typography, Grid, MenuItem } from '@mui/material';
+import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, MenuItem } from '@mui/material';
 import { generateId } from '../../utils/calculations';
 
 export const HabitForm = ({ goals, onAddHabit }) => {
@@ -38,12 +38,24 @@ export const HabitForm = ({ goals, onAddHabit }) => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>Create New Habit</Typography>
+    <Card 
+      elevation={0}
+      sx={{ 
+        border: '2px solid',
+        borderColor: 'success.main',
+        transition: 'all 0.2s',
+        '&:hover': { boxShadow: 4 }
+      }}
+    >
+      <CardHeader 
+        title="Create New Habit"
+        subheader="Link a daily action to your goal with context (trigger, time, location)"
+        titleTypographyProps={{ fontWeight: 600 }}
+      />
+      <CardContent sx={{ pt: 0 }}>
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Habit Name"
@@ -52,9 +64,16 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 onChange={handleChange}
                 placeholder="Read for 30 minutes"
                 required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'success.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 select
@@ -63,6 +82,13 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 value={formData.goalId}
                 onChange={handleChange}
                 required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'success.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
               >
                 {goals.map(goal => (
                   <MenuItem key={goal.id} value={goal.id}>
@@ -71,7 +97,7 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Trigger"
@@ -80,9 +106,16 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 onChange={handleChange}
                 placeholder="After morning tea"
                 required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'success.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Time"
@@ -92,9 +125,16 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
                 required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'success.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Location"
@@ -103,6 +143,13 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 onChange={handleChange}
                 placeholder="Living room"
                 required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'success.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -110,6 +157,13 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 fullWidth
                 variant="contained"
                 type="submit"
+                size="large"
+                disabled={!formData.name || !formData.goalId || !formData.trigger || !formData.time || !formData.location}
+                sx={{ 
+                  fontWeight: 600,
+                  '&:hover': { transform: 'translateY(-1px)', boxShadow: 3 },
+                  transition: 'all 0.2s'
+                }}
               >
                 Add Habit
               </Button>

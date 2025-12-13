@@ -1,18 +1,19 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, LinearProgress } from '@mui/material';
+import { Card, CardHeader, CardContent, Typography, Box, LinearProgress, Skeleton } from '@mui/material';
 import { ProgressRing } from '../common/ProgressRing';
 import { calculateGoalProgress } from '../../utils/calculations';
 
 export const GoalProgressSection = ({ goals }) => {
   if (goals.length === 0) {
     return (
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Goal Progress
+      <Card elevation={0} sx={{ border: '2px dashed', borderColor: 'divider', bgcolor: 'grey.50' }}>
+        <CardContent sx={{ py: 8, textAlign: 'center' }}>
+          <Box sx={{ fontSize: '2.5rem', mb: 2, opacity: 0.6 }}>📊</Box>
+          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+            No goals yet
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-            No goals created yet. Add your first goal to get started!
+          <Typography variant="body2" color="text.secondary">
+            Add your first goal to see progress tracking here
           </Typography>
         </CardContent>
       </Card>
@@ -20,13 +21,21 @@ export const GoalProgressSection = ({ goals }) => {
   }
 
   return (
-    <Card sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        <Typography variant="h2" sx={{ mb: 4 }}>
-          Goal Progress
-        </Typography>
-        
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 3, mb: 5 }}>
+    <Card 
+      elevation={0}
+      sx={{ 
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s',
+        '&:hover': { boxShadow: 3 }
+      }}
+    >
+      <CardHeader 
+        title="Goal Progress"
+        titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+      />
+      <CardContent sx={{ pt: 0 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 3, mb: 4 }}>
           {goals.map(goal => {
             const progress = calculateGoalProgress(goal);
             return (
@@ -40,7 +49,7 @@ export const GoalProgressSection = ({ goals }) => {
           })}
         </Box>
 
-        <Typography variant="h4" sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Monthly Progress
         </Typography>
         {goals.map(goal => {
@@ -69,7 +78,7 @@ export const GoalProgressSection = ({ goals }) => {
                   '& .MuiLinearProgress-bar': {
                     backgroundColor: monthlyPercentage >= 80 ? 'success.main' : 'primary.main',
                     borderRadius: 5,
-                    transition: 'all 0.3s ease'
+                    transition: 'transform 0.4s ease'
                   }
                 }}
               />

@@ -31,7 +31,9 @@ export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, a
           mb: 3,
           pb: 2,
           borderBottom: '2px solid',
-          borderColor: 'grey.200'
+          borderColor: 'grey.200',
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          gap: { xs: 1, sm: 0 }
         }}
       >
         <Box 
@@ -40,12 +42,12 @@ export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, a
             mr: 1.5,
             display: 'flex',
             alignItems: 'center',
-            fontSize: 28
+            fontSize: { xs: 24, sm: 28 }
           }}
         >
           {icon}
         </Box>
-        <Typography variant="h3" sx={{ fontWeight: 600, flex: 1 }}>
+        <Typography variant="h3" sx={{ fontWeight: 600, flex: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
           {label}
         </Typography>
         <Chip 
@@ -54,8 +56,9 @@ export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, a
           color={allCompleted ? 'success' : 'default'}
           sx={{ 
             fontWeight: 600,
-            fontSize: '0.875rem',
-            height: 32
+            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+            height: { xs: 28, sm: 32 },
+            minWidth: 60
           }}
         />
       </Box>

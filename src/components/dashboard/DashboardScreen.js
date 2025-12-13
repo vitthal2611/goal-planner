@@ -33,54 +33,56 @@ export const DashboardScreen = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 600 }}>Dashboard</Typography>
+    <Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>Dashboard</Typography>
+        <Typography variant="body1" color="text.secondary">Track your progress across all goals and habits</Typography>
+      </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Card sx={{ height: '100%', borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1 }}>
                 Yearly Progress
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: getColor(avgYearlyProgress) }}>
+              <Typography variant="h2" sx={{ fontWeight: 700, color: getColor(avgYearlyProgress), my: 2 }}>
                 {Math.round(avgYearlyProgress)}%
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Average across {goals.length} goals
+              <Typography variant="body2" color="text.secondary">
+                Average across {goals.length} {goals.length === 1 ? 'goal' : 'goals'}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Card sx={{ height: '100%', borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1 }}>
                 Monthly Target
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              <Typography variant="h2" sx={{ fontWeight: 700, color: 'primary.main', my: 2 }}>
                 {Math.round(monthlyData.actual)}/{Math.round(monthlyData.target)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {Math.round((monthlyData.actual / monthlyData.target) * 100)}% complete
+              <Typography variant="body2" color="text.secondary">
+                {Math.round((monthlyData.actual / monthlyData.target) * 100)}% complete this month
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Card sx={{ height: '100%', borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1 }}>
                 Habit Consistency
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: getColor(avgHabitConsistency, [80, 60, 40]) }}>
+              <Typography variant="h2" sx={{ fontWeight: 700, color: getColor(avgHabitConsistency, [80, 60, 40]), my: 2 }}>
                 {Math.round(avgHabitConsistency)}%
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Last 30 days
+              <Typography variant="body2" color="text.secondary">
+                Last 30 days average
               </Typography>
             </CardContent>
           </Card>
@@ -88,11 +90,10 @@ export const DashboardScreen = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Goal Progress Rings */}
         <Grid item xs={12} lg={7}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Goal Progress</Typography>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Goal Progress</Typography>
               
               <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', my: 3 }}>
                 {goals.map(goal => {
@@ -201,18 +202,17 @@ export const DashboardScreen = () => {
           </Card>
         </Grid>
 
-        {/* Habit Streaks */}
         <Grid item xs={12} lg={5}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Habit Streaks</Typography>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Habit Streaks</Typography>
               
               {habits.map(habit => {
                 const consistency = calculateHabitConsistency(habit, habitLogs);
                 
                 return (
-                  <Card key={habit.id} variant="outlined" sx={{ mb: 2, bgcolor: 'grey.50' }}>
-                    <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                  <Card key={habit.id} variant="outlined" sx={{ mb: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+                    <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>

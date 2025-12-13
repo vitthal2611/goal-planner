@@ -27,10 +27,14 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
 
   if (goals.length === 0) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="body1" color="text.secondary" align="center">
-            No goals yet. Create your first goal above!
+      <Card elevation={0} sx={{ border: '2px dashed', borderColor: 'divider', bgcolor: 'grey.50' }}>
+        <CardContent sx={{ py: 10, textAlign: 'center' }}>
+          <Box sx={{ fontSize: '2.5rem', mb: 3, opacity: 0.6 }}>🎯</Box>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            No goals yet
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Create your first goal above to start tracking your progress
           </Typography>
         </CardContent>
       </Card>
@@ -38,156 +42,184 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
   }
 
   return (
-    <Grid container spacing={3}>
-      {goals.map(goal => {
-        const progress = calculateGoalProgress(goal);
-        const targets = breakdownGoalTargets(goal);
-        const isEditing = editingId === goal.id;
+    <Box>
+      <Grid container spacing={4}>
+        {goals.map(goal => {
+          const progress = calculateGoalProgress(goal);
+          const targets = breakdownGoalTargets(goal);
+          const isEditing = editingId === goal.id;
 
-        return (
-          <Grid item xs={12} key={goal.id}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {goal.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Target: {goal.yearlyTarget} {goal.unit} per year
-                    </Typography>
+          return (
+            <Grid item xs={12} key={goal.id}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  transition: 'all 0.2s',
+                  '&:hover': { 
+                    boxShadow: 4,
+                    borderColor: progress.onTrack ? 'success.main' : 'warning.main'
+                  }
+                }}
+              >
+                <CardContent>
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, gap: { xs: 2, sm: 0 } }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+                        {goal.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Target: {goal.yearlyTarget} {goal.unit} per year
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      {progress.onTrack ? (
+                        <Chip icon={<TrendingUp />} label="On Track" color="success" />
+                      ) : (
+                        <Chip icon={<TrendingDown />} label="Behind" color="warning" />
+                      )}
+                      <IconButton onClick={() => onDeleteGoal(goal.id)} color="error">
+                        <Delete />
+                      </IconButton>
+                    </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {progress.onTrack ? (
-                      <Chip icon={<TrendingUp />} label="On Track" size="small" color="success" />
-                    ) : (
-                      <Chip icon={<TrendingDown />} label="Behind" size="small" color="warning" />
-                    )}
-                    <IconButton size="small" onClick={() => onDeleteGoal(goal.id)} color="error">
-                      <Delete />
-                    </IconButton>
-                  </Box>
-                </Box>
-
-                {/* Progress Update */}
-                <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      Actual Progress:
+                  <Box sx={{ mb: 5, p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
+                    <Typography variant="overline" color="text.secondary" sx={{ mb: 2.5, display: 'block' }}>
+                      Current Progress
                     </Typography>
-                    {isEditing ? (
-                      <>
-                        <TextField
-                          size="small"
-                          type="number"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          sx={{ width: 120 }}
-                        />
-                        <Typography variant="body2">/ {goal.yearlyTarget} {goal.unit}</Typography>
-                        <IconButton size="small" color="primary" onClick={() => handleSave(goal)}>
-                          <Check />
-                        </IconButton>
-                        <IconButton size="small" onClick={handleCancel}>
-                          <Close />
-                        </IconButton>
-                      </>
-                    ) : (
-                      <>
-                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                          {goal.actualProgress} / {goal.yearlyTarget} {goal.unit}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, flexWrap: 'wrap' }}>
+                      {isEditing ? (
+                        <>
+                          <TextField
+                            size="medium"
+                            type="number"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            sx={{ width: 140 }}
+                          />
+                          <Typography variant="h6">/ {goal.yearlyTarget} {goal.unit}</Typography>
+                          <Button size="small" variant="contained" onClick={() => handleSave(goal)} sx={{ minHeight: 44 }}>
+                            Save
+                          </Button>
+                          <Button size="small" onClick={handleCancel} sx={{ minHeight: 44 }}>
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                            {goal.actualProgress}
+                          </Typography>
+                          <Typography variant="h6" color="text.secondary">
+                            / {goal.yearlyTarget} {goal.unit}
+                          </Typography>
+                          <Chip label={`${Math.round(progress.yearlyProgress)}%`} color="primary" sx={{ fontWeight: 600 }} />
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            startIcon={<Edit />} 
+                            onClick={() => handleEdit(goal)}
+                            sx={{ 
+                              '&:hover': { bgcolor: 'primary.50' },
+                              minHeight: 44
+                            }}
+                          >
+                            Update
+                          </Button>
+                        </>
+                      )}
+                    </Box>
+                  </Box>
+
+                  <Typography variant="overline" color="text.secondary" sx={{ mb: 2.5, display: 'block' }}>
+                    Auto-Calculated Targets
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 5 }}>
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{ p: 3, bgcolor: 'primary.50', borderRadius: 2, textAlign: 'center' }}>
+                        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          Quarterly
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ({Math.round(progress.yearlyProgress)}%)
+                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                          {targets.quarterly.toFixed(1)}
                         </Typography>
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(goal)}>
-                          <Edit />
-                        </IconButton>
-                      </>
-                    )}
-                  </Box>
-                </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {goal.unit} per quarter
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{ p: 3, bgcolor: 'success.50', borderRadius: 2, textAlign: 'center' }}>
+                        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          Monthly
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                          {targets.monthly.toFixed(1)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {goal.unit} per month
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Box sx={{ p: 3, bgcolor: 'warning.50', borderRadius: 2, textAlign: 'center' }}>
+                        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          Weekly
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                          {targets.weekly.toFixed(2)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {goal.unit} per week
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
 
-                {/* Auto-calculated Targets */}
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Quarterly Target
+                  <Typography variant="overline" color="text.secondary" sx={{ mb: 2.5, display: 'block' }}>
+                    Yearly Progress
+                  </Typography>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {Math.round(progress.yearlyProgress)}% Complete
                       </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {targets.quarterly.toFixed(1)} {goal.unit}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        per quarter
+                      <Typography variant="body2" color="text.secondary">
+                        {progress.actual} / {progress.expected} expected
                       </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min(progress.yearlyProgress, 100)}
+                      sx={{
+                        height: 12,
+                        borderRadius: 2,
+                        bgcolor: 'grey.200',
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: progress.onTrack ? 'success.main' : 'warning.main',
+                          borderRadius: 2,
+                          transition: 'transform 0.4s ease'
+                        }
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Monthly Target
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {targets.monthly.toFixed(1)} {goal.unit}
+                        {progress.remaining} {goal.unit} remaining
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        per month
+                        {progress.daysRemaining} days left in year
                       </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Weekly Target
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {targets.weekly.toFixed(2)} {goal.unit}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        per week
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-
-                {/* Progress Bar */}
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">
-                      Yearly Progress
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {progress.actual} / {progress.expected} expected
-                    </Typography>
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(progress.yearlyProgress, 100)}
-                    sx={{
-                      height: 10,
-                      borderRadius: 1,
-                      bgcolor: 'grey.200',
-                      '& .MuiLinearProgress-bar': {
-                        bgcolor: progress.onTrack ? 'success.main' : 'warning.main'
-                      }
-                    }}
-                  />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {progress.remaining} {goal.unit} remaining
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {progress.daysRemaining} days left
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      })}
-    </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
   );
 };
