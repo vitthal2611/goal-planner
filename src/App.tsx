@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Container, Fab, Box } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Container, Fab, Box, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { Goal, Habit, HabitLog } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { generateId, formatDate } from './utils/calculations';
+import TestRunner from './tests/TestRunner';
 
 const theme = createTheme({
   palette: {
@@ -79,6 +80,7 @@ const sampleHabits: Habit[] = [
 ];
 
 function App() {
+  const [showTests, setShowTests] = useState(false);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', sampleGoals);
   const [habits, setHabits] = useLocalStorage<Habit[]>('habits', sampleHabits);
   const [habitLogs, setHabitLogs] = useLocalStorage<HabitLog[]>('habitLogs', []);
@@ -118,15 +120,22 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Goal Planner & Daily Action Tracker
             </Typography>
+            <Button color="inherit" onClick={() => setShowTests(!showTests)}>
+              {showTests ? 'Hide Tests' : 'Run Tests'}
+            </Button>
           </Toolbar>
         </AppBar>
         
         <Container maxWidth="xl" sx={{ mt: 2 }}>
-          <Dashboard 
-            goals={goals} 
-            habits={habits} 
-            habitLogs={habitLogs}
-          />
+          {showTests ? (
+            <TestRunner />
+          ) : (
+            <Dashboard 
+              goals={goals} 
+              habits={habits} 
+              habitLogs={habitLogs}
+            />
+          )}
         </Container>
 
         <Fab

@@ -1,5 +1,7 @@
 import { generateId } from '../utils/calculations';
 
+const currentYear = new Date().getFullYear();
+
 export const sampleGoals = [
   {
     id: 'goal-1',
@@ -7,9 +9,10 @@ export const sampleGoals = [
     yearlyTarget: 24,
     actualProgress: 8,
     unit: 'books',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
-    createdAt: new Date('2024-01-01')
+    year: currentYear,
+    startDate: new Date(`${currentYear}-01-01`),
+    endDate: new Date(`${currentYear}-12-31`),
+    createdAt: new Date(`${currentYear}-01-01`)
   },
   {
     id: 'goal-2',
@@ -17,9 +20,10 @@ export const sampleGoals = [
     yearlyTarget: 200,
     actualProgress: 45,
     unit: 'hours',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
-    createdAt: new Date('2024-01-01')
+    year: currentYear,
+    startDate: new Date(`${currentYear}-01-01`),
+    endDate: new Date(`${currentYear}-12-31`),
+    createdAt: new Date(`${currentYear}-01-01`)
   },
   {
     id: 'goal-3',
@@ -27,9 +31,10 @@ export const sampleGoals = [
     yearlyTarget: 500,
     actualProgress: 120,
     unit: 'words',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
-    createdAt: new Date('2024-01-01')
+    year: currentYear,
+    startDate: new Date(`${currentYear}-01-01`),
+    endDate: new Date(`${currentYear}-12-31`),
+    createdAt: new Date(`${currentYear}-01-01`)
   },
   {
     id: 'goal-4',
@@ -37,9 +42,32 @@ export const sampleGoals = [
     yearlyTarget: 12000,
     actualProgress: 3500,
     unit: 'dollars',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
-    createdAt: new Date('2024-01-01')
+    year: currentYear,
+    startDate: new Date(`${currentYear}-01-01`),
+    endDate: new Date(`${currentYear}-12-31`),
+    createdAt: new Date(`${currentYear}-01-01`)
+  },
+  {
+    id: 'goal-past-1',
+    title: 'Read 20 books',
+    yearlyTarget: 20,
+    actualProgress: 20,
+    unit: 'books',
+    year: currentYear - 1,
+    startDate: new Date(`${currentYear - 1}-01-01`),
+    endDate: new Date(`${currentYear - 1}-12-31`),
+    createdAt: new Date(`${currentYear - 1}-01-01`)
+  },
+  {
+    id: 'goal-future-1',
+    title: 'Read 30 books',
+    yearlyTarget: 30,
+    actualProgress: 0,
+    unit: 'books',
+    year: currentYear + 1,
+    startDate: new Date(`${currentYear + 1}-01-01`),
+    endDate: new Date(`${currentYear + 1}-12-31`),
+    createdAt: new Date()
   }
 ];
 
@@ -53,6 +81,7 @@ export const sampleHabits = [
     location: 'Living room',
     frequency: 'daily',
     isActive: true,
+    startYear: currentYear,
     createdAt: new Date('2024-01-01')
   },
   {
@@ -64,6 +93,7 @@ export const sampleHabits = [
     location: 'Home gym',
     frequency: 'daily',
     isActive: true,
+    startYear: currentYear,
     createdAt: new Date('2024-01-01')
   },
   {
@@ -75,6 +105,7 @@ export const sampleHabits = [
     location: 'Office desk',
     frequency: 'daily',
     isActive: true,
+    startYear: currentYear,
     createdAt: new Date('2024-01-01')
   },
   {
@@ -86,6 +117,7 @@ export const sampleHabits = [
     location: 'Bedroom',
     frequency: 'daily',
     isActive: true,
+    startYear: currentYear,
     createdAt: new Date('2024-01-01')
   },
   {
@@ -97,7 +129,20 @@ export const sampleHabits = [
     location: 'Park',
     frequency: 'daily',
     isActive: true,
+    startYear: currentYear,
     createdAt: new Date('2024-01-15')
+  },
+  {
+    id: 'habit-future-1',
+    name: 'Read for 45 minutes',
+    goalIds: ['goal-future-1'],
+    trigger: 'After morning tea',
+    time: '07:00',
+    location: 'Living room',
+    frequency: 'daily',
+    isActive: true,
+    startYear: currentYear + 1,
+    createdAt: new Date()
   }
 ];
 

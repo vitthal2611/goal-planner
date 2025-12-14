@@ -6,14 +6,17 @@ import { GoalManagement } from './components/goals/GoalManagement';
 import { HabitManagement } from './components/habits/HabitManagement';
 import { Today } from './components/today/Today';
 import { Review } from './components/review/Review';
+import { YearSelector } from './components/common/YearSelector';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { AppProvider } from './context/AppContext';
+import { YearProvider, useYear } from './context/YearContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/auth/Login';
 import { lightTheme, darkTheme } from './theme/theme';
 
 const AppContent = () => {
   const { user, loading, logout } = useAuth();
+  const { selectedYear, setSelectedYear } = useYear();
   const [currentTab, setCurrentTab] = useState(0);
   const [darkMode, setDarkMode] = useLocalStorage('darkMode', false);
   const theme = darkMode ? darkTheme : lightTheme;
@@ -153,6 +156,10 @@ const AppContent = () => {
         </Paper>
         
         <Container maxWidth="xl" sx={{ py: 5, flex: 1 }}>
+          <YearSelector 
+            selectedYear={selectedYear} 
+            onYearChange={setSelectedYear}
+          />
           <Fade in={true} timeout={400} key={currentTab}>
             <Box>
               {currentTab === 0 && <Today />}
@@ -171,9 +178,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <YearProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </YearProvider>
     </AuthProvider>
   );
 }

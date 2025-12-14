@@ -17,12 +17,27 @@ A production-ready Single Page Application (SPA) for tracking yearly goals and d
 npm install
 
 # Start development server
-npm start
+npm run dev
 
 # Open browser at http://localhost:3000
 ```
 
-**That's it!** The app loads with sample data and is ready to use.
+**That's it!** Sign in with Google or email, and the app loads with sample data.
+
+### 🔥 Firebase Setup (Required)
+
+1. **Deploy Security Rules** (first time only):
+```bash
+firebase deploy --only database
+```
+
+2. **Enable Authentication** in [Firebase Console](https://console.firebase.google.com/):
+   - Go to Authentication → Sign-in method
+   - Enable Google and Email/Password
+
+3. **Start using the app** - All data persists automatically!
+
+See [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for detailed instructions.
 
 ---
 
@@ -33,8 +48,8 @@ npm start
 - 📈 **Real-Time Progress** - Instant updates across all sections
 - 💡 **Auto-Generated Insights** - Smart recommendations based on your data
 - 🌙 **Dark Mode** - Beautiful light and dark themes
-- 💾 **Offline-First** - Works without internet, data saved locally
-- 🔄 **Cross-Device Sync** - Sign in with Google to sync across all devices
+- 🔄 **Real-Time Sync** - ✅ LIVE - Syncs across all devices instantly
+- 💾 **Firebase Database** - ✅ PRODUCTION - Secure cloud storage with offline support
 - 📱 **Mobile-Friendly** - Responsive design with large touch targets
 - ⚡ **Zero Friction** - One tap to mark habits done
 
@@ -64,7 +79,7 @@ Auto-generated insights, planned vs actual comparison, habit adherence summary.
 | Document | Description |
 |----------|-------------|
 | [QUICK_START.md](QUICK_START.md) | Get started in 30 seconds |
-| [FIREBASE_SETUP.md](FIREBASE_SETUP.md) | Enable cross-device sync (5 min setup) |
+| [FIREBASE_REALTIME_DB_SETUP.md](FIREBASE_REALTIME_DB_SETUP.md) | Firebase Realtime Database setup (5 min) |
 | [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | Complete 11-step implementation details |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and data flow |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
@@ -92,10 +107,10 @@ Auto-generated insights, planned vs actual comparison, habit adherence summary.
 - **Material UI v5.15** - Component library
 - **date-fns 2.30** - Date calculations
 - **React Context API** - State management
-- **Firebase** - Authentication & cross-device sync
-- **localStorage** - Offline-first data persistence
+- **Firebase Realtime Database** - Cloud data storage
+- **Firebase Authentication** - Google sign-in
 
-**Works offline!** Syncs when online.
+**Real-time sync across all devices!**
 
 ---
 
@@ -385,10 +400,12 @@ npx cypress open
 
 ## 🔒 Security
 
-- ✅ No backend (no server vulnerabilities)
-- ✅ No authentication needed (single-user)
-- ✅ No network requests (no XSS/CSRF)
-- ✅ localStorage only (browser-isolated)
+- ✅ Firebase Realtime Database with security rules (DEPLOYED)
+- ✅ Google + Email/Password Authentication
+- ✅ User-specific data isolation (users can only access their own data)
+- ✅ Secure HTTPS connections
+- ✅ Automatic sample data for new users
+- ✅ Real-time data persistence
 
 ---
 
@@ -489,5 +506,5 @@ src/
 - Real-time progress tracking with on-track indicators
 - Habit streak calculation and consistency metrics
 - Automated review generation with insights
-- Local storage persistence
+- Firebase Realtime Database persistence
 - Material UI v5 design system

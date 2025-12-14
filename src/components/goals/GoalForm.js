@@ -1,36 +1,64 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, TextField, Button, Box, Grid } from '@mui/material';
+import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, Collapse } from '@mui/material';
 import { generateId } from '../../utils/calculations';
+import { format, addMonths } from 'date-fns';
+import { useYear } from '../../context/YearContext';
 
 export const GoalForm = ({ onAddGoal }) => {
+  const { selectedYear } = useYear();
   const [formData, setFormData] = useState({
     title: '',
-    yearlyTarget: '',
-    unit: ''
+    unit: '',
+    year: selectedYear
   });
+  const [monthlyTargets, setMonthlyTargets] = useState({});
+  const [showMonthly, setShowMonthly] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleMonthlyTargetChange = (monthKey, value) => {
+    setMonthlyTargets(prev => ({ ...prev, [monthKey]: value }));
+  };
+
+  const getMonths = () => {
+    const months = [];
+    const start = new Date(formData.year, 0, 1);
+    for (let i = 0; i < 12; i++) {
+      const monthDate = addMonths(start, i);
+      months.push({
+        key: format(monthDate, 'yyyy-MM'),
+        label: format(monthDate, 'MMM')
+      });
+    }
+    return months;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.yearlyTarget || !formData.unit) return;
+    if (!formData.title || !formData.unit) return;
+
+    const yearlyTarget = Object.values(monthlyTargets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
     const newGoal = {
       id: generateId(),
       title: formData.title,
-      yearlyTarget: parseFloat(formData.yearlyTarget),
+      yearlyTarget,
       actualProgress: 0,
       unit: formData.unit,
-      startDate: new Date(new Date().getFullYear(), 0, 1),
-      endDate: new Date(new Date().getFullYear(), 11, 31),
-      createdAt: new Date()
+      year: formData.year,
+      startDate: new Date(formData.year, 0, 1),
+      endDate: new Date(formData.year, 11, 31),
+      createdAt: new Date(),
+      monthlyTargets
     };
 
     onAddGoal(newGoal);
-    setFormData({ title: '', yearlyTarget: '', unit: '' });
+    setFormData({ title: '', unit: '', year: selectedYear });
+    setMonthlyTargets({});
+    setShowMonthly(false);
   };
 
   return (
@@ -72,25 +100,6 @@ export const GoalForm = ({ onAddGoal }) => {
             <Grid item xs={6} sm={4}>
               <TextField
                 fullWidth
-                label="Yearly Target"
-                name="yearlyTarget"
-                type="number"
-                value={formData.yearlyTarget}
-                onChange={handleChange}
-                placeholder="24"
-                required
-                sx={{ 
-                  bgcolor: 'background.paper',
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': { borderColor: 'primary.main' },
-                    '&.Mui-focused fieldset': { borderWidth: 2 }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={6} sm={4}>
-              <TextField
-                fullWidth
                 label="Unit"
                 name="unit"
                 value={formData.unit}
@@ -106,13 +115,58 @@ export const GoalForm = ({ onAddGoal }) => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={6} sm={2}>
+              <TextField
+                fullWidth
+                label="Year"
+                name="year"
+                type="number"
+                value={formData.year}
+                onChange={handleChange}
+                required
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => setShowMonthly(!showMonthly)}
+                sx={{ mb: 2 }}
+              >
+                {showMonthly ? 'Hide' : 'Set'} Monthly Targets
+              </Button>
+              <Collapse in={showMonthly}>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  {getMonths().map(({ key, label }) => (
+                    <Grid item xs={6} sm={3} md={2} key={key}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label={label}
+                        type="number"
+                        value={monthlyTargets[key] || ''}
+                        onChange={(e) => handleMonthlyTargetChange(key, e.target.value)}
+                        InputProps={{ inputProps: { min: 0, step: 0.1 } }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Collapse>
+            </Grid>
+            <Grid item xs={12}>
               <Button
                 fullWidth
                 variant="contained"
                 type="submit"
                 size="large"
-                disabled={!formData.title || !formData.yearlyTarget || !formData.unit}
+                disabled={!formData.title || !formData.unit}
                 sx={{ 
                   height: 56, 
                   fontWeight: 600,

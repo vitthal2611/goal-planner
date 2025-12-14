@@ -1,48 +1,59 @@
-import { useCallback, useEffect } from 'react';
-import { useLocalStorage } from './useLocalStorage';
-import { getInitialData } from '../data/sampleData';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { useState, useCallback, useEffect } from 'react';
+import { ref, set, onValue } from 'firebase/database';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
-
-const initialData = getInitialData();
+import { getInitialData } from '../data/sampleData';
 
 export const useGoals = (deleteHabitFn, habits) => {
   const { user } = useAuth();
-  const [goals, setGoals] = useLocalStorage('goals', initialData.goals);
+  const [goals, setGoals] = useState([]);
 
-  // Sync to Firestore when goals change
   useEffect(() => {
-    if (user && goals.length > 0) {
-      setDoc(doc(db, 'users', user.uid), { goals }, { merge: true });
+    if (!user) {
+      setGoals([]);
+      return;
     }
-  }, [goals, user]);
-
-  // Listen to Firestore changes
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists() && doc.data().goals) {
-        setGoals(doc.data().goals);
+    const goalsRef = ref(db, `users/${user.uid}/goals`);
+    const unsubscribe = onValue(goalsRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        setGoals(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        await set(goalsRef, initialData.goals);
       }
     });
     return unsubscribe;
   }, [user]);
   
   const addGoal = useCallback((newGoal) => {
-    setGoals(prev => [...prev, newGoal]);
-  }, [setGoals]);
+    if (!user) return;
+    setGoals(prev => {
+      const updated = [...prev, newGoal];
+      set(ref(db, `users/${user.uid}/goals`), updated);
+      return updated;
+    });
+  }, [user]);
   
-  const updateGoal = useCallback((goalId, newProgress) => {
-    setGoals(prev => prev.map(goal => 
-      goal.id === goalId ? { ...goal, actualProgress: newProgress } : goal
-    ));
-  }, [setGoals]);
+  const updateGoal = useCallback((goalId, newProgress, monthlyData) => {
+    if (!user) return;
+    setGoals(prev => {
+      const updated = prev.map(goal => 
+        goal.id === goalId ? { ...goal, actualProgress: newProgress, ...(monthlyData && { monthlyData }) } : goal
+      );
+      set(ref(db, `users/${user.uid}/goals`), updated);
+      return updated;
+    });
+  }, [user]);
   
   const deleteGoal = useCallback((goalId) => {
-    setGoals(prev => prev.filter(goal => goal.id !== goalId));
+    if (!user) return;
+    setGoals(prev => {
+      const updated = prev.filter(goal => goal.id !== goalId);
+      set(ref(db, `users/${user.uid}/goals`), updated.length ? updated : null);
+      return updated;
+    });
     habits?.filter(h => h.goalIds?.includes(goalId)).forEach(h => deleteHabitFn(h.id));
-  }, [setGoals, deleteHabitFn, habits]);
+  }, [user, deleteHabitFn, habits]);
   
   return { goals, addGoal, updateGoal, deleteGoal };
 };

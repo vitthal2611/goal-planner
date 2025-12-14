@@ -1,11 +1,9 @@
 {
-  "firestore": {
-    "database": "(default)",
-    "location": "nam5",
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+  "database": {
+    "rules": "database.rules.json"
   },
   "hosting": {
+    "site": "goal-planner-d7d2b-dac3e",
     "public": "dist",
     "ignore": [
       "firebase.json",

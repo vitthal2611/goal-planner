@@ -1,58 +1,60 @@
-import { useCallback, useEffect } from 'react';
-import { useLocalStorage } from './useLocalStorage';
-import { generateId, formatDate } from '../utils/calculations';
-import { getInitialData } from '../data/sampleData';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { useState, useCallback, useEffect } from 'react';
+import { ref, set, onValue } from 'firebase/database';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
-
-const initialData = getInitialData();
+import { generateId, formatDate } from '../utils/calculations';
+import { getInitialData } from '../data/sampleData';
 
 export const useHabitLogs = () => {
   const { user } = useAuth();
-  const [habitLogs, setHabitLogs] = useLocalStorage('habitLogs', initialData.logs);
+  const [habitLogs, setHabitLogs] = useState([]);
 
-  // Sync to Firestore
   useEffect(() => {
-    if (user && habitLogs.length > 0) {
-      setDoc(doc(db, 'users', user.uid), { habitLogs }, { merge: true });
+    if (!user) {
+      setHabitLogs([]);
+      return;
     }
-  }, [habitLogs, user]);
-
-  // Listen to Firestore changes
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists() && doc.data().habitLogs) {
-        setHabitLogs(doc.data().habitLogs);
+    const logsRef = ref(db, `users/${user.uid}/habitLogs`);
+    const unsubscribe = onValue(logsRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        setHabitLogs(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        await set(logsRef, initialData.logs);
       }
     });
     return unsubscribe;
   }, [user]);
   
   const logHabit = useCallback((habitId, status) => {
+    if (!user) return;
     const today = formatDate(new Date());
-    const existingLog = habitLogs.find(log => log.habitId === habitId && log.date === today);
     
-    if (existingLog) {
-      setHabitLogs(prev => 
-        prev.map(log => 
+    setHabitLogs(prev => {
+      const existingLog = prev.find(log => log.habitId === habitId && log.date === today);
+      let updated;
+      
+      if (existingLog) {
+        updated = prev.map(log => 
           log.id === existingLog.id 
-            ? { ...log, status, loggedAt: new Date() }
+            ? { ...log, status, loggedAt: new Date().toISOString() }
             : log
-        )
-      );
-    } else {
-      const newLog = {
-        id: generateId(),
-        habitId,
-        date: today,
-        status,
-        loggedAt: new Date(),
-      };
-      setHabitLogs(prev => [...prev, newLog]);
-    }
-  }, [habitLogs, setHabitLogs]);
+        );
+      } else {
+        const newLog = {
+          id: generateId(),
+          habitId,
+          date: today,
+          status,
+          loggedAt: new Date().toISOString(),
+        };
+        updated = [...prev, newLog];
+      }
+      
+      set(ref(db, `users/${user.uid}/habitLogs`), updated);
+      return updated;
+    });
+  }, [user]);
   
-  return { habitLogs, logHabit };
+  return { logs: habitLogs, logHabit };
 };

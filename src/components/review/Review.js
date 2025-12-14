@@ -5,7 +5,7 @@ import { calculateGoalProgress } from '../../utils/goalUtils';
 import { calculateHabitConsistency } from '../../utils/habitUtils';
 import { useAppContext } from '../../context/AppContext';
 
-const generateInsights = (goals, habits, habitLogs) => {
+const generateInsights = (goals, habits, logs) => {
   const insights = [];
 
   // Goal insights
@@ -35,7 +35,7 @@ const generateInsights = (goals, habits, habitLogs) => {
   // Habit insights
   const habitStats = habits.map(h => ({
     habit: h,
-    consistency: calculateHabitConsistency(h, habitLogs)
+    consistency: calculateHabitConsistency(h, logs)
   }));
 
   const excellentHabits = habitStats.filter(h => h.consistency.consistency >= 90);
@@ -90,8 +90,8 @@ const generateInsights = (goals, habits, habitLogs) => {
 };
 
 export const Review = () => {
-  const { goals, habits, habitLogs } = useAppContext();
-  const insights = generateInsights(goals, habits, habitLogs);
+  const { goals, habits, logs } = useAppContext();
+  const insights = generateInsights(goals, habits, logs);
 
   const goalStats = goals.map(goal => {
     const progress = calculateGoalProgress(goal);
@@ -99,7 +99,7 @@ export const Review = () => {
   });
 
   const habitStats = habits.map(habit => {
-    const consistency = calculateHabitConsistency(habit, habitLogs);
+    const consistency = calculateHabitConsistency(habit, logs);
     return { habit, consistency };
   });
 

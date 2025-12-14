@@ -8,6 +8,7 @@ export class Habit {
     location,
     frequency = 'daily',
     isActive = true,
+    startYear,
     createdAt = new Date()
   }) {
     this.id = id;
@@ -18,6 +19,7 @@ export class Habit {
     this.location = location;
     this.frequency = frequency;
     this.isActive = isActive;
+    this.startYear = startYear || new Date(createdAt).getFullYear();
     this.createdAt = createdAt;
   }
 

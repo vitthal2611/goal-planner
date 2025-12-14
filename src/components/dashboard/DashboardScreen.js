@@ -6,7 +6,7 @@ import { calculateHabitConsistency } from '../../utils/habitUtils';
 import { useAppContext } from '../../context/AppContext';
 
 export const DashboardScreen = () => {
-  const { goals, habits, habitLogs } = useAppContext();
+  const { goals, habits, logs } = useAppContext();
   // Overall metrics
   const avgYearlyProgress = goals.length > 0
     ? goals.reduce((sum, g) => sum + calculateGoalProgress(g).yearlyProgress, 0) / goals.length
@@ -22,7 +22,7 @@ export const DashboardScreen = () => {
   }, { actual: 0, target: 0 });
 
   const avgHabitConsistency = habits.length > 0
-    ? habits.reduce((sum, h) => sum + calculateHabitConsistency(h, habitLogs).consistency, 0) / habits.length
+    ? habits.reduce((sum, h) => sum + calculateHabitConsistency(h, logs).consistency, 0) / habits.length
     : 0;
 
   const getColor = (value, thresholds = [90, 70, 50]) => {
@@ -208,7 +208,7 @@ export const DashboardScreen = () => {
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Habit Streaks</Typography>
               
               {habits.map(habit => {
-                const consistency = calculateHabitConsistency(habit, habitLogs);
+                const consistency = calculateHabitConsistency(habit, logs);
                 
                 return (
                   <Card key={habit.id} variant="outlined" sx={{ mb: 2, bgcolor: 'grey.50', borderRadius: 2 }}>

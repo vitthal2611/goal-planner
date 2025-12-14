@@ -1,41 +1,47 @@
-import { useCallback, useEffect } from 'react';
-import { useLocalStorage } from './useLocalStorage';
-import { getInitialData } from '../data/sampleData';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { useState, useCallback, useEffect } from 'react';
+import { ref, set, onValue } from 'firebase/database';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
-
-const initialData = getInitialData();
+import { getInitialData } from '../data/sampleData';
 
 export const useHabits = () => {
   const { user } = useAuth();
-  const [habits, setHabits] = useLocalStorage('habits', initialData.habits);
+  const [habits, setHabits] = useState([]);
 
-  // Sync to Firestore
   useEffect(() => {
-    if (user && habits.length > 0) {
-      setDoc(doc(db, 'users', user.uid), { habits }, { merge: true });
+    if (!user) {
+      setHabits([]);
+      return;
     }
-  }, [habits, user]);
-
-  // Listen to Firestore changes
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists() && doc.data().habits) {
-        setHabits(doc.data().habits);
+    const habitsRef = ref(db, `users/${user.uid}/habits`);
+    const unsubscribe = onValue(habitsRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        setHabits(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        await set(habitsRef, initialData.habits);
       }
     });
     return unsubscribe;
   }, [user]);
   
   const addHabit = useCallback((newHabit) => {
-    setHabits(prev => [...prev, newHabit]);
-  }, [setHabits]);
+    if (!user) return;
+    setHabits(prev => {
+      const updated = [...prev, newHabit];
+      set(ref(db, `users/${user.uid}/habits`), updated);
+      return updated;
+    });
+  }, [user]);
   
   const deleteHabit = useCallback((habitId) => {
-    setHabits(prev => prev.filter(habit => habit.id !== habitId));
-  }, [setHabits]);
+    if (!user) return;
+    setHabits(prev => {
+      const updated = prev.filter(habit => habit.id !== habitId);
+      set(ref(db, `users/${user.uid}/habits`), updated.length ? updated : null);
+      return updated;
+    });
+  }, [user]);
   
   return { habits, addHabit, deleteHabit };
 };

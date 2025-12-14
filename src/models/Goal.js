@@ -7,7 +7,10 @@ export class Goal {
     unit,
     startDate,
     endDate,
-    createdAt = new Date()
+    year,
+    createdAt = new Date(),
+    monthlyData = {},
+    monthlyTargets = {}
   }) {
     this.id = id;
     this.title = title;
@@ -16,7 +19,10 @@ export class Goal {
     this.unit = unit;
     this.startDate = startDate;
     this.endDate = endDate;
+    this.year = year || new Date(startDate).getFullYear();
     this.createdAt = createdAt;
+    this.monthlyData = monthlyData;
+    this.monthlyTargets = monthlyTargets;
   }
 
   updateProgress(newProgress) {

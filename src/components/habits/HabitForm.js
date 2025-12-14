@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, MenuItem } from '@mui/material';
 import { generateId } from '../../utils/calculations';
+import { useYear } from '../../context/YearContext';
 
 export const HabitForm = ({ goals, onAddHabit }) => {
+  const { selectedYear } = useYear();
   const [formData, setFormData] = useState({
     name: '',
     goalId: '',
@@ -30,6 +32,7 @@ export const HabitForm = ({ goals, onAddHabit }) => {
       location: formData.location,
       frequency: formData.frequency,
       isActive: true,
+      startYear: selectedYear,
       createdAt: new Date()
     };
 

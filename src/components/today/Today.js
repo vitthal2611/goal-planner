@@ -6,13 +6,13 @@ import { HabitTimeGroup } from './HabitTimeGroup';
 import { useAppContext } from '../../context/AppContext';
 
 export const Today = () => {
-  const { habits, habitLogs, logHabit } = useAppContext();
+  const { habits, logs, logHabit } = useAppContext();
   const [animatingHabit, setAnimatingHabit] = useState(null);
   const today = formatDate(new Date());
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const getTodaysLog = (habitId) => {
-    return habitLogs.find(log => log.habitId === habitId && log.date === today);
+    return logs.find(log => log.habitId === habitId && log.date === today);
   };
 
   const groupHabitsByTime = () => {
@@ -29,6 +29,10 @@ export const Today = () => {
       else if (hour >= 12 && hour < 17) groups.afternoon.push(habit);
       else if (hour >= 17 && hour < 21) groups.evening.push(habit);
       else groups.night.push(habit);
+    });
+
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => a.time.localeCompare(b.time));
     });
 
     return groups;
@@ -127,7 +131,7 @@ export const Today = () => {
           icon={icon}
           color={color}
           habits={groups[key]}
-          logs={habitLogs}
+          logs={logs}
           onLogHabit={handleLogHabit}
           animatingHabit={animatingHabit}
           formatDate={formatDate}
