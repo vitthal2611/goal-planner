@@ -15,16 +15,22 @@ export const useHabitLogs = () => {
       setHabitLogs([]);
       return;
     }
-    const logsRef = ref(db, `users/${user.uid}/habitLogs`);
-    const unsubscribe = onValue(logsRef, async (snapshot) => {
-      if (snapshot.exists()) {
-        setHabitLogs(Object.values(snapshot.val()));
-      } else {
-        const initialData = getInitialData();
-        await set(logsRef, initialData.logs);
-      }
-    });
-    return unsubscribe;
+    try {
+      const logsRef = ref(db, `users/${user.uid}/habitLogs`);
+      const unsubscribe = onValue(logsRef, async (snapshot) => {
+        if (snapshot.exists()) {
+          setHabitLogs(Object.values(snapshot.val()));
+        } else {
+          const initialData = getInitialData();
+          setHabitLogs(initialData.logs);
+        }
+      });
+      return unsubscribe;
+    } catch (error) {
+      console.error('Firebase error:', error);
+      const initialData = getInitialData();
+      setHabitLogs(initialData.logs);
+    }
   }, [user]);
   
   const logHabit = useCallback((habitId, status, habit) => {

@@ -20,6 +20,7 @@ const AppContent = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [darkMode, setDarkMode] = useLocalStorage('darkMode', false);
   const theme = darkMode ? darkTheme : lightTheme;
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   if (loading) {
     return (
@@ -41,8 +42,6 @@ const AppContent = () => {
       </ThemeProvider>
     );
   }
-
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const navItems = [
     { label: 'Today', icon: <TodayOutlined /> },

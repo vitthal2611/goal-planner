@@ -13,16 +13,22 @@ export const useGoals = (deleteHabitFn, habits) => {
       setGoals([]);
       return;
     }
-    const goalsRef = ref(db, `users/${user.uid}/goals`);
-    const unsubscribe = onValue(goalsRef, async (snapshot) => {
-      if (snapshot.exists()) {
-        setGoals(Object.values(snapshot.val()));
-      } else {
-        const initialData = getInitialData();
-        await set(goalsRef, initialData.goals);
-      }
-    });
-    return unsubscribe;
+    try {
+      const goalsRef = ref(db, `users/${user.uid}/goals`);
+      const unsubscribe = onValue(goalsRef, async (snapshot) => {
+        if (snapshot.exists()) {
+          setGoals(Object.values(snapshot.val()));
+        } else {
+          const initialData = getInitialData();
+          setGoals(initialData.goals);
+        }
+      });
+      return unsubscribe;
+    } catch (error) {
+      console.error('Firebase error:', error);
+      const initialData = getInitialData();
+      setGoals(initialData.goals);
+    }
   }, [user]);
   
   const addGoal = useCallback((newGoal) => {
