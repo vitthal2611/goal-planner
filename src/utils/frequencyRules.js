@@ -1,0 +1,101 @@
+import { FREQUENCY_TYPES } from './frequencyConstants';
+import { getDay, eachDayOfInterval } from 'date-fns';
+
+/**
+ * Check if a habit is scheduled for a specific date
+ */
+export const isHabitScheduledForDate = (habit, date) => {
+  if (!habit.isActive) return false;
+
+  const { frequency, frequencyConfig = {} } = habit;
+
+  switch (frequency) {
+    case FREQUENCY_TYPES.DAILY:
+      return true;
+
+    case FREQUENCY_TYPES.WEEKLY:
+      // Always scheduled, but completion tracked per week
+      return true;
+
+    case FREQUENCY_TYPES.SPECIFIC_DAYS: {
+      const dayOfWeek = getDay(date);
+      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Mon=0, Sun=6
+      return (frequencyConfig.days || []).includes(adjustedDay);
+    }
+
+    case FREQUENCY_TYPES.MONTHLY:
+      // Always scheduled, but completion tracked per month
+      return true;
+
+    default:
+      return true;
+  }
+};
+
+/**
+ * Get expected completions for a date range
+ */
+export const getExpectedCompletions = (habit, startDate, endDate) => {
+  const { frequency, frequencyConfig = {} } = habit;
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  switch (frequency) {
+    case FREQUENCY_TYPES.DAILY:
+      return days.length;
+
+    case FREQUENCY_TYPES.WEEKLY: {
+      const weeks = Math.ceil(days.length / 7);
+      return weeks * (frequencyConfig.daysPerWeek || 1);
+    }
+
+    case FREQUENCY_TYPES.SPECIFIC_DAYS:
+      return days.filter(day => isHabitScheduledForDate(habit, day)).length;
+
+    case FREQUENCY_TYPES.MONTHLY: {
+      const months = new Set(days.map(d => `${d.getFullYear()}-${d.getMonth()}`)).size;
+      return months * (frequencyConfig.timesPerMonth || 1);
+    }
+
+    default:
+      return days.length;
+  }
+};
+
+/**
+ * Check if a date should count as "missed" (scheduled but not completed)
+ */
+export const shouldCountAsMissed = (habit, date, logs) => {
+  if (!isHabitScheduledForDate(habit, date)) return false;
+  
+  const dateStr = date.toISOString().split('T')[0];
+  const log = logs.find(l => l.habitId === habit.id && l.date === dateStr);
+  
+  return !log || log.status !== 'done';
+};
+
+/**
+ * Get human-readable frequency label
+ */
+export const getFrequencyLabel = (habit) => {
+  const { frequency, frequencyConfig = {} } = habit;
+  
+  switch (frequency) {
+    case FREQUENCY_TYPES.DAILY:
+      return 'Daily';
+    
+    case FREQUENCY_TYPES.WEEKLY:
+      return `${frequencyConfig.daysPerWeek || 1}× per week`;
+    
+    case FREQUENCY_TYPES.SPECIFIC_DAYS: {
+      const days = frequencyConfig.days || [];
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return days.map(d => dayNames[d]).join(', ');
+    }
+    
+    case FREQUENCY_TYPES.MONTHLY:
+      return `${frequencyConfig.timesPerMonth || 1}× per month`;
+    
+    default:
+      return 'Daily';
+  }
+};

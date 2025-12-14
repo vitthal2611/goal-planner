@@ -22,20 +22,24 @@ export const calculateGoalProgress = (goal) => {
   };
 };
 
-export const calculateHabitConsistency = (habit, logs, days = 30) => {
-  const endDate = new Date();
-  const startDate = subDays(endDate, days);
+export const calculateHabitConsistency = (habit, logs, goal) => {
+  if (!goal) return { consistency: 0, completed: 0, expected: 0, currentStreak: 0, longestStreak: 0 };
+  
+  const startDate = new Date(goal.startDate);
+  const endDate = new Date(goal.endDate);
+  const today = new Date();
+  const effectiveEndDate = today < endDate ? today : endDate;
   
   const recentLogs = logs.filter(log => {
     const logDate = new Date(log.date);
-    return logDate >= startDate && logDate <= endDate;
+    return log.habitId === habit.id && logDate >= startDate && logDate <= effectiveEndDate;
   });
   
   const completedDays = recentLogs.filter(log => log.status === 'done').length;
-  const totalExpectedDays = days;
+  const totalExpectedDays = Math.max(1, differenceInDays(effectiveEndDate, startDate) + 1);
   
-  const currentStreak = calculateCurrentStreak(logs);
-  const longestStreak = calculateLongestStreak(logs);
+  const currentStreak = calculateCurrentStreak(logs, goal);
+  const longestStreak = calculateLongestStreak(logs, goal);
   
   return {
     consistency: totalExpectedDays > 0 ? (completedDays / totalExpectedDays) * 100 : 0,
@@ -46,13 +50,23 @@ export const calculateHabitConsistency = (habit, logs, days = 30) => {
   };
 };
 
-const calculateCurrentStreak = (logs) => {
+const calculateCurrentStreak = (logs, goal) => {
+  if (!goal) return 0;
+  
+  const startDate = new Date(goal.startDate);
+  const endDate = new Date(goal.endDate);
+  const today = new Date();
+  const effectiveEndDate = today < endDate ? today : endDate;
+  
   const sortedLogs = logs
-    .filter(log => log.status === 'done')
+    .filter(log => {
+      const logDate = new Date(log.date);
+      return log.status === 'done' && logDate >= startDate && logDate <= effectiveEndDate;
+    })
     .sort((a, b) => b.date.localeCompare(a.date));
   
   let streak = 0;
-  let currentDate = new Date();
+  let currentDate = effectiveEndDate;
   
   for (const log of sortedLogs) {
     const logDate = new Date(log.date);
@@ -64,14 +78,24 @@ const calculateCurrentStreak = (logs) => {
     } else {
       break;
     }
+    
+    if (currentDate < startDate) break;
   }
   
   return streak;
 };
 
-const calculateLongestStreak = (logs) => {
+const calculateLongestStreak = (logs, goal) => {
+  if (!goal) return 0;
+  
+  const startDate = new Date(goal.startDate);
+  const endDate = new Date(goal.endDate);
+  
   const doneLogs = logs
-    .filter(log => log.status === 'done')
+    .filter(log => {
+      const logDate = new Date(log.date);
+      return log.status === 'done' && logDate >= startDate && logDate <= endDate;
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
   
   let maxStreak = 0;

@@ -44,6 +44,7 @@ See [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for detailed instructions.
 ## ✨ Key Features
 
 - 📊 **Auto-Calculated Targets** - Yearly goals broken down into quarterly/monthly/weekly targets
+- ✏️ **Inline Editing** - ✅ NEW - Edit goals and habits directly with instant updates
 - 🔥 **Habit Streaks** - Track current and longest streaks with fire icons
 - 📈 **Real-Time Progress** - Instant updates across all sections
 - 💡 **Auto-Generated Insights** - Smart recommendations based on your data
@@ -85,6 +86,9 @@ Auto-generated insights, planned vs actual comparison, habit adherence summary.
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
 | [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | Comprehensive project overview |
 | [DATAFLOW.md](DATAFLOW.md) | Data flow documentation |
+| [EDIT_UPDATE_IMPLEMENTATION.md](EDIT_UPDATE_IMPLEMENTATION.md) | Edit & update functionality guide |
+| [EDIT_UPDATE_EXAMPLES.md](EDIT_UPDATE_EXAMPLES.md) | Real-world edit examples |
+| [EDIT_UPDATE_QUICK_REFERENCE.md](EDIT_UPDATE_QUICK_REFERENCE.md) | Quick reference for editing |
 
 ---
 

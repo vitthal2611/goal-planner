@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, MenuItem } from '@mui/material';
+import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, MenuItem, Chip, Typography, Tooltip } from '@mui/material';
 import { generateId } from '../../utils/calculations';
 import { useYear } from '../../context/YearContext';
+import { FREQUENCY_TYPES, DAY_NAMES } from '../../utils/frequencyConstants';
 
 export const HabitForm = ({ goals, onAddHabit }) => {
   const { selectedYear } = useYear();
@@ -11,7 +12,10 @@ export const HabitForm = ({ goals, onAddHabit }) => {
     trigger: '',
     time: '',
     location: '',
-    frequency: 'daily'
+    frequency: FREQUENCY_TYPES.DAILY,
+    daysPerWeek: 3,
+    selectedDays: [0, 2, 4],
+    timesPerMonth: 12
   });
 
   const handleChange = (e) => {
@@ -23,6 +27,15 @@ export const HabitForm = ({ goals, onAddHabit }) => {
     
     if (!formData.name || !formData.goalId || !formData.trigger || !formData.time || !formData.location) return;
 
+    let frequencyConfig = {};
+    if (formData.frequency === FREQUENCY_TYPES.WEEKLY) {
+      frequencyConfig = { daysPerWeek: formData.daysPerWeek };
+    } else if (formData.frequency === FREQUENCY_TYPES.SPECIFIC_DAYS) {
+      frequencyConfig = { days: formData.selectedDays };
+    } else if (formData.frequency === FREQUENCY_TYPES.MONTHLY) {
+      frequencyConfig = { timesPerMonth: formData.timesPerMonth };
+    }
+
     const newHabit = {
       id: generateId(),
       name: formData.name,
@@ -31,13 +44,24 @@ export const HabitForm = ({ goals, onAddHabit }) => {
       time: formData.time,
       location: formData.location,
       frequency: formData.frequency,
+      frequencyConfig,
       isActive: true,
       startYear: selectedYear,
       createdAt: new Date()
     };
 
     onAddHabit(newHabit);
-    setFormData({ name: '', goalId: '', trigger: '', time: '', location: '', frequency: 'daily' });
+    setFormData({ 
+      name: '', 
+      goalId: '', 
+      trigger: '', 
+      time: '', 
+      location: '', 
+      frequency: FREQUENCY_TYPES.DAILY,
+      daysPerWeek: 3,
+      selectedDays: [0, 2, 4],
+      timesPerMonth: 12
+    });
   };
 
   return (
@@ -155,6 +179,77 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                 }}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Tooltip title="Choose how often this habit should be tracked" placement="top">
+                <TextField
+                  fullWidth
+                  select
+                  label="Frequency"
+                  name="frequency"
+                  value={formData.frequency}
+                  onChange={handleChange}
+                  sx={{ 
+                    bgcolor: 'background.paper',
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: 'success.main' },
+                      '&.Mui-focused fieldset': { borderWidth: 2 }
+                    }
+                  }}
+                >
+                  <MenuItem value={FREQUENCY_TYPES.DAILY}>Daily</MenuItem>
+                  <MenuItem value={FREQUENCY_TYPES.WEEKLY}>Weekly (X times per week)</MenuItem>
+                  <MenuItem value={FREQUENCY_TYPES.SPECIFIC_DAYS}>Specific Days (Mon-Sun)</MenuItem>
+                  <MenuItem value={FREQUENCY_TYPES.MONTHLY}>Monthly (X times per month)</MenuItem>
+                </TextField>
+              </Tooltip>
+            </Grid>
+            {formData.frequency === FREQUENCY_TYPES.WEEKLY && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Days per week"
+                  value={formData.daysPerWeek}
+                  onChange={(e) => setFormData({ ...formData, daysPerWeek: parseInt(e.target.value) || 1 })}
+                  inputProps={{ min: 1, max: 7 }}
+                  sx={{ bgcolor: 'background.paper' }}
+                />
+              </Grid>
+            )}
+            {formData.frequency === FREQUENCY_TYPES.SPECIFIC_DAYS && (
+              <Grid item xs={12}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Select days</Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {DAY_NAMES.map((day, idx) => (
+                    <Chip
+                      key={idx}
+                      label={day}
+                      onClick={() => {
+                        const days = formData.selectedDays.includes(idx)
+                          ? formData.selectedDays.filter(d => d !== idx)
+                          : [...formData.selectedDays, idx].sort();
+                        setFormData({ ...formData, selectedDays: days });
+                      }}
+                      color={formData.selectedDays.includes(idx) ? 'primary' : 'default'}
+                      variant={formData.selectedDays.includes(idx) ? 'filled' : 'outlined'}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+            {formData.frequency === FREQUENCY_TYPES.MONTHLY && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Times per month"
+                  value={formData.timesPerMonth}
+                  onChange={(e) => setFormData({ ...formData, timesPerMonth: parseInt(e.target.value) || 1 })}
+                  inputProps={{ min: 1, max: 31 }}
+                  sx={{ bgcolor: 'background.paper' }}
+                />
+              </Grid>
+            )}
             <Grid item xs={12}>
               <Button
                 fullWidth

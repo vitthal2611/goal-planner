@@ -1,22 +1,27 @@
-import { differenceInDays, subDays, parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
+import { differenceInDays, subDays, parseISO, isAfter, isBefore, startOfDay, min as minDate, max as maxDate } from 'date-fns';
+import { getExpectedCompletions, isHabitScheduledForDate } from './frequencyRules';
 
-export const calculateHabitConsistency = (habit, logs, days = 30) => {
-  const endDate = new Date();
-  const startDate = subDays(endDate, days);
+export const calculateHabitConsistency = (habit, logs, goal) => {
+  if (!goal) return { consistency: 0, completionRate: 0, completed: 0, skipped: 0, missed: 0, expected: 0, currentStreak: 0, longestStreak: 0 };
+  
+  const startDate = startOfDay(parseISO(goal.startDate));
+  const endDate = startOfDay(parseISO(goal.endDate));
+  const today = startOfDay(new Date());
+  const effectiveEndDate = minDate([today, endDate]);
   
   const relevantLogs = logs.filter(log => {
-    const logDate = parseISO(log.date);
+    const logDate = startOfDay(parseISO(log.date));
     return log.habitId === habit.id && 
-           isAfter(logDate, startDate) && 
-           isBefore(logDate, endDate);
+           logDate >= startDate && 
+           logDate <= effectiveEndDate;
   });
   
   const completedDays = relevantLogs.filter(log => log.status === 'done').length;
   const skippedDays = relevantLogs.filter(log => log.status === 'skipped').length;
   const totalLoggedDays = relevantLogs.length;
   
-  const expectedDays = getExpectedDays(habit, startDate, endDate);
-  const missedDays = expectedDays - totalLoggedDays;
+  const expectedDays = getExpectedCompletions(habit, startDate, effectiveEndDate);
+  const missedDays = Math.max(0, expectedDays - totalLoggedDays);
   
   const consistency = expectedDays > 0 ? (completedDays / expectedDays) * 100 : 0;
   const completionRate = totalLoggedDays > 0 ? (completedDays / totalLoggedDays) * 100 : 0;
@@ -28,29 +33,46 @@ export const calculateHabitConsistency = (habit, logs, days = 30) => {
     skipped: skippedDays,
     missed: missedDays,
     expected: expectedDays,
-    currentStreak: calculateCurrentStreak(habit, logs),
-    longestStreak: calculateLongestStreak(habit, logs)
+    currentStreak: calculateCurrentStreak(habit, logs, goal),
+    longestStreak: calculateLongestStreak(habit, logs, goal)
   };
 };
 
-export const calculateCurrentStreak = (habit, logs) => {
+export const calculateCurrentStreak = (habit, logs, goal) => {
+  if (!goal) return 0;
+  
+  const startDate = startOfDay(parseISO(goal.startDate));
+  const endDate = startOfDay(parseISO(goal.endDate));
+  const today = startOfDay(new Date());
+  
   const habitLogs = logs
-    .filter(log => log.habitId === habit.id && log.status === 'done')
+    .filter(log => {
+      const logDate = startOfDay(parseISO(log.date));
+      return log.habitId === habit.id && 
+             log.status === 'done' && 
+             logDate >= startDate && 
+             logDate <= endDate;
+    })
     .sort((a, b) => b.date.localeCompare(a.date));
   
   if (habitLogs.length === 0) return 0;
   
   let streak = 0;
-  let checkDate = startOfDay(new Date());
+  let checkDate = minDate([today, endDate]);
   
-  for (const log of habitLogs) {
-    const logDate = startOfDay(parseISO(log.date));
-    const daysDiff = differenceInDays(checkDate, logDate);
+  while (checkDate >= startDate) {
+    if (!isHabitScheduledForDate(habit, checkDate)) {
+      checkDate = subDays(checkDate, 1);
+      continue;
+    }
     
-    if (daysDiff === streak) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    const log = habitLogs.find(l => l.date === dateStr);
+    
+    if (log) {
       streak++;
       checkDate = subDays(checkDate, 1);
-    } else if (daysDiff > streak) {
+    } else {
       break;
     }
   }
@@ -58,27 +80,54 @@ export const calculateCurrentStreak = (habit, logs) => {
   return streak;
 };
 
-export const calculateLongestStreak = (habit, logs) => {
+export const calculateLongestStreak = (habit, logs, goal) => {
+  if (!goal) return 0;
+  
+  const startDate = startOfDay(parseISO(goal.startDate));
+  const endDate = startOfDay(parseISO(goal.endDate));
+  
   const habitLogs = logs
-    .filter(log => log.habitId === habit.id && log.status === 'done')
+    .filter(log => {
+      const logDate = startOfDay(parseISO(log.date));
+      return log.habitId === habit.id && 
+             log.status === 'done' && 
+             logDate >= startDate && 
+             logDate <= endDate;
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
   
   if (habitLogs.length === 0) return 0;
   
   let maxStreak = 0;
-  let currentStreak = 1;
+  let currentStreak = 0;
+  let lastDate = null;
   
-  for (let i = 1; i < habitLogs.length; i++) {
-    const prevDate = parseISO(habitLogs[i - 1].date);
-    const currDate = parseISO(habitLogs[i].date);
-    const daysDiff = differenceInDays(currDate, prevDate);
+  for (const log of habitLogs) {
+    const logDate = parseISO(log.date);
     
-    if (daysDiff === 1) {
-      currentStreak++;
-    } else {
-      maxStreak = Math.max(maxStreak, currentStreak);
+    if (!lastDate) {
       currentStreak = 1;
+    } else {
+      let checkDate = subDays(logDate, 1);
+      let foundGap = false;
+      
+      while (checkDate > lastDate && differenceInDays(logDate, lastDate) <= 7) {
+        if (isHabitScheduledForDate(habit, checkDate)) {
+          foundGap = true;
+          break;
+        }
+        checkDate = subDays(checkDate, 1);
+      }
+      
+      if (!foundGap && differenceInDays(logDate, lastDate) <= 7) {
+        currentStreak++;
+      } else {
+        maxStreak = Math.max(maxStreak, currentStreak);
+        currentStreak = 1;
+      }
     }
+    
+    lastDate = logDate;
   }
   
   return Math.max(maxStreak, currentStreak);
@@ -99,8 +148,8 @@ export const getExpectedDays = (habit, startDate, endDate) => {
   }
 };
 
-export const getHabitStatus = (habit, logs) => {
-  const consistency = calculateHabitConsistency(habit, logs, 7);
+export const getHabitStatus = (habit, logs, goal) => {
+  const consistency = calculateHabitConsistency(habit, logs, goal);
   
   if (consistency.consistency >= 90) return 'excellent';
   if (consistency.consistency >= 70) return 'good';
@@ -112,13 +161,13 @@ export const getHabitsForGoal = (goalId, habits) => {
   return habits.filter(habit => habit.goalIds.includes(goalId));
 };
 
-export const calculateGoalHabitAlignment = (goalId, habits, logs) => {
-  const relatedHabits = getHabitsForGoal(goalId, habits);
+export const calculateGoalHabitAlignment = (goal, habits, logs) => {
+  const relatedHabits = getHabitsForGoal(goal.id, habits);
   
   if (relatedHabits.length === 0) return 0;
   
   const consistencies = relatedHabits.map(habit => 
-    calculateHabitConsistency(habit, logs).consistency
+    calculateHabitConsistency(habit, logs, goal).consistency
   );
   
   const avgConsistency = consistencies.reduce((sum, c) => sum + c, 0) / consistencies.length;

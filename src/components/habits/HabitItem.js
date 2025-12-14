@@ -1,10 +1,18 @@
-import React from 'react';
-import { Card, CardHeader, CardContent, CardActions, Typography, Box, Chip, IconButton, LinearProgress, Grid, Avatar } from '@mui/material';
-import { LocalFireDepartment, CheckCircle, Cancel, Delete } from '@mui/icons-material';
-import { calculateHabitConsistency, formatDate } from '../../utils/calculations';
+import React, { useState } from 'react';
+import { Card, CardHeader, CardContent, CardActions, Typography, Box, Chip, IconButton, LinearProgress, Grid, Avatar, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { LocalFireDepartment, CheckCircle, Cancel, Delete, Edit, Check, Close } from '@mui/icons-material';
+import { formatDate } from '../../utils/calculations';
+import { getHabitCardMetrics } from '../../utils/goalAwareHabitUtils';
+import { getFrequencyLabel } from '../../utils/frequencyRules';
+import { analyzeHabitEditImpact } from '../../utils/updateUtils';
+import { ConfirmDialog } from '../common/ConfirmDialog.js';
 
-export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit }) => {
-  const consistency = calculateHabitConsistency(habit, habitLogs);
+export const HabitItem = ({ habit, goal, goals = [], habitLogs, onLogHabit, onUpdateHabit, onDeleteHabit }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, data: null });
+  
+  const metrics = getHabitCardMetrics(habit, habitLogs, goals);
   const today = formatDate(new Date());
   const todaysLog = habitLogs.find(log => log.habitId === habit.id && log.date === today);
 
@@ -18,9 +26,55 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
     if (value >= 40) return 'warning.main';
     return 'error.main';
   };
+  
+  const startEdit = () => {
+    setIsEditing(true);
+    setEditDraft({
+      name: habit.name,
+      trigger: habit.trigger,
+      time: habit.time,
+      location: habit.location,
+      frequency: habit.frequency,
+      goalIds: habit.goalIds
+    });
+  };
+  
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditDraft(null);
+  };
+  
+  const saveEdit = () => {
+    const impact = analyzeHabitEditImpact(habit, editDraft, habitLogs);
+    
+    if (impact.warnings.length > 0) {
+      setConfirmDialog({
+        open: true,
+        data: { updates: editDraft, impact }
+      });
+    } else {
+      applyEdit(editDraft);
+    }
+  };
+  
+  const applyEdit = (updates) => {
+    onUpdateHabit(habit.id, updates);
+    cancelEdit();
+    setConfirmDialog({ open: false, data: null });
+  };
 
   return (
-    <Card 
+    <>
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, data: null })}
+        onConfirm={() => applyEdit(confirmDialog.data.updates)}
+        title="Confirm Habit Changes"
+        message="This change may affect your tracking."
+        warnings={confirmDialog.data?.impact?.warnings || []}
+      />
+      
+      <Card 
       elevation={0}
       sx={{ 
         border: '1px solid',
@@ -35,68 +89,147 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
     >
       <CardHeader
         avatar={
-          <Avatar sx={{ bgcolor: consistency.currentStreak > 0 ? 'warning.main' : 'grey.300', width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 } }}>
+          <Avatar sx={{ bgcolor: metrics.currentStreak > 0 ? 'warning.main' : 'grey.300', width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 } }}>
             <LocalFireDepartment sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </Avatar>
         }
         action={
-          <IconButton onClick={() => onDeleteHabit(habit.id)} color="error" sx={{ minWidth: 44, minHeight: 44 }}>
-            <Delete />
-          </IconButton>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {isEditing ? (
+              <>
+                <IconButton onClick={saveEdit} color="primary" sx={{ minWidth: 44, minHeight: 44 }}>
+                  <Check />
+                </IconButton>
+                <IconButton onClick={cancelEdit} sx={{ minWidth: 44, minHeight: 44 }}>
+                  <Close />
+                </IconButton>
+              </>
+            ) : (
+              <>
+                <IconButton onClick={startEdit} sx={{ minWidth: 44, minHeight: 44 }}>
+                  <Edit />
+                </IconButton>
+                <IconButton onClick={() => onDeleteHabit(habit.id)} color="error" sx={{ minWidth: 44, minHeight: 44 }}>
+                  <Delete />
+                </IconButton>
+              </>
+            )}
+          </Box>
         }
-        title={habit.name}
-        subheader={`Goal: ${goal?.title || 'Unknown'}`}
+        title={
+          isEditing ? (
+            <TextField
+              value={editDraft.name}
+              onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
+              size="small"
+              fullWidth
+            />
+          ) : habit.name
+        }
+        subheader={
+          isEditing ? (
+            <FormControl size="small" fullWidth sx={{ mt: 1 }}>
+              <InputLabel>Goal</InputLabel>
+              <Select
+                value={editDraft.goalIds[0] || ''}
+                onChange={(e) => setEditDraft({ ...editDraft, goalIds: [e.target.value] })}
+                label="Goal"
+              >
+                {goals.map(g => (
+                  <MenuItem key={g.id} value={g.id}>{g.title}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : `Goal: ${goal?.title || 'Unknown'}`
+        }
         titleTypographyProps={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' } }}
       />
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-          <Chip label={`${consistency.currentStreak} day streak`} icon={<LocalFireDepartment />} color={consistency.currentStreak > 0 ? 'warning' : 'default'} />
-          <Chip label={`${consistency.consistency}%`} color="primary" />
+          <Chip label={`${metrics.currentStreak} day streak`} icon={<LocalFireDepartment />} color={metrics.currentStreak > 0 ? 'warning' : 'default'} />
+          <Chip label={`${metrics.thirtyDayConsistency}%`} color="primary" />
+          {habit.frequency !== 'daily' && (
+            <Chip label={getFrequencyLabel(habit)} variant="outlined" size="small" />
+          )}
         </Box>
 
         <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={4}>
-              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Trigger</Typography>
-              <Typography variant="body2">{habit.trigger}</Typography>
+          {isEditing ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Trigger"
+                  value={editDraft.trigger}
+                  onChange={(e) => setEditDraft({ ...editDraft, trigger: e.target.value })}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Time"
+                  type="time"
+                  value={editDraft.time}
+                  onChange={(e) => setEditDraft({ ...editDraft, time: e.target.value })}
+                  size="small"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Location"
+                  value={editDraft.location}
+                  onChange={(e) => setEditDraft({ ...editDraft, location: e.target.value })}
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={4}>
-              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Time</Typography>
-              <Typography variant="body2">{habit.time}</Typography>
+          ) : (
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Trigger</Typography>
+                <Typography variant="body2">{habit.trigger}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Time</Typography>
+                <Typography variant="body2">{habit.time}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Location</Typography>
+                <Typography variant="body2">{habit.location}</Typography>
+              </Grid>
             </Grid>
-            <Grid item xs={4}>
-              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Location</Typography>
-              <Typography variant="body2">{habit.location}</Typography>
-            </Grid>
-          </Grid>
+          )}
         </Box>
 
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="body2">30-Day Consistency</Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {consistency.consistency}%
+              {metrics.thirtyDayConsistency}%
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
-            value={consistency.consistency}
+            value={metrics.thirtyDayConsistency}
             sx={{
               height: 8,
               borderRadius: 1,
               bgcolor: 'grey.200',
               '& .MuiLinearProgress-bar': {
-                bgcolor: getConsistencyColor(consistency.consistency),
+                bgcolor: getConsistencyColor(metrics.thirtyDayConsistency),
                 transition: 'transform 0.4s ease'
               }
             }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="caption" color="text.secondary">
-              {consistency.completed}/{consistency.expected} completed
+              {metrics.completed}/{metrics.expected} completed
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Best streak: {consistency.longestStreak} days
+              Best streak: {metrics.bestStreak} days
             </Typography>
           </Box>
         </Box>
@@ -130,5 +263,6 @@ export const HabitItem = ({ habit, goal, habitLogs, onLogHabit, onDeleteHabit })
         )}
       </CardActions>
     </Card>
+    </>
   );
 };

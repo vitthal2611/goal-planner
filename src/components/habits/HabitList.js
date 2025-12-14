@@ -2,7 +2,7 @@ import React from 'react';
 import { Grid, Typography, Card, CardContent, Box } from '@mui/material';
 import { HabitItem } from './HabitItem';
 
-export const HabitList = ({ habits, goals, habitLogs, onLogHabit, onDeleteHabit }) => {
+export const HabitList = ({ habits, goals, habitLogs, onLogHabit, onUpdateHabit, onDeleteHabit }) => {
   if (habits.length === 0) {
     return (
       <Card elevation={0} sx={{ border: '2px dashed', borderColor: 'divider', bgcolor: 'grey.50' }}>
@@ -29,8 +29,10 @@ export const HabitList = ({ habits, goals, habitLogs, onLogHabit, onDeleteHabit 
             <HabitItem
               habit={habit}
               goal={goal}
+              goals={goals}
               habitLogs={habitLogs}
               onLogHabit={onLogHabit}
+              onUpdateHabit={onUpdateHabit}
               onDeleteHabit={onDeleteHabit}
             />
           </Grid>

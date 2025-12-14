@@ -34,6 +34,17 @@ export const useHabits = () => {
     });
   }, [user]);
   
+  const updateHabit = useCallback((habitId, updates) => {
+    if (!user) return;
+    setHabits(prev => {
+      const updated = prev.map(habit => 
+        habit.id === habitId ? { ...habit, ...updates } : habit
+      );
+      set(ref(db, `users/${user.uid}/habits`), updated);
+      return updated;
+    });
+  }, [user]);
+  
   const deleteHabit = useCallback((habitId) => {
     if (!user) return;
     setHabits(prev => {
@@ -43,5 +54,5 @@ export const useHabits = () => {
     });
   }, [user]);
   
-  return { habits, addHabit, deleteHabit };
+  return { habits, addHabit, updateHabit, deleteHabit };
 };

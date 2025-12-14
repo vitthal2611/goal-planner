@@ -18,4 +18,156 @@ import { HabitStreakSection } from '../habits/HabitStreakSection';
 import { YearComparisonSection } from './YearComparisonSection';
 import { NextYearSuggestionCard } from '../goals/NextYearSuggestionCard';
 import { ArchiveYearDialog } from '../common/ArchiveYearDialog';
-import { calculateGoalProgress, calculateHabitConsistency } from '../../utils/calculations';\nimport { generateNextYearSuggestions } from '../../utils/suggestionUtils';\nimport { useAppContext } from '../../context/AppContext';\nimport { useYear } from '../../context/YearContext';\n\nexport const EnhancedDashboard = () => {\n  const { goals, habits, habitLogs } = useAppContext();\n  const { selectedYear, currentYear, isPastYear, archiveYear, yearData } = useYear();\n  const [showArchiveDialog, setShowArchiveDialog] = useState(false);\n  const [showSuggestions, setShowSuggestions] = useState(false);\n\n  // Get current and previous year data\n  const currentYearData = { goals, habits, habitLogs };\n  const previousYearData = yearData[selectedYear - 1];\n\n  // Generate suggestions for planning next year\n  const suggestions = generateNextYearSuggestions(currentYearData);\n\n  const calculateOverallProgress = () => {\n    if (goals.length === 0) return 0;\n    const totalProgress = goals.reduce((sum, goal) => {\n      const progress = calculateGoalProgress(goal);\n      return sum + progress.yearlyProgress;\n    }, 0);\n    return totalProgress / goals.length;\n  };\n\n  const calculateOverallHabitConsistency = () => {\n    if (habits.length === 0) return 0;\n    const consistencies = habits.map(habit => {\n      const habitConsistency = calculateHabitConsistency(habit, habitLogs);\n      return habitConsistency.consistency;\n    });\n    return consistencies.reduce((sum, consistency) => sum + consistency, 0) / consistencies.length;\n  };\n\n  const handleArchiveYear = () => {\n    archiveYear(selectedYear);\n    setShowArchiveDialog(false);\n  };\n\n  const handleApplySuggestion = (suggestion) => {\n    // Implementation would depend on your goal creation flow\n    console.log('Applying suggestion:', suggestion);\n  };\n\n  const overallProgress = calculateOverallProgress();\n  const habitConsistency = calculateOverallHabitConsistency();\n  const completedGoals = goals.filter(g => g.isCompleted()).length;\n\n  return (\n    <Container maxWidth=\"xl\" sx={{ py: 5 }}>\n      {/* Header with Actions */}\n      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>\n        <Box>\n          <Typography variant=\"h3\" sx={{ fontWeight: 700, mb: 1.5 }}>\n            Dashboard {selectedYear}\n          </Typography>\n          <Typography variant=\"body1\" color=\"text.secondary\">\n            Your progress overview\n          </Typography>\n        </Box>\n        \n        <Stack direction=\"row\" spacing={2}>\n          {isPastYear && selectedYear < currentYear && (\n            <Button\n              variant=\"outlined\"\n              startIcon={<Archive />}\n              onClick={() => setShowArchiveDialog(true)}\n            >\n              Archive Year\n            </Button>\n          )}\n          {selectedYear === currentYear && (\n            <Button\n              variant=\"outlined\"\n              startIcon={<Lightbulb />}\n              onClick={() => setShowSuggestions(true)}\n            >\n              Next Year Ideas\n            </Button>\n          )}\n        </Stack>\n      </Box>\n\n      {/* Year-over-Year Comparison */}\n      <YearComparisonSection \n        currentYearData={currentYearData}\n        previousYearData={previousYearData}\n      />\n\n      {/* Summary Cards */}\n      <Grid container spacing={3} sx={{ mb: 4 }}>\n        <Grid item xs={12} md={4}>\n          <SummaryCard\n            title=\"Yearly Progress\"\n            value={`${Math.round(overallProgress)}%`}\n            subtitle=\"Average across all goals\"\n            color={overallProgress >= 70 ? 'success' : overallProgress >= 50 ? 'primary' : 'warning'}\n          />\n        </Grid>\n        <Grid item xs={12} md={4}>\n          <SummaryCard\n            title=\"Goals Completed\"\n            value={`${completedGoals}/${goals.length}`}\n            subtitle=\"This year\"\n            color={completedGoals >= goals.length * 0.8 ? 'success' : 'primary'}\n          />\n        </Grid>\n        <Grid item xs={12} md={4}>\n          <SummaryCard\n            title=\"Habit Consistency\"\n            value={`${Math.round(habitConsistency)}%`}\n            subtitle=\"Average consistency\"\n            color={habitConsistency >= 80 ? 'success' : habitConsistency >= 60 ? 'primary' : 'warning'}\n          />\n        </Grid>\n      </Grid>\n\n      <Divider sx={{ mb: 4 }} />\n\n      {/* Detailed Progress */}\n      <Grid container spacing={4}>\n        <Grid item xs={12}>\n          <GoalProgressSection goals={goals} />\n        </Grid>\n        <Grid item xs={12}>\n          <HabitStreakSection habits={habits} habitLogs={habitLogs} />\n        </Grid>\n      </Grid>\n\n      {/* Archive Year Dialog */}\n      <ArchiveYearDialog\n        open={showArchiveDialog}\n        onClose={() => setShowArchiveDialog(false)}\n        onConfirm={handleArchiveYear}\n        year={selectedYear}\n      />\n\n      {/* Next Year Suggestions Dialog */}\n      <Dialog \n        open={showSuggestions} \n        onClose={() => setShowSuggestions(false)}\n        maxWidth=\"md\"\n        fullWidth\n      >\n        <DialogTitle>Ideas for Next Year</DialogTitle>\n        <DialogContent>\n          <Stack spacing={2}>\n            {suggestions.map(suggestion => (\n              <NextYearSuggestionCard\n                key={suggestion.id}\n                suggestion={suggestion}\n                onApply={handleApplySuggestion}\n              />\n            ))}\n          </Stack>\n        </DialogContent>\n      </Dialog>\n    </Container>\n  );\n};
+import { calculateGoalProgress, calculateHabitConsistency } from '../../utils/calculations';
+import { generateNextYearSuggestions } from '../../utils/suggestionUtils';
+import { useAppContext } from '../../context/AppContext';
+import { useYear } from '../../context/YearContext';
+
+export const EnhancedDashboard = () => {
+  const { goals, habits, habitLogs } = useAppContext();
+  const { selectedYear, currentYear, isPastYear, archiveYear, yearData } = useYear();
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const currentYearData = { goals, habits, habitLogs };
+  const previousYearData = yearData[selectedYear - 1];
+  const suggestions = generateNextYearSuggestions(currentYearData);
+
+  const calculateOverallProgress = () => {
+    if (goals.length === 0) return 0;
+    const totalProgress = goals.reduce((sum, goal) => {
+      const progress = calculateGoalProgress(goal);
+      return sum + progress.yearlyProgress;
+    }, 0);
+    return totalProgress / goals.length;
+  };
+
+  const calculateOverallHabitConsistency = () => {
+    if (habits.length === 0) return 0;
+    const consistencies = habits.map(habit => {
+      const goal = goals.find(g => habit.goalIds.includes(g.id));
+      const habitConsistency = calculateHabitConsistency(habit, habitLogs, goal);
+      return habitConsistency.consistency;
+    });
+    return consistencies.reduce((sum, consistency) => sum + consistency, 0) / consistencies.length;
+  };
+
+  const handleArchiveYear = () => {
+    archiveYear(selectedYear);
+    setShowArchiveDialog(false);
+  };
+
+  const handleApplySuggestion = (suggestion) => {
+    console.log('Applying suggestion:', suggestion);
+  };
+
+  const overallProgress = calculateOverallProgress();
+  const habitConsistency = calculateOverallHabitConsistency();
+  const completedGoals = goals.filter(g => g.isCompleted()).length;
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>
+            Dashboard {selectedYear}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Your progress overview
+          </Typography>
+        </Box>
+        
+        <Stack direction="row" spacing={2}>
+          {isPastYear && selectedYear < currentYear && (
+            <Button
+              variant="outlined"
+              startIcon={<Archive />}
+              onClick={() => setShowArchiveDialog(true)}
+            >
+              Archive Year
+            </Button>
+          )}
+          {selectedYear === currentYear && (
+            <Button
+              variant="outlined"
+              startIcon={<Lightbulb />}
+              onClick={() => setShowSuggestions(true)}
+            >
+              Next Year Ideas
+            </Button>
+          )}
+        </Stack>
+      </Box>
+
+      <YearComparisonSection 
+        currentYearData={currentYearData}
+        previousYearData={previousYearData}
+      />
+
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={4}>
+          <SummaryCard
+            title="Yearly Progress"
+            value={`${Math.round(overallProgress)}%`}
+            subtitle="Average across all goals"
+            color={overallProgress >= 70 ? 'success' : overallProgress >= 50 ? 'primary' : 'warning'}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <SummaryCard
+            title="Goals Completed"
+            value={`${completedGoals}/${goals.length}`}
+            subtitle="This year"
+            color={completedGoals >= goals.length * 0.8 ? 'success' : 'primary'}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <SummaryCard
+            title="Habit Consistency"
+            value={`${Math.round(habitConsistency)}%`}
+            subtitle="Average consistency"
+            color={habitConsistency >= 80 ? 'success' : habitConsistency >= 60 ? 'primary' : 'warning'}
+          />
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ mb: 4 }} />
+
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <GoalProgressSection goals={goals} />
+        </Grid>
+        <Grid item xs={12}>
+          <HabitStreakSection habits={habits} habitLogs={habitLogs} />
+        </Grid>
+      </Grid>
+
+      <ArchiveYearDialog
+        open={showArchiveDialog}
+        onClose={() => setShowArchiveDialog(false)}
+        onConfirm={handleArchiveYear}
+        year={selectedYear}
+      />
+
+      <Dialog 
+        open={showSuggestions} 
+        onClose={() => setShowSuggestions(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Ideas for Next Year</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            {suggestions.map(suggestion => (
+              <NextYearSuggestionCard
+                key={suggestion.id}
+                suggestion={suggestion}
+                onApply={handleApplySuggestion}
+              />
+            ))}
+          </Stack>
+        </DialogContent>
+      </Dialog>
+    </Container>
+  );
+};

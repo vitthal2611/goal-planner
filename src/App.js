@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThemeProvider, CssBaseline, Box, Container, Fade, Paper, ToggleButtonGroup, ToggleButton, IconButton, Typography, Stack, Button } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, Container, Fade, Paper, ToggleButtonGroup, ToggleButton, IconButton, Typography, Stack, Button, BottomNavigation, BottomNavigationAction, useMediaQuery } from '@mui/material';
 import { Brightness4, Brightness7, TodayOutlined, DashboardOutlined, FlagOutlined, RepeatOutlined, AssessmentOutlined, LogoutOutlined } from '@mui/icons-material';
 import { DashboardScreen } from './components/dashboard/DashboardScreen';
 import { GoalManagement } from './components/goals/GoalManagement';
@@ -12,7 +12,7 @@ import { AppProvider } from './context/AppContext';
 import { YearProvider, useYear } from './context/YearContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/auth/Login';
-import { lightTheme, darkTheme } from './theme/theme';
+import { lightTheme, darkTheme } from './theme/mobileTheme';
 
 const AppContent = () => {
   const { user, loading, logout } = useAuth();
@@ -42,6 +42,8 @@ const AppContent = () => {
     );
   }
 
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const navItems = [
     { label: 'Today', icon: <TodayOutlined /> },
     { label: 'Dashboard', icon: <DashboardOutlined /> },
@@ -53,114 +55,145 @@ const AppContent = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            borderBottom: 1, 
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            position: 'sticky',
-            top: 0,
-            zIndex: 1100
-          }}
-        >
-          <Container maxWidth="xl">
-            <Stack 
-              direction="row" 
-              alignItems="center" 
-              justifyContent="space-between"
-              sx={{ py: 3 }}
-            >
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  fontWeight: 700,
-                  background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
-                }}
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column', pb: { xs: 7, md: 0 } }}>
+        {!isMobile && (
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              position: 'sticky',
+              top: 0,
+              zIndex: 1100
+            }}
+          >
+            <Container maxWidth="xl">
+              <Stack 
+                direction="row" 
+                alignItems="center" 
+                justifyContent="space-between"
+                sx={{ py: 3 }}
               >
-                Goal Planner
-              </Typography>
-              
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                  {user?.email}
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.02em'
+                  }}
+                >
+                  Goal Planner
                 </Typography>
-                <IconButton 
-                  onClick={() => setDarkMode(!darkMode)}
-                  size="small"
-                >
-                  {darkMode ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
-                </IconButton>
-                <Button 
-                  onClick={logout} 
-                  variant="outlined" 
-                  size="small"
-                  startIcon={<LogoutOutlined />}
-                  sx={{ display: { xs: 'none', sm: 'flex' } }}
-                >
-                  Logout
-                </Button>
-                <IconButton onClick={logout} size="small" sx={{ display: { xs: 'flex', sm: 'none' } }}>
-                  <LogoutOutlined fontSize="small" />
-                </IconButton>
+                
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {user?.email}
+                  </Typography>
+                  <IconButton onClick={() => setDarkMode(!darkMode)}>
+                    {darkMode ? <Brightness7 /> : <Brightness4 />}
+                  </IconButton>
+                  <Button onClick={logout} variant="outlined" startIcon={<LogoutOutlined />}>
+                    Logout
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
 
-            <Box sx={{ pb: 2.5 }}>
-              <ToggleButtonGroup
-                value={currentTab}
-                exclusive
-                onChange={(e, v) => v !== null && setCurrentTab(v)}
-                sx={{
-                  gap: { xs: 0.5, sm: 1 },
-                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                  '& .MuiToggleButton-root': {
-                    border: 'none',
-                    borderRadius: 2,
-                    px: { xs: 1.5, sm: 2.5 },
-                    py: 1,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    fontSize: { xs: '0.8125rem', sm: '0.9375rem' },
-                    color: 'text.secondary',
-                    minHeight: 44,
-                    '&:hover': {
-                      bgcolor: 'grey.100'
-                    },
-                    '&.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': {
-                        bgcolor: 'primary.dark'
+              <Box sx={{ pb: 2.5 }}>
+                <ToggleButtonGroup
+                  value={currentTab}
+                  exclusive
+                  onChange={(e, v) => v !== null && setCurrentTab(v)}
+                  sx={{
+                    gap: 1,
+                    '& .MuiToggleButton-root': {
+                      border: 'none',
+                      borderRadius: 2,
+                      px: 2.5,
+                      py: 1,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      color: 'text.secondary',
+                      minHeight: 44,
+                      '&:hover': { bgcolor: 'grey.100' },
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' }
                       }
                     }
-                  }
-                }}
+                  }}
+                >
+                  {navItems.map((item, index) => (
+                    <ToggleButton key={index} value={index}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        {item.icon}
+                        {item.label}
+                      </Stack>
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+            </Container>
+          </Paper>
+        )}
+
+        {isMobile && (
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              position: 'sticky',
+              top: 0,
+              zIndex: 1100
+            }}
+          >
+            <Container maxWidth="xl">
+              <Stack 
+                direction="row" 
+                alignItems="center" 
+                justifyContent="space-between"
+                sx={{ py: 2 }}
               >
-                {navItems.map((item, index) => (
-                  <ToggleButton key={index} value={index}>
-                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
-                      <Box sx={{ fontSize: { xs: 20, sm: 24 } }}>{item.icon}</Box>
-                      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{item.label}</Box>
-                    </Stack>
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Box>
-          </Container>
-        </Paper>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  {navItems[currentTab].label}
+                </Typography>
+                
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <IconButton onClick={() => setDarkMode(!darkMode)} size="small">
+                    {darkMode ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+                  </IconButton>
+                  <IconButton onClick={logout} size="small">
+                    <LogoutOutlined fontSize="small" />
+                  </IconButton>
+                </Stack>
+              </Stack>
+            </Container>
+          </Paper>
+        )}
         
-        <Container maxWidth="xl" sx={{ py: 5, flex: 1 }}>
-          <YearSelector 
-            selectedYear={selectedYear} 
-            onYearChange={setSelectedYear}
-          />
-          <Fade in={true} timeout={400} key={currentTab}>
+        <Container maxWidth="xl" sx={{ py: { xs: 2, md: 5 }, flex: 1 }}>
+          {!isMobile && (
+            <YearSelector 
+              selectedYear={selectedYear} 
+              onYearChange={setSelectedYear}
+            />
+          )}
+          <Fade in={true} timeout={300} key={currentTab}>
             <Box>
               {currentTab === 0 && <Today />}
               {currentTab === 1 && <DashboardScreen />}
@@ -170,6 +203,51 @@ const AppContent = () => {
             </Box>
           </Fade>
         </Container>
+
+        {isMobile && (
+          <Paper 
+            elevation={3}
+            sx={{ 
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1100,
+              borderTop: 1,
+              borderColor: 'divider'
+            }}
+          >
+            <BottomNavigation
+              value={currentTab}
+              onChange={(e, v) => setCurrentTab(v)}
+              showLabels
+              sx={{
+                height: 64,
+                '& .MuiBottomNavigationAction-root': {
+                  minWidth: 'auto',
+                  padding: '6px 0',
+                  '&.Mui-selected': {
+                    color: 'primary.main'
+                  }
+                },
+                '& .MuiBottomNavigationAction-label': {
+                  fontSize: '0.75rem',
+                  '&.Mui-selected': {
+                    fontSize: '0.75rem'
+                  }
+                }
+              }}
+            >
+              {navItems.map((item, index) => (
+                <BottomNavigationAction
+                  key={index}
+                  label={item.label}
+                  icon={item.icon}
+                />
+              ))}
+            </BottomNavigation>
+          </Paper>
+        )}
       </Box>
     </ThemeProvider>
   );

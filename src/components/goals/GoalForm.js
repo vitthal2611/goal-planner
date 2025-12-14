@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, Collapse } from '@mui/material';
+import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, Collapse, Typography, Alert } from '@mui/material';
 import { generateId } from '../../utils/calculations';
 import { format, addMonths } from 'date-fns';
 import { useYear } from '../../context/YearContext';
+import { validateGoalDates, getDateValidationMessage } from '../../utils/goalTimelineValidation';
 
 export const GoalForm = ({ onAddGoal }) => {
   const { selectedYear } = useYear();
+  const today = new Date();
   const [formData, setFormData] = useState({
     title: '',
     unit: '',
-    year: selectedYear
+    year: selectedYear,
+    startDate: format(today, 'yyyy-MM-dd'),
+    endDate: format(new Date(selectedYear, 11, 31), 'yyyy-MM-dd')
   });
   const [monthlyTargets, setMonthlyTargets] = useState({});
   const [showMonthly, setShowMonthly] = useState(false);
+  const [showDates, setShowDates] = useState(false);
+  const [dateWarning, setDateWarning] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const newData = { ...formData, [e.target.name]: e.target.value };
+    setFormData(newData);
+    
+    // Validate dates if both are set
+    if (e.target.name === 'startDate' || e.target.name === 'endDate') {
+      if (newData.startDate && newData.endDate) {
+        const validation = validateGoalDates(newData.startDate, newData.endDate);
+        setDateWarning(getDateValidationMessage(validation.warnings));
+      }
+    }
   };
 
   const handleMonthlyTargetChange = (monthKey, value) => {
@@ -42,6 +57,10 @@ export const GoalForm = ({ onAddGoal }) => {
 
     const yearlyTarget = Object.values(monthlyTargets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
+    const today = new Date();
+    const startDate = formData.startDate || today;
+    const endDate = formData.endDate || new Date(formData.year, 11, 31, 23, 59, 59);
+
     const newGoal = {
       id: generateId(),
       title: formData.title,
@@ -49,16 +68,25 @@ export const GoalForm = ({ onAddGoal }) => {
       actualProgress: 0,
       unit: formData.unit,
       year: formData.year,
-      startDate: new Date(formData.year, 0, 1),
-      endDate: new Date(formData.year, 11, 31),
+      startDate,
+      endDate,
+      status: 'active',
       createdAt: new Date(),
       monthlyTargets
     };
 
     onAddGoal(newGoal);
-    setFormData({ title: '', unit: '', year: selectedYear });
+    const resetDate = new Date();
+    setFormData({ 
+      title: '', 
+      unit: '', 
+      year: selectedYear,
+      startDate: format(resetDate, 'yyyy-MM-dd'),
+      endDate: format(new Date(selectedYear, 11, 31), 'yyyy-MM-dd')
+    });
     setMonthlyTargets({});
     setShowMonthly(false);
+    setShowDates(false);
   };
 
   return (
@@ -137,8 +165,55 @@ export const GoalForm = ({ onAddGoal }) => {
               <Button
                 fullWidth
                 variant="outlined"
+                onClick={() => setShowDates(!showDates)}
+                sx={{ mb: 1 }}
+              >
+                {showDates ? 'Hide' : 'Set'} Custom Dates (Optional)
+              </Button>
+              <Collapse in={showDates}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2, mb: 2 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                    By default, goals start today and end on Dec 31
+                  </Typography>
+                  {dateWarning && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      {dateWarning}
+                    </Alert>
+                  )}
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Start Date"
+                        type="date"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ bgcolor: 'white' }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="End Date"
+                        type="date"
+                        name="endDate"
+                        value={formData.endDate}
+                        onChange={handleChange}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ bgcolor: 'white' }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Collapse>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                fullWidth
+                variant="outlined"
                 onClick={() => setShowMonthly(!showMonthly)}
-                sx={{ mb: 2 }}
               >
                 {showMonthly ? 'Hide' : 'Set'} Monthly Targets
               </Button>

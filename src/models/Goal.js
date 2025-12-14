@@ -8,6 +8,7 @@ export class Goal {
     startDate,
     endDate,
     year,
+    status = 'active',
     createdAt = new Date(),
     monthlyData = {},
     monthlyTargets = {}
@@ -17,9 +18,10 @@ export class Goal {
     this.yearlyTarget = yearlyTarget;
     this.actualProgress = actualProgress;
     this.unit = unit;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.year = year || new Date(startDate).getFullYear();
+    this.startDate = startDate || new Date();
+    this.endDate = endDate || new Date(year || new Date().getFullYear(), 11, 31);
+    this.year = year || new Date(this.startDate).getFullYear();
+    this.status = status;
     this.createdAt = createdAt;
     this.monthlyData = monthlyData;
     this.monthlyTargets = monthlyTargets;

@@ -1,11 +1,13 @@
 import React from 'react';
-import { Box, Grid, Typography, Card, CardContent, CircularProgress, LinearProgress, Chip } from '@mui/material';
+import { Box, Grid, Typography, Card, CardContent, CircularProgress, LinearProgress, Chip, useMediaQuery, useTheme } from '@mui/material';
 import { LocalFireDepartment, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { calculateGoalProgress, breakdownGoalTargets } from '../../utils/goalUtils';
 import { calculateHabitConsistency } from '../../utils/habitUtils';
 import { useAppContext } from '../../context/AppContext';
 
 export const DashboardScreen = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { goals, habits, logs } = useAppContext();
   // Overall metrics
   const avgYearlyProgress = goals.length > 0
@@ -22,7 +24,10 @@ export const DashboardScreen = () => {
   }, { actual: 0, target: 0 });
 
   const avgHabitConsistency = habits.length > 0
-    ? habits.reduce((sum, h) => sum + calculateHabitConsistency(h, logs).consistency, 0) / habits.length
+    ? habits.reduce((sum, h) => {
+        const goal = goals.find(g => h.goalIds.includes(g.id));
+        return sum + calculateHabitConsistency(h, logs, goal).consistency;
+      }, 0) / habits.length
     : 0;
 
   const getColor = (value, thresholds = [90, 70, 50]) => {
@@ -33,13 +38,15 @@ export const DashboardScreen = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>Dashboard</Typography>
-        <Typography variant="body1" color="text.secondary">Track your progress across all goals and habits</Typography>
-      </Box>
+    <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      {!isMobile && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>Dashboard</Typography>
+          <Typography variant="body1" color="text.secondary">Track your progress across all goals and habits</Typography>
+        </Box>
+      )}
 
-      <Grid container spacing={3} sx={{ mb: 5 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, sm: 5 } }}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
@@ -208,7 +215,8 @@ export const DashboardScreen = () => {
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Habit Streaks</Typography>
               
               {habits.map(habit => {
-                const consistency = calculateHabitConsistency(habit, logs);
+                const goal = goals.find(g => habit.goalIds.includes(g.id));
+                const consistency = calculateHabitConsistency(habit, logs, goal);
                 
                 return (
                   <Card key={habit.id} variant="outlined" sx={{ mb: 2, bgcolor: 'grey.50', borderRadius: 2 }}>

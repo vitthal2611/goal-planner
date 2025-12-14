@@ -6,7 +6,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useYear } from '../../context/YearContext';
 
 export const HabitManagement = () => {
-  const { goals, habits, logs, addHabit, logHabit, deleteHabit } = useAppContext();
+  const { goals, habits, logs, addHabit, updateHabit, logHabit, deleteHabit } = useAppContext();
   const { isReadOnly } = useYear();
   return (
     <Container maxWidth="xl" sx={{ py: 5 }}>
@@ -33,6 +33,7 @@ export const HabitManagement = () => {
         goals={goals}
         habitLogs={logs}
         onLogHabit={logHabit}
+        onUpdateHabit={updateHabit}
         onDeleteHabit={deleteHabit}
       />
     </Container>

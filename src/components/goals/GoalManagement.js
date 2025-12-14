@@ -46,7 +46,8 @@ export const GoalManagement = () => {
 
       {/* Goal List */}
       <GoalList 
-        goals={goals} 
+        goals={goals}
+        habits={habits}
         onUpdateGoal={updateGoal}
         onDeleteGoal={deleteGoal}
       />

@@ -1,9 +1,12 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, Typography, Box, Chip } from '@mui/material';
 import { LocalFireDepartment, CheckCircle } from '@mui/icons-material';
-import { calculateHabitConsistency, formatDate } from '../../utils/calculations';
+import { formatDate } from '../../utils/calculations';
+import { getHabitCardMetrics } from '../../utils/goalAwareHabitUtils';
+import { useAppContext } from '../../context/AppContext';
 
 export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
+  const { goals } = useAppContext();
   const getTodaysLog = (habitId) => {
     const today = formatDate(new Date());
     return habitLogs.find(log => log.habitId === habitId && log.date === today);
@@ -41,7 +44,7 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
       />
       <CardContent sx={{ pt: 0 }}>
         {habits.map(habit => {
-          const consistency = calculateHabitConsistency(habit, habitLogs);
+          const metrics = getHabitCardMetrics(habit, habitLogs, goals);
           const todaysLog = getTodaysLog(habit.id);
           
           return (
@@ -76,15 +79,15 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
                         sx={{ 
                           fontSize: 18, 
                           mr: 0.5, 
-                          color: consistency.currentStreak > 0 ? 'warning.main' : 'grey.400' 
+                          color: metrics.currentStreak > 0 ? 'warning.main' : 'grey.400' 
                         }} 
                       />
                       <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>
-                        {consistency.currentStreak}
+                        {metrics.currentStreak}
                       </Typography>
                     </Box>
                     <Typography variant="caption" color="text.secondary">
-                      {Math.round(consistency.consistency)}%
+                      {metrics.thirtyDayConsistency}%
                     </Typography>
                   </Box>
                 </Box>
@@ -123,7 +126,7 @@ export const HabitStreakSection = ({ habits, habitLogs, onLogHabit }) => {
                   </Box>
                   
                   <Typography variant="caption" color="text.secondary">
-                    Best: {consistency.longestStreak}
+                    Best: {metrics.bestStreak}
                   </Typography>
                 </Box>
               </CardContent>

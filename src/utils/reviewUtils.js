@@ -18,7 +18,8 @@ export const generateReview = (type, goals, habits, logs, date = new Date()) => 
   
   const habitStreaks = {};
   habits.forEach(habit => {
-    const consistency = calculateHabitConsistency(habit, logs, 30);
+    const goal = goals.find(g => habit.goalIds.includes(g.id));
+    const consistency = calculateHabitConsistency(habit, logs, goal);
     habitStreaks[habit.id] = {
       currentStreak: consistency.currentStreak,
       longestStreak: consistency.longestStreak,

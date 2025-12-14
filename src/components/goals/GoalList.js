@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Typography, Box, Grid, TextField, Button, IconButton, LinearProgress, Chip, Collapse } from '@mui/material';
-import { Edit, Check, Close, Delete, TrendingUp, TrendingDown, ExpandMore } from '@mui/icons-material';
+import { Edit, Check, Close, Delete, TrendingUp, TrendingDown, ExpandMore, CalendarToday, CheckCircle, Schedule } from '@mui/icons-material';
 import { calculateGoalProgress, breakdownGoalTargets } from '../../utils/goalUtils';
+import { getGoalTimelineStatus } from '../../utils/goalTimelineRules';
+import { analyzeGoalEditImpact } from '../../utils/updateUtils';
+import { ConfirmDialog } from '../common/ConfirmDialog.js';
 import { format, startOfYear, addMonths } from 'date-fns';
 
-export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
+export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => {
   const [expandedMonthly, setExpandedMonthly] = useState({});
   const [monthlyValues, setMonthlyValues] = useState({});
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [editDraft, setEditDraft] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, data: null });
 
   const toggleMonthly = (goalId) => {
     setExpandedMonthly(prev => ({ ...prev, [goalId]: !prev[goalId] }));
@@ -22,8 +28,49 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
   const saveMonthlyData = (goal) => {
     const updatedMonthlyData = { ...goal.monthlyData, ...monthlyValues[goal.id] };
     const totalProgress = Object.values(updatedMonthlyData).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-    onUpdateGoal(goal.id, totalProgress, updatedMonthlyData);
+    onUpdateGoal(goal.id, { actualProgress: totalProgress, monthlyData: updatedMonthlyData });
     setMonthlyValues(prev => ({ ...prev, [goal.id]: {} }));
+  };
+  
+  const startEdit = (goal) => {
+    setEditingGoal(goal.id);
+    setEditDraft({
+      title: goal.title,
+      yearlyTarget: goal.yearlyTarget,
+      startDate: format(new Date(goal.startDate), 'yyyy-MM-dd'),
+      endDate: format(new Date(goal.endDate), 'yyyy-MM-dd')
+    });
+  };
+  
+  const cancelEdit = () => {
+    setEditingGoal(null);
+    setEditDraft(null);
+  };
+  
+  const saveEdit = (goal) => {
+    const updates = {
+      title: editDraft.title,
+      yearlyTarget: parseFloat(editDraft.yearlyTarget),
+      startDate: new Date(editDraft.startDate).toISOString(),
+      endDate: new Date(editDraft.endDate).toISOString()
+    };
+    
+    const impact = analyzeGoalEditImpact(goal, updates, habits);
+    
+    if (impact.warnings.length > 0) {
+      setConfirmDialog({
+        open: true,
+        data: { goal, updates, impact }
+      });
+    } else {
+      applyEdit(goal.id, updates);
+    }
+  };
+  
+  const applyEdit = (goalId, updates) => {
+    onUpdateGoal(goalId, updates);
+    cancelEdit();
+    setConfirmDialog({ open: false, data: null });
   };
 
   const getMonths = (goal) => {
@@ -68,6 +115,15 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
 
   return (
     <Box>
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, data: null })}
+        onConfirm={() => applyEdit(confirmDialog.data.goal.id, confirmDialog.data.updates)}
+        title="Confirm Goal Changes"
+        message="This change will affect your progress calculations."
+        warnings={confirmDialog.data?.impact?.warnings || []}
+      />
+      
       <Grid container spacing={4}>
         {goals.map(goal => {
           const progress = calculateGoalProgress(goal);
@@ -96,16 +152,107 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal }) => {
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                        {goal.title}
-                      </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                        {goal.yearlyTarget} {goal.unit} • Year {new Date(goal.startDate).getFullYear()}
-                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {editingGoal === goal.id ? (
+                          <TextField
+                            value={editDraft.title}
+                            onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
+                            size="small"
+                            sx={{ bgcolor: 'white', borderRadius: 1 }}
+                          />
+                        ) : (
+                          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                            {goal.title}
+                          </Typography>
+                        )}
+                        {(() => {
+                          const status = getGoalTimelineStatus(goal);
+                          const statusConfig = {
+                            active: { label: 'Active', icon: <TrendingUp />, color: 'rgba(76, 175, 80, 0.9)' },
+                            completed: { label: 'Completed', icon: <CheckCircle />, color: 'rgba(33, 150, 243, 0.9)' },
+                            upcoming: { label: 'Upcoming', icon: <Schedule />, color: 'rgba(255, 152, 0, 0.9)' },
+                            ended: { label: 'Ended', icon: <CalendarToday />, color: 'rgba(158, 158, 158, 0.9)' }
+                          };
+                          const config = statusConfig[status];
+                          return (
+                            <Chip 
+                              icon={config.icon}
+                              label={config.label}
+                              size="small"
+                              sx={{ bgcolor: config.color, color: 'white', fontWeight: 600 }}
+                            />
+                          );
+                        })()}
+                      </Box>
+                      {editingGoal === goal.id ? (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 0.5 }}>
+                          <TextField
+                            type="number"
+                            value={editDraft.yearlyTarget}
+                            onChange={(e) => setEditDraft({ ...editDraft, yearlyTarget: e.target.value })}
+                            size="small"
+                            sx={{ width: 100, bgcolor: 'white', borderRadius: 1 }}
+                          />
+                          <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                            {goal.unit}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Typography variant="body1" sx={{ opacity: 0.9, mb: 0.5 }}>
+                          {goal.yearlyTarget} {goal.unit} • Year {goal.startDate ? new Date(goal.startDate).getFullYear() : 'N/A'}
+                        </Typography>
+                      )}
+                      {editingGoal === goal.id ? (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          <TextField
+                            type="date"
+                            label="Start"
+                            value={editDraft.startDate}
+                            onChange={(e) => setEditDraft({ ...editDraft, startDate: e.target.value })}
+                            size="small"
+                            sx={{ bgcolor: 'white', borderRadius: 1 }}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                          <TextField
+                            type="date"
+                            label="End"
+                            value={editDraft.endDate}
+                            onChange={(e) => setEditDraft({ ...editDraft, endDate: e.target.value })}
+                            size="small"
+                            sx={{ bgcolor: 'white', borderRadius: 1 }}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Box>
+                      ) : (
+                        goal.startDate && goal.endDate && (
+                          <Typography variant="body2" sx={{ opacity: 0.8, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CalendarToday sx={{ fontSize: 16 }} />
+                            {format(new Date(goal.startDate), 'MMM d')} – {format(new Date(goal.endDate), 'MMM d, yyyy')}
+                          </Typography>
+                        )
+                      )}
                     </Box>
-                    <IconButton onClick={() => onDeleteGoal(goal.id)} sx={{ color: 'white' }}>
-                      <Delete />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {editingGoal === goal.id ? (
+                        <>
+                          <IconButton onClick={() => saveEdit(goal)} sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.2)' }}>
+                            <Check />
+                          </IconButton>
+                          <IconButton onClick={cancelEdit} sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.2)' }}>
+                            <Close />
+                          </IconButton>
+                        </>
+                      ) : (
+                        <>
+                          <IconButton onClick={() => startEdit(goal)} sx={{ color: 'white' }}>
+                            <Edit />
+                          </IconButton>
+                          <IconButton onClick={() => onDeleteGoal(goal.id)} sx={{ color: 'white' }}>
+                            <Delete />
+                          </IconButton>
+                        </>
+                      )}
+                    </Box>
                   </Box>
                   
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>

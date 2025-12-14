@@ -1,8 +1,11 @@
 import React from 'react';
-import { Box, Typography, Chip, Grid, Grow } from '@mui/material';
+import { Box, Typography, Chip, Grid, Grow, useMediaQuery, useTheme } from '@mui/material';
 import { HabitCard } from './HabitCard';
 
 export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, animatingHabit, formatDate }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   if (habits.length === 0) return null;
 
   const today = formatDate(new Date());
@@ -22,49 +25,43 @@ export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, a
   const allCompleted = completedCount === habits.length;
 
   return (
-    <Box sx={{ mb: 5 }}>
-      {/* Section header with visual anchor */}
+    <Box sx={{ mb: { xs: 3, sm: 5 }, px: { xs: 2, sm: 0 } }}>
       <Box 
         sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          mb: 3,
-          pb: 2,
+          mb: { xs: 2, sm: 3 },
+          pb: { xs: 1.5, sm: 2 },
           borderBottom: '2px solid',
-          borderColor: 'grey.200',
-          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-          gap: { xs: 1, sm: 0 }
+          borderColor: 'grey.200'
         }}
       >
         <Box 
           sx={{ 
             color, 
-            mr: 1.5,
+            mr: { xs: 1, sm: 1.5 },
             display: 'flex',
             alignItems: 'center',
-            fontSize: { xs: 24, sm: 28 }
+            fontSize: { xs: 22, sm: 28 }
           }}
         >
           {icon}
         </Box>
-        <Typography variant="h3" sx={{ fontWeight: 600, flex: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, flex: 1 }}>
           {label}
         </Typography>
         <Chip 
           label={`${completedCount}/${habits.length}`}
-          size="medium"
+          size="small"
           color={allCompleted ? 'success' : 'default'}
           sx={{ 
             fontWeight: 600,
-            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-            height: { xs: 28, sm: 32 },
-            minWidth: 60
+            minWidth: 50
           }}
         />
       </Box>
 
-      {/* Habit cards with spacing */}
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
         {habits.map(habit => {
           const log = getTodaysLog(habit.id);
           return (

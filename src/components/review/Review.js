@@ -33,10 +33,13 @@ const generateInsights = (goals, habits, logs) => {
   }
 
   // Habit insights
-  const habitStats = habits.map(h => ({
-    habit: h,
-    consistency: calculateHabitConsistency(h, logs)
-  }));
+  const habitStats = habits.map(h => {
+    const goal = goals.find(g => h.goalIds.includes(g.id));
+    return {
+      habit: h,
+      consistency: calculateHabitConsistency(h, logs, goal)
+    };
+  });
 
   const excellentHabits = habitStats.filter(h => h.consistency.consistency >= 90);
   const strugglingHabits = habitStats.filter(h => h.consistency.consistency < 50);
@@ -99,7 +102,8 @@ export const Review = () => {
   });
 
   const habitStats = habits.map(habit => {
-    const consistency = calculateHabitConsistency(habit, logs);
+    const goal = goals.find(g => habit.goalIds.includes(g.id));
+    const consistency = calculateHabitConsistency(habit, logs, goal);
     return { habit, consistency };
   });
 

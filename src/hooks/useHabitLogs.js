@@ -4,6 +4,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { generateId, formatDate } from '../utils/calculations';
 import { getInitialData } from '../data/sampleData';
+import { isHabitScheduledForDate } from '../utils/frequencyRules';
 
 export const useHabitLogs = () => {
   const { user } = useAuth();
@@ -26,9 +27,13 @@ export const useHabitLogs = () => {
     return unsubscribe;
   }, [user]);
   
-  const logHabit = useCallback((habitId, status) => {
+  const logHabit = useCallback((habitId, status, habit) => {
     if (!user) return;
     const today = formatDate(new Date());
+    const todayDate = new Date();
+    
+    // Only create log if habit is scheduled for today
+    if (habit && !isHabitScheduledForDate(habit, todayDate)) return;
     
     setHabitLogs(prev => {
       const existingLog = prev.find(log => log.habitId === habitId && log.date === today);
@@ -56,5 +61,16 @@ export const useHabitLogs = () => {
     });
   }, [user]);
   
-  return { logs: habitLogs, logHabit };
+  const updateLog = useCallback((logId, updates) => {
+    if (!user) return;
+    setHabitLogs(prev => {
+      const updated = prev.map(log => 
+        log.id === logId ? { ...log, ...updates, loggedAt: new Date().toISOString() } : log
+      );
+      set(ref(db, `users/${user.uid}/habitLogs`), updated);
+      return updated;
+    });
+  }, [user]);
+  
+  return { logs: habitLogs, logHabit, updateLog };
 };

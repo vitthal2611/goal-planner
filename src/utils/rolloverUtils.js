@@ -9,7 +9,7 @@ export const categorizeGoalsForRollover = (goals) => {
 
 export const createRolledOverGoal = (originalGoal, newYear) => {
   const startDate = new Date(newYear, 0, 1);
-  const endDate = new Date(newYear, 11, 31);
+  const endDate = new Date(newYear, 11, 31, 23, 59, 59);
   
   return new Goal({
     id: `${originalGoal.id}_rollover_${newYear}`,
@@ -20,9 +20,12 @@ export const createRolledOverGoal = (originalGoal, newYear) => {
     startDate,
     endDate,
     year: newYear,
+    status: 'active',
     isRollover: true,
     originalGoalId: originalGoal.id,
-    createdAt: new Date()
+    createdAt: new Date(),
+    monthlyData: {},
+    monthlyTargets: originalGoal.monthlyTargets || {}
   });
 };
 

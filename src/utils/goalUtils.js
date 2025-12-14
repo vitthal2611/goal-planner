@@ -1,4 +1,4 @@
-import { differenceInDays, differenceInCalendarQuarters, differenceInCalendarMonths } from 'date-fns';
+import { differenceInDays, differenceInCalendarQuarters, differenceInCalendarMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 export const breakdownGoalTargets = (goal) => {
   const { yearlyTarget } = goal;
@@ -16,12 +16,50 @@ export const breakdownGoalTargets = (goal) => {
 export const calculateGoalProgress = (goal, currentDate = new Date()) => {
   const { yearlyTarget = 0, actualProgress = 0, startDate, endDate } = goal;
   
-  const start = startDate ? new Date(startDate) : new Date();
-  const end = endDate ? new Date(endDate) : new Date();
+  // Validate dates
+  if (!startDate || !endDate) {
+    return {
+      yearlyProgress: 0,
+      quarterlyProgress: 0,
+      monthlyProgress: 0,
+      onTrack: false,
+      targets: breakdownGoalTargets(goal),
+      actual: actualProgress,
+      expected: 0,
+      remaining: yearlyTarget - actualProgress,
+      daysRemaining: 0,
+      projectedCompletion: 0,
+      progressRate: "0.00"
+    };
+  }
+  
+  const start = startOfDay(new Date(startDate));
+  const end = endOfDay(new Date(endDate));
+  const now = startOfDay(currentDate);
+  
+  // Validate parsed dates
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+    return {
+      yearlyProgress: 0,
+      quarterlyProgress: 0,
+      monthlyProgress: 0,
+      onTrack: false,
+      targets: breakdownGoalTargets(goal),
+      actual: actualProgress,
+      expected: 0,
+      remaining: yearlyTarget - actualProgress,
+      daysRemaining: 0,
+      projectedCompletion: 0,
+      progressRate: "0.00"
+    };
+  }
+  
+  // Only calculate if within timeline
+  const isActive = isWithinInterval(now, { start, end });
   
   const totalDays = Math.max(1, differenceInDays(end, start) + 1);
-  const daysPassed = Math.max(0, differenceInDays(currentDate, start));
-  const daysRemaining = differenceInDays(end, currentDate);
+  const daysPassed = Math.max(0, Math.min(differenceInDays(now, start), totalDays));
+  const daysRemaining = Math.max(0, differenceInDays(end, now));
   
   const targets = breakdownGoalTargets(goal);
   

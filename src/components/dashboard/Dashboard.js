@@ -3,7 +3,8 @@ import { Box, Container, Grid, Typography, Divider } from '@mui/material';
 import { SummaryCard } from '../common/SummaryCard';
 import { GoalProgressSection } from '../goals/GoalProgressSection';
 import { HabitStreakSection } from '../habits/HabitStreakSection';
-import { calculateGoalProgress, calculateHabitConsistency } from '../../utils/calculations';
+import { calculateGoalProgress } from '../../utils/calculations';
+import { calculateGoalAwareConsistency } from '../../utils/goalAwareHabitUtils';
 import { useAppContext } from '../../context/AppContext';
 
 export const Dashboard = () => {
@@ -36,8 +37,8 @@ export const Dashboard = () => {
   const calculateOverallHabitConsistency = () => {
     if (habits.length === 0) return 0;
     const consistencies = habits.map(habit => {
-      const habitConsistency = calculateHabitConsistency(habit, habitLogs);
-      return habitConsistency.consistency;
+      const { consistency } = calculateGoalAwareConsistency(habit, habitLogs, goals, 30);
+      return consistency;
     });
     return consistencies.reduce((sum, consistency) => sum + consistency, 0) / consistencies.length;
   };
