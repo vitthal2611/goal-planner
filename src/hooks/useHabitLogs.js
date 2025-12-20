@@ -15,22 +15,16 @@ export const useHabitLogs = () => {
       setHabitLogs([]);
       return;
     }
-    try {
-      const logsRef = ref(db, `users/${user.uid}/habitLogs`);
-      const unsubscribe = onValue(logsRef, async (snapshot) => {
-        if (snapshot.exists()) {
-          setHabitLogs(Object.values(snapshot.val()));
-        } else {
-          const initialData = getInitialData();
-          setHabitLogs(initialData.logs);
-        }
-      });
-      return unsubscribe;
-    } catch (error) {
-      console.error('Firebase error:', error);
-      const initialData = getInitialData();
-      setHabitLogs(initialData.logs);
-    }
+    const logsRef = ref(db, `users/${user.uid}/habitLogs`);
+    const unsubscribe = onValue(logsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setHabitLogs(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        set(logsRef, initialData.logs).catch(console.error);
+      }
+    });
+    return unsubscribe;
   }, [user]);
   
   const logHabit = useCallback((habitId, status, habit) => {
@@ -38,7 +32,6 @@ export const useHabitLogs = () => {
     const today = formatDate(new Date());
     const todayDate = new Date();
     
-    // Only create log if habit is scheduled for today
     if (habit && !isHabitScheduledForDate(habit, todayDate)) return;
     
     setHabitLogs(prev => {
@@ -62,7 +55,7 @@ export const useHabitLogs = () => {
         updated = [...prev, newLog];
       }
       
-      set(ref(db, `users/${user.uid}/habitLogs`), updated);
+      set(ref(db, `users/${user.uid}/habitLogs`), updated).catch(console.error);
       return updated;
     });
   }, [user]);
@@ -73,7 +66,7 @@ export const useHabitLogs = () => {
       const updated = prev.map(log => 
         log.id === logId ? { ...log, ...updates, loggedAt: new Date().toISOString() } : log
       );
-      set(ref(db, `users/${user.uid}/habitLogs`), updated);
+      set(ref(db, `users/${user.uid}/habitLogs`), updated).catch(console.error);
       return updated;
     });
   }, [user]);

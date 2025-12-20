@@ -13,51 +13,34 @@ export const useGoals = (deleteHabitFn, habits) => {
       setGoals([]);
       return;
     }
-    try {
-      const goalsRef = ref(db, `users/${user.uid}/goals`);
-      const unsubscribe = onValue(goalsRef, async (snapshot) => {
-        if (snapshot.exists()) {
-          setGoals(Object.values(snapshot.val()));
-        } else {
-          const initialData = getInitialData();
-          setGoals(initialData.goals);
-        }
-      });
-      return unsubscribe;
-    } catch (error) {
-      console.error('Firebase error:', error);
-      const initialData = getInitialData();
-      setGoals(initialData.goals);
-    }
+    const goalsRef = ref(db, `users/${user.uid}/goals`);
+    const unsubscribe = onValue(goalsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setGoals(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        set(goalsRef, initialData.goals).catch(console.error);
+      }
+    });
+    return unsubscribe;
   }, [user]);
   
   const addGoal = useCallback((newGoal) => {
     if (!user) return;
     setGoals(prev => {
       const updated = [...prev, newGoal];
-      set(ref(db, `users/${user.uid}/goals`), updated);
+      set(ref(db, `users/${user.uid}/goals`), updated).catch(console.error);
       return updated;
     });
   }, [user]);
   
-  const updateGoal = useCallback((goalId, updates) => {
-    if (!user) return;
-    setGoals(prev => {
-      const updated = prev.map(goal => 
-        goal.id === goalId ? { ...goal, ...updates } : goal
-      );
-      set(ref(db, `users/${user.uid}/goals`), updated);
-      return updated;
-    });
-  }, [user]);
-  
-  const updateGoalProgress = useCallback((goalId, newProgress, monthlyData) => {
+  const updateGoal = useCallback((goalId, newProgress, monthlyData) => {
     if (!user) return;
     setGoals(prev => {
       const updated = prev.map(goal => 
         goal.id === goalId ? { ...goal, actualProgress: newProgress, ...(monthlyData && { monthlyData }) } : goal
       );
-      set(ref(db, `users/${user.uid}/goals`), updated);
+      set(ref(db, `users/${user.uid}/goals`), updated).catch(console.error);
       return updated;
     });
   }, [user]);
@@ -66,11 +49,11 @@ export const useGoals = (deleteHabitFn, habits) => {
     if (!user) return;
     setGoals(prev => {
       const updated = prev.filter(goal => goal.id !== goalId);
-      set(ref(db, `users/${user.uid}/goals`), updated.length ? updated : null);
+      set(ref(db, `users/${user.uid}/goals`), updated.length ? updated : null).catch(console.error);
       return updated;
     });
     habits?.filter(h => h.goalIds?.includes(goalId)).forEach(h => deleteHabitFn(h.id));
   }, [user, deleteHabitFn, habits]);
   
-  return { goals, addGoal, updateGoal, updateGoalProgress, deleteGoal };
+  return { goals, addGoal, updateGoal, deleteGoal };
 };

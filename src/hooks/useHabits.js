@@ -13,29 +13,23 @@ export const useHabits = () => {
       setHabits([]);
       return;
     }
-    try {
-      const habitsRef = ref(db, `users/${user.uid}/habits`);
-      const unsubscribe = onValue(habitsRef, async (snapshot) => {
-        if (snapshot.exists()) {
-          setHabits(Object.values(snapshot.val()));
-        } else {
-          const initialData = getInitialData();
-          setHabits(initialData.habits);
-        }
-      });
-      return unsubscribe;
-    } catch (error) {
-      console.error('Firebase error:', error);
-      const initialData = getInitialData();
-      setHabits(initialData.habits);
-    }
+    const habitsRef = ref(db, `users/${user.uid}/habits`);
+    const unsubscribe = onValue(habitsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setHabits(Object.values(snapshot.val()));
+      } else {
+        const initialData = getInitialData();
+        set(habitsRef, initialData.habits).catch(console.error);
+      }
+    });
+    return unsubscribe;
   }, [user]);
   
   const addHabit = useCallback((newHabit) => {
     if (!user) return;
     setHabits(prev => {
       const updated = [...prev, newHabit];
-      set(ref(db, `users/${user.uid}/habits`), updated);
+      set(ref(db, `users/${user.uid}/habits`), updated).catch(console.error);
       return updated;
     });
   }, [user]);
@@ -46,7 +40,7 @@ export const useHabits = () => {
       const updated = prev.map(habit => 
         habit.id === habitId ? { ...habit, ...updates } : habit
       );
-      set(ref(db, `users/${user.uid}/habits`), updated);
+      set(ref(db, `users/${user.uid}/habits`), updated).catch(console.error);
       return updated;
     });
   }, [user]);
@@ -55,7 +49,7 @@ export const useHabits = () => {
     if (!user) return;
     setHabits(prev => {
       const updated = prev.filter(habit => habit.id !== habitId);
-      set(ref(db, `users/${user.uid}/habits`), updated.length ? updated : null);
+      set(ref(db, `users/${user.uid}/habits`), updated.length ? updated : null).catch(console.error);
       return updated;
     });
   }, [user]);
