@@ -9,8 +9,8 @@ export const getHabitDateRange = (habit, goals) => {
   if (!linkedGoal) return null;
   
   return {
-    startDate: startOfDay(parseISO(linkedGoal.startDate)),
-    endDate: startOfDay(parseISO(linkedGoal.endDate))
+    startDate: startOfDay(typeof linkedGoal.startDate === 'string' ? parseISO(linkedGoal.startDate) : new Date(linkedGoal.startDate)),
+    endDate: startOfDay(typeof linkedGoal.endDate === 'string' ? parseISO(linkedGoal.endDate) : new Date(linkedGoal.endDate))
   };
 };
 
@@ -105,6 +105,11 @@ export const getBestStreak = (habit, logs, goals) => {
   
   const today = startOfDay(new Date());
   const effectiveEndDate = minDate([today, dateRange.endDate]);
+  
+  // Validate dates before calling eachDayOfInterval
+  if (isNaN(dateRange.startDate.getTime()) || isNaN(effectiveEndDate.getTime()) || dateRange.startDate > effectiveEndDate) {
+    return 0;
+  }
   
   const scheduledDays = eachDayOfInterval({ 
     start: dateRange.startDate, 

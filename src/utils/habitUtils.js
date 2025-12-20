@@ -4,8 +4,8 @@ import { getExpectedCompletions, isHabitScheduledForDate } from './frequencyRule
 export const calculateHabitConsistency = (habit, logs, goal) => {
   if (!goal) return { consistency: 0, completionRate: 0, completed: 0, skipped: 0, missed: 0, expected: 0, currentStreak: 0, longestStreak: 0 };
   
-  const startDate = startOfDay(parseISO(goal.startDate));
-  const endDate = startOfDay(parseISO(goal.endDate));
+  const startDate = startOfDay(typeof goal.startDate === 'string' ? parseISO(goal.startDate) : new Date(goal.startDate));
+  const endDate = startOfDay(typeof goal.endDate === 'string' ? parseISO(goal.endDate) : new Date(goal.endDate));
   const today = startOfDay(new Date());
   const effectiveEndDate = minDate([today, endDate]);
   
@@ -41,8 +41,8 @@ export const calculateHabitConsistency = (habit, logs, goal) => {
 export const calculateCurrentStreak = (habit, logs, goal) => {
   if (!goal) return 0;
   
-  const startDate = startOfDay(parseISO(goal.startDate));
-  const endDate = startOfDay(parseISO(goal.endDate));
+  const startDate = startOfDay(typeof goal.startDate === 'string' ? parseISO(goal.startDate) : new Date(goal.startDate));
+  const endDate = startOfDay(typeof goal.endDate === 'string' ? parseISO(goal.endDate) : new Date(goal.endDate));
   const today = startOfDay(new Date());
   
   const habitLogs = logs
@@ -83,8 +83,8 @@ export const calculateCurrentStreak = (habit, logs, goal) => {
 export const calculateLongestStreak = (habit, logs, goal) => {
   if (!goal) return 0;
   
-  const startDate = startOfDay(parseISO(goal.startDate));
-  const endDate = startOfDay(parseISO(goal.endDate));
+  const startDate = startOfDay(typeof goal.startDate === 'string' ? parseISO(goal.startDate) : new Date(goal.startDate));
+  const endDate = startOfDay(typeof goal.endDate === 'string' ? parseISO(goal.endDate) : new Date(goal.endDate));
   
   const habitLogs = logs
     .filter(log => {

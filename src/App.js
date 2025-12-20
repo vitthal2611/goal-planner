@@ -13,9 +13,10 @@ import { YearProvider, useYear } from './context/YearContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/auth/Login';
 import { lightTheme, darkTheme } from './theme/mobileTheme';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const AppContent = () => {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, error } = useAuth();
   const { selectedYear, setSelectedYear } = useYear();
   const [currentTab, setCurrentTab] = useState(0);
   const [darkMode, setDarkMode] = useLocalStorage('darkMode', false);
@@ -29,6 +30,19 @@ const AppContent = () => {
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', gap: 2 }}>
           <FlagOutlined sx={{ fontSize: 64, color: 'primary.main' }} />
           <Typography variant="h5" color="text.secondary">Loading...</Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', gap: 2, p: 3 }}>
+          <Typography variant="h5" color="error">Authentication Error</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>{error}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>Please enable Authentication in Firebase Console</Typography>
         </Box>
       </ThemeProvider>
     );
@@ -254,13 +268,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <YearProvider>
-        <AppProvider>
-          <AppContent />
-        </AppProvider>
-      </YearProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <YearProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </YearProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

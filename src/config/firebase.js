@@ -3,13 +3,14 @@ import { getAuth } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL
+  apiKey: "AIzaSyDkVbVhmFA301ZERkgNuxzfkjxzmlpe7Uk",
+  authDomain: "goal-planner-b604e.firebaseapp.com",
+  databaseURL: "https://goal-planner-b604e-default-rtdb.firebaseio.com",
+  projectId: "goal-planner-b604e",
+  storageBucket: "goal-planner-b604e.firebasestorage.app",
+  messagingSenderId: "82233624728",
+  appId: "1:82233624728:web:49b5d083a39237d987e8ed",
+  measurementId: "G-ZJRQEGH25W"
 };
 
 const app = initializeApp(firebaseConfig);

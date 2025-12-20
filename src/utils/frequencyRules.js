@@ -36,8 +36,17 @@ export const isHabitScheduledForDate = (habit, date) => {
  * Get expected completions for a date range
  */
 export const getExpectedCompletions = (habit, startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+  
+  // Ensure dates are valid Date objects
+  const start = startDate instanceof Date ? startDate : new Date(startDate);
+  const end = endDate instanceof Date ? endDate : new Date(endDate);
+  
+  // Check for invalid dates or invalid interval
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return 0;
+  
   const { frequency, frequencyConfig = {} } = habit;
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  const days = eachDayOfInterval({ start, end });
 
   switch (frequency) {
     case FREQUENCY_TYPES.DAILY:
