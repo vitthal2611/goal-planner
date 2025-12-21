@@ -3,7 +3,6 @@ import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, Collapse, 
 import { generateId } from '../../utils/calculations';
 import { format, addMonths } from 'date-fns';
 import { useYear } from '../../context/YearContext';
-import { validateGoalDates, getDateValidationMessage } from '../../utils/goalTimelineValidation';
 
 export const GoalForm = ({ onAddGoal }) => {
   const { selectedYear } = useYear();
@@ -23,14 +22,6 @@ export const GoalForm = ({ onAddGoal }) => {
   const handleChange = (e) => {
     const newData = { ...formData, [e.target.name]: e.target.value };
     setFormData(newData);
-    
-    // Validate dates if both are set
-    if (e.target.name === 'startDate' || e.target.name === 'endDate') {
-      if (newData.startDate && newData.endDate) {
-        const validation = validateGoalDates(newData.startDate, newData.endDate);
-        setDateWarning(getDateValidationMessage(validation.warnings));
-      }
-    }
   };
 
   const handleMonthlyTargetChange = (monthKey, value) => {

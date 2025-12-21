@@ -1,71 +1,85 @@
 import React from 'react';
-import { Box, Chip, Stack, Typography } from '@mui/material';
+import { Box, FormControl, InputLabel, Select, MenuItem, Chip, IconButton } from '@mui/material';
 import { NavigateBefore, NavigateNext } from '@mui/icons-material';
 
 export const YearSelector = ({ selectedYear, onYearChange, availableYears = [] }) => {
   const currentYear = new Date().getFullYear();
   
-  // Generate year range: 2 years back, current, 2 years forward
+  // Generate year range: current year + next 4 years
   const years = availableYears.length > 0 
     ? availableYears 
-    : [currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+    : Array.from({ length: 5 }, (_, i) => currentYear + i);
 
-  const getYearLabel = (year) => {
-    if (year === currentYear) return 'Current';
-    if (year < currentYear) return 'Past';
-    return 'Planned';
+  const handlePrevious = () => {
+    const currentIndex = years.indexOf(selectedYear);
+    if (currentIndex > 0) {
+      onYearChange(years[currentIndex - 1]);
+    }
   };
 
-  const getYearColor = (year) => {
-    if (year === currentYear) return 'primary';
-    if (year < currentYear) return 'default';
-    return 'secondary';
+  const handleNext = () => {
+    const currentIndex = years.indexOf(selectedYear);
+    if (currentIndex < years.length - 1) {
+      onYearChange(years[currentIndex + 1]);
+    }
+  };
+
+  const getYearStatus = (year) => {
+    if (year === currentYear) return 'Active';
+    if (year > currentYear) return 'Planned';
+    return 'Past';
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" gap={1}>
-        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-          Year:
-        </Typography>
-        {years.map((year) => (
-          <Chip
-            key={year}
-            label={
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <span>{year}</span>
-                {year === currentYear && (
-                  <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    (Active)
-                  </Typography>
-                )}
-              </Stack>
-            }
-            onClick={() => onYearChange(year)}
-            color={selectedYear === year ? getYearColor(year) : 'default'}
-            variant={selectedYear === year ? 'filled' : 'outlined'}
-            sx={{
-              fontWeight: selectedYear === year ? 600 : 400,
-              transition: 'all 0.2s',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 2
-              }
-            }}
-          />
-        ))}
-      </Stack>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 3 }}>
+      <IconButton 
+        onClick={handlePrevious}
+        disabled={years.indexOf(selectedYear) === 0}
+        sx={{ 
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          '&:hover': { borderColor: 'primary.main' }
+        }}
+      >
+        <NavigateBefore />
+      </IconButton>
       
-      {selectedYear < currentYear && (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          📖 Viewing past year (read-only)
-        </Typography>
-      )}
-      {selectedYear > currentYear && (
-        <Typography variant="caption" color="secondary.main" sx={{ mt: 1, display: 'block' }}>
-          📅 Planning future year
-        </Typography>
-      )}
+      <FormControl size="small" sx={{ minWidth: 120 }}>
+        <InputLabel>Year</InputLabel>
+        <Select
+          value={selectedYear}
+          onChange={(e) => onYearChange(e.target.value)}
+          label="Year"
+        >
+          {years.map((year) => (
+            <MenuItem key={year} value={year}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {year}
+                <Chip 
+                  label={getYearStatus(year)}
+                  size="small"
+                  color={year === currentYear ? 'primary' : year > currentYear ? 'secondary' : 'default'}
+                  sx={{ fontSize: '0.7rem', height: 20 }}
+                />
+              </Box>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      
+      <IconButton 
+        onClick={handleNext}
+        disabled={years.indexOf(selectedYear) === years.length - 1}
+        sx={{ 
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          '&:hover': { borderColor: 'primary.main' }
+        }}
+      >
+        <NavigateNext />
+      </IconButton>
     </Box>
   );
 };

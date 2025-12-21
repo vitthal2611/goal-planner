@@ -14,6 +14,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/auth/Login';
 import { lightTheme, darkTheme } from './theme/mobileTheme';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ImprovedGoalCard } from './components/goals/ImprovedGoalCard';
+import { QuickAddGoalHabit } from './components/common/QuickAddGoalHabit';
 
 const AppContent = () => {
   const { user, loading, logout, error } = useAuth();

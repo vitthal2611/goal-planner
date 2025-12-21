@@ -71,11 +71,11 @@ export const calculateGoalProgress = (goal, currentDate = new Date()) => {
   
   const onTrack = actualProgress >= expectedProgressByNow;
   
-  const currentQuarter = Math.floor(differenceInCalendarMonths(currentDate, start) / 3);
+  const currentQuarter = Math.max(0, Math.floor(differenceInCalendarMonths(currentDate, start) / 3));
   const quarterlyExpected = targets.quarterly * (currentQuarter + 1);
   const quarterlyProgress = quarterlyExpected > 0 ? (actualProgress / quarterlyExpected) * 100 : 0;
   
-  const currentMonth = differenceInCalendarMonths(currentDate, start);
+  const currentMonth = Math.max(0, differenceInCalendarMonths(currentDate, start));
   const monthlyExpected = targets.monthly * (currentMonth + 1);
   const monthlyProgress = monthlyExpected > 0 ? (actualProgress / monthlyExpected) * 100 : 0;
   
@@ -109,6 +109,11 @@ export const getGoalStatus = (goal) => {
 
 export const calculateRequiredDailyRate = (goal, currentDate = new Date()) => {
   const { yearlyTarget, actualProgress, endDate } = goal;
+  
+  if (!endDate || isNaN(new Date(endDate).getTime())) {
+    return "0.00";
+  }
+  
   const remaining = yearlyTarget - actualProgress;
   const daysLeft = Math.max(1, differenceInDays(new Date(endDate), currentDate));
   

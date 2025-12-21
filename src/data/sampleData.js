@@ -9,10 +9,20 @@ export const sampleGoals = [
     yearlyTarget: 24,
     actualProgress: 8,
     unit: 'books',
-    year: currentYear,
-    startDate: new Date(`${currentYear}-01-01`),
-    endDate: new Date(`${currentYear}-12-31`),
-    createdAt: new Date(`${currentYear}-01-01`)
+    year: 2025,
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-12-31'),
+    createdAt: new Date('2025-01-01'),
+    monthlyTargets: {
+      '2025-01': 2, '2025-02': 2, '2025-03': 2, '2025-04': 2,
+      '2025-05': 2, '2025-06': 2, '2025-07': 2, '2025-08': 2,
+      '2025-09': 2, '2025-10': 2, '2025-11': 2, '2025-12': 2
+    },
+    monthlyData: {
+      '2025-01': 1, '2025-02': 2, '2025-03': 1, '2025-04': 0,
+      '2025-05': 0, '2025-06': 0, '2025-07': 0, '2025-08': 0,
+      '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0
+    }
   },
   {
     id: 'goal-2',
@@ -20,54 +30,41 @@ export const sampleGoals = [
     yearlyTarget: 200,
     actualProgress: 45,
     unit: 'hours',
-    year: currentYear,
-    startDate: new Date(`${currentYear}-01-01`),
-    endDate: new Date(`${currentYear}-12-31`),
-    createdAt: new Date(`${currentYear}-01-01`)
+    year: 2025,
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-12-31'),
+    createdAt: new Date('2025-01-01'),
+    monthlyTargets: {
+      '2025-01': 17, '2025-02': 17, '2025-03': 17, '2025-04': 17,
+      '2025-05': 17, '2025-06': 17, '2025-07': 17, '2025-08': 17,
+      '2025-09': 17, '2025-10': 17, '2025-11': 17, '2025-12': 15
+    },
+    monthlyData: {
+      '2025-01': 20, '2025-02': 15, '2025-03': 10, '2025-04': 0,
+      '2025-05': 0, '2025-06': 0, '2025-07': 0, '2025-08': 0,
+      '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0
+    }
   },
   {
     id: 'goal-3',
-    title: 'Learn 500 new words',
-    yearlyTarget: 500,
-    actualProgress: 120,
-    unit: 'words',
-    year: currentYear,
-    startDate: new Date(`${currentYear}-01-01`),
-    endDate: new Date(`${currentYear}-12-31`),
-    createdAt: new Date(`${currentYear}-01-01`)
-  },
-  {
-    id: 'goal-4',
     title: 'Save $12,000',
     yearlyTarget: 12000,
     actualProgress: 3500,
     unit: 'dollars',
-    year: currentYear,
-    startDate: new Date(`${currentYear}-01-01`),
-    endDate: new Date(`${currentYear}-12-31`),
-    createdAt: new Date(`${currentYear}-01-01`)
-  },
-  {
-    id: 'goal-past-1',
-    title: 'Read 20 books',
-    yearlyTarget: 20,
-    actualProgress: 20,
-    unit: 'books',
-    year: currentYear - 1,
-    startDate: new Date(`${currentYear - 1}-01-01`),
-    endDate: new Date(`${currentYear - 1}-12-31`),
-    createdAt: new Date(`${currentYear - 1}-01-01`)
-  },
-  {
-    id: 'goal-future-1',
-    title: 'Read 30 books',
-    yearlyTarget: 30,
-    actualProgress: 0,
-    unit: 'books',
-    year: currentYear + 1,
-    startDate: new Date(`${currentYear + 1}-01-01`),
-    endDate: new Date(`${currentYear + 1}-12-31`),
-    createdAt: new Date()
+    year: 2025,
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-12-31'),
+    createdAt: new Date('2025-01-01'),
+    monthlyTargets: {
+      '2025-01': 1000, '2025-02': 1000, '2025-03': 1000, '2025-04': 1000,
+      '2025-05': 1000, '2025-06': 1000, '2025-07': 1000, '2025-08': 1000,
+      '2025-09': 1000, '2025-10': 1000, '2025-11': 1000, '2025-12': 1000
+    },
+    monthlyData: {
+      '2025-01': 1200, '2025-02': 800, '2025-03': 1500, '2025-04': 0,
+      '2025-05': 0, '2025-06': 0, '2025-07': 0, '2025-08': 0,
+      '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0
+    }
   }
 ];
 
@@ -81,8 +78,8 @@ export const sampleHabits = [
     location: 'Living room',
     frequency: 'daily',
     isActive: true,
-    startYear: currentYear,
-    createdAt: new Date('2024-01-01')
+    startYear: 2025,
+    createdAt: new Date('2025-01-01')
   },
   {
     id: 'habit-2',
@@ -93,35 +90,11 @@ export const sampleHabits = [
     location: 'Home gym',
     frequency: 'daily',
     isActive: true,
-    startYear: currentYear,
-    createdAt: new Date('2024-01-01')
+    startYear: 2025,
+    createdAt: new Date('2025-01-01')
   },
   {
     id: 'habit-3',
-    name: 'Study vocabulary',
-    goalIds: ['goal-3'],
-    trigger: 'During lunch break',
-    time: '12:30',
-    location: 'Office desk',
-    frequency: 'daily',
-    isActive: true,
-    startYear: currentYear,
-    createdAt: new Date('2024-01-01')
-  },
-  {
-    id: 'habit-4',
-    name: 'Track expenses',
-    goalIds: ['goal-4'],
-    trigger: 'Before bed',
-    time: '21:00',
-    location: 'Bedroom',
-    frequency: 'daily',
-    isActive: true,
-    startYear: currentYear,
-    createdAt: new Date('2024-01-01')
-  },
-  {
-    id: 'habit-5',
     name: 'Evening walk',
     goalIds: ['goal-2'],
     trigger: 'After dinner',
@@ -129,20 +102,20 @@ export const sampleHabits = [
     location: 'Park',
     frequency: 'daily',
     isActive: true,
-    startYear: currentYear,
-    createdAt: new Date('2024-01-15')
+    startYear: 2025,
+    createdAt: new Date('2025-01-15')
   },
   {
-    id: 'habit-future-1',
-    name: 'Read for 45 minutes',
-    goalIds: ['goal-future-1'],
-    trigger: 'After morning tea',
-    time: '07:00',
-    location: 'Living room',
+    id: 'habit-4',
+    name: 'Track expenses',
+    goalIds: ['goal-3'],
+    trigger: 'Before bed',
+    time: '21:00',
+    location: 'Bedroom',
     frequency: 'daily',
     isActive: true,
-    startYear: currentYear + 1,
-    createdAt: new Date()
+    startYear: 2025,
+    createdAt: new Date('2025-01-01')
   }
 ];
 

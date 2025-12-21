@@ -27,32 +27,36 @@ export const useHabitLogs = () => {
     return unsubscribe;
   }, [user]);
   
-  const logHabit = useCallback((habitId, status, habit) => {
+  const logHabit = useCallback((habitId, status, habit, dateStr = null) => {
     if (!user) return;
-    const today = formatDate(new Date());
-    const todayDate = new Date();
+    const targetDate = dateStr || formatDate(new Date());
+    const targetDateObj = dateStr ? new Date(dateStr) : new Date();
     
-    if (habit && !isHabitScheduledForDate(habit, todayDate)) return;
+    if (habit && !isHabitScheduledForDate(habit, targetDateObj)) return;
     
     setHabitLogs(prev => {
-      const existingLog = prev.find(log => log.habitId === habitId && log.date === today);
+      const existingLog = prev.find(log => log.habitId === habitId && log.date === targetDate);
       let updated;
       
-      if (existingLog) {
+      if (status === 'remove' && existingLog) {
+        updated = prev.filter(log => log.id !== existingLog.id);
+      } else if (existingLog) {
         updated = prev.map(log => 
           log.id === existingLog.id 
             ? { ...log, status, loggedAt: new Date().toISOString() }
             : log
         );
-      } else {
+      } else if (status !== 'remove') {
         const newLog = {
           id: generateId(),
           habitId,
-          date: today,
+          date: targetDate,
           status,
           loggedAt: new Date().toISOString(),
         };
         updated = [...prev, newLog];
+      } else {
+        return prev;
       }
       
       set(ref(db, `users/${user.uid}/habitLogs`), updated).catch(console.error);

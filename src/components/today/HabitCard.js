@@ -7,20 +7,19 @@ export const HabitCard = ({ habit, log, onToggle, isAnimating }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDone = log?.status === 'done';
-  const isSkipped = log?.status === 'skipped';
 
   return (
     <Card 
       elevation={isDone ? 2 : 0}
       sx={{ 
         cursor: 'pointer',
-        bgcolor: isDone ? 'success.50' : isSkipped ? 'grey.100' : 'background.paper',
+        bgcolor: isDone ? 'success.50' : 'background.paper',
         border: '1px solid',
-        borderColor: isDone ? 'success.main' : isSkipped ? 'grey.300' : 'divider',
+        borderColor: isDone ? 'success.main' : 'divider',
         transform: isAnimating ? 'scale(1.02)' : 'scale(1)',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': { 
-          bgcolor: isDone ? 'success.100' : isSkipped ? 'grey.200' : 'grey.50',
+          bgcolor: isDone ? 'success.100' : 'grey.50',
           borderColor: isDone ? 'success.dark' : 'primary.main',
           transform: isMobile ? 'none' : 'translateY(-2px)',
           boxShadow: isMobile ? 0 : 4
@@ -58,8 +57,7 @@ export const HabitCard = ({ habit, log, onToggle, isAnimating }) => {
               variant="body1" 
               sx={{ 
                 fontWeight: 500,
-                textDecoration: isSkipped ? 'line-through' : 'none',
-                color: isSkipped ? 'text.secondary' : 'text.primary',
+                color: 'text.primary',
                 mb: { xs: 0.5, sm: 0.75 },
                 fontSize: { xs: '1rem', sm: '1rem' },
                 lineHeight: 1.5
@@ -86,22 +84,6 @@ export const HabitCard = ({ habit, log, onToggle, isAnimating }) => {
               </Box>
             )}
           </Box>
-
-          {isDone && (
-            <Chip 
-              label="Done" 
-              size="small" 
-              color="success" 
-              sx={{ fontWeight: 600, ml: 1 }}
-            />
-          )}
-          {isSkipped && (
-            <Chip 
-              label="Skipped" 
-              size="small" 
-              sx={{ fontWeight: 600, ml: 1 }}
-            />
-          )}
         </Box>
       </CardContent>
     </Card>

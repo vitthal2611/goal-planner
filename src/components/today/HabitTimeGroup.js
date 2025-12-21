@@ -1,23 +1,26 @@
 import React from 'react';
-import { Box, Typography, Chip, Grid, Grow, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Grid, Grow, useMediaQuery, useTheme } from '@mui/material';
 import { HabitCard } from './HabitCard';
+import { SectionHeader } from '../common/SectionHeader';
 
-export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, animatingHabit, formatDate }) => {
+export const HabitTimeGroup = ({ label, icon, color, habits, logs, dateStr, onLogHabit, animatingHabit }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   if (habits.length === 0) return null;
 
-  const today = formatDate(new Date());
-  const getTodaysLog = (habitId) => logs.find(log => log.habitId === habitId && log.date === today);
+  const getTodaysLog = (habitId) => logs.find(log => log.habitId === habitId && log.date === dateStr);
 
   const handleToggle = (habitId, currentStatus) => {
-    if (!currentStatus) {
+    const newStatus = currentStatus === 'done' ? null : 'done';
+    if (newStatus) {
       onLogHabit(habitId, 'done');
-    } else if (currentStatus === 'done') {
-      onLogHabit(habitId, 'skipped');
     } else {
-      onLogHabit(habitId, 'done');
+      // Remove the log entry
+      const existingLog = logs.find(log => log.habitId === habitId && log.date === dateStr);
+      if (existingLog) {
+        onLogHabit(habitId, 'remove');
+      }
     }
   };
 
@@ -26,40 +29,13 @@ export const HabitTimeGroup = ({ label, icon, color, habits, logs, onLogHabit, a
 
   return (
     <Box sx={{ mb: { xs: 3, sm: 5 }, px: { xs: 2, sm: 0 } }}>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: { xs: 2, sm: 3 },
-          pb: { xs: 1.5, sm: 2 },
-          borderBottom: '2px solid',
-          borderColor: 'grey.200'
-        }}
-      >
-        <Box 
-          sx={{ 
-            color, 
-            mr: { xs: 1, sm: 1.5 },
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: { xs: 22, sm: 28 }
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="h5" sx={{ fontWeight: 600, flex: 1 }}>
-          {label}
-        </Typography>
-        <Chip 
-          label={`${completedCount}/${habits.length}`}
-          size="small"
-          color={allCompleted ? 'success' : 'default'}
-          sx={{ 
-            fontWeight: 600,
-            minWidth: 50
-          }}
-        />
-      </Box>
+      <SectionHeader
+        title={label}
+        icon={icon}
+        iconColor={color}
+        count={`${completedCount}/${habits.length}`}
+        countColor={allCompleted ? 'success' : 'default'}
+      />
 
       <Grid container spacing={{ xs: 1.5, sm: 2 }}>
         {habits.map(habit => {

@@ -34,11 +34,11 @@ export const useGoals = (deleteHabitFn, habits) => {
     });
   }, [user]);
   
-  const updateGoal = useCallback((goalId, newProgress, monthlyData) => {
+  const updateGoal = useCallback((goalId, updates) => {
     if (!user) return;
     setGoals(prev => {
       const updated = prev.map(goal => 
-        goal.id === goalId ? { ...goal, actualProgress: newProgress, ...(monthlyData && { monthlyData }) } : goal
+        goal.id === goalId ? { ...goal, ...updates } : goal
       );
       set(ref(db, `users/${user.uid}/goals`), updated).catch(console.error);
       return updated;

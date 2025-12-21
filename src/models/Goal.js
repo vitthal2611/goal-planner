@@ -20,7 +20,15 @@ export class Goal {
     this.unit = unit;
     this.startDate = startDate || new Date();
     this.endDate = endDate || new Date(year || new Date().getFullYear(), 11, 31);
-    this.year = year || new Date(this.startDate).getFullYear();
+    
+    // Safe year calculation
+    if (year) {
+      this.year = year;
+    } else {
+      const startDateObj = new Date(this.startDate);
+      this.year = isNaN(startDateObj.getTime()) ? new Date().getFullYear() : startDateObj.getFullYear();
+    }
+    
     this.status = status;
     this.createdAt = createdAt;
     this.monthlyData = monthlyData;
@@ -28,10 +36,12 @@ export class Goal {
   }
 
   updateProgress(newProgress) {
+    if (typeof newProgress !== 'number' || newProgress < 0) return;
     this.actualProgress = Math.min(newProgress, this.yearlyTarget);
   }
 
   incrementProgress(amount) {
+    if (typeof amount !== 'number' || amount < 0) return;
     this.actualProgress = Math.min(this.actualProgress + amount, this.yearlyTarget);
   }
 

@@ -162,7 +162,7 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => 
                           />
                         ) : (
                           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                            {goal.title}
+                            {String(goal.title)}
                           </Typography>
                         )}
                         {(() => {
@@ -199,7 +199,7 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => 
                         </Box>
                       ) : (
                         <Typography variant="body1" sx={{ opacity: 0.9, mb: 0.5 }}>
-                          {goal.yearlyTarget} {goal.unit} • Year {goal.startDate ? new Date(goal.startDate).getFullYear() : 'N/A'}
+                          {goal.yearlyTarget} {goal.unit} • Year {goal.year || new Date().getFullYear()}
                         </Typography>
                       )}
                       {editingGoal === goal.id ? (
@@ -356,7 +356,7 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => 
                     <Grid item xs={4}>
                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          {targets.quarterly.toFixed(1)}
+                          {String(targets.quarterly.toFixed(1))}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Quarterly
@@ -366,7 +366,7 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => 
                     <Grid item xs={4}>
                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 2 }}>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
-                          {targets.monthly.toFixed(1)}
+                          {String(targets.monthly.toFixed(1))}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Monthly
@@ -376,7 +376,7 @@ export const GoalList = ({ goals, onUpdateGoal, onDeleteGoal, habits = [] }) => 
                     <Grid item xs={4}>
                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 2 }}>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                          {targets.weekly.toFixed(1)}
+                          {String(targets.weekly.toFixed(1))}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Weekly

@@ -1,19 +1,13 @@
 import React from 'react';
-import { Box, Container, Typography, Divider, Stack } from '@mui/material';
-import { GoalForm } from './GoalForm';
-import { GoalList } from './GoalList';
-import { PlanNextYear } from '../common/PlanNextYear';
+import { Box, Container, Typography, Divider, Stack, Grid } from '@mui/material';
+import { GoalFormSimple as GoalForm } from './GoalFormSimple';
+import { ImprovedGoalCard } from './ImprovedGoalCard';
 import { useAppContext } from '../../context/AppContext';
 import { useYear } from '../../context/YearContext';
 
 export const GoalManagement = () => {
   const { goals, habits, addGoal, updateGoal, deleteGoal, addHabit } = useAppContext();
   const { isCurrentYear, isReadOnly, selectedYear } = useYear();
-  
-  const handlePlanNextYear = ({ goals: newGoals, habits: newHabits }) => {
-    newGoals.forEach(g => addGoal(g));
-    newHabits.forEach(h => addHabit(h));
-  };
   
   return (
     <Container maxWidth="xl" sx={{ py: 5 }}>
@@ -22,20 +16,14 @@ export const GoalManagement = () => {
           <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>Goals</Typography>
           <Typography variant="body1" color="text.secondary">Set and track your yearly objectives</Typography>
         </Box>
-        {isCurrentYear && (
-          <PlanNextYear 
-            goals={goals} 
-            habits={habits}
-            onPlan={handlePlanNextYear}
-            currentYear={selectedYear}
-          />
-        )}
       </Stack>
 
       {!isReadOnly && (
-        <Box sx={{ mb: 7 }}>
-          <GoalForm onAddGoal={addGoal} />
-        </Box>
+        <>
+          <Box sx={{ mb: 7 }}>
+            <GoalForm onAddGoal={addGoal} />
+          </Box>
+        </>
       )}
 
       <Divider sx={{ mb: 6 }}>
@@ -45,12 +33,24 @@ export const GoalManagement = () => {
       </Divider>
 
       {/* Goal List */}
-      <GoalList 
-        goals={goals}
-        habits={habits}
-        onUpdateGoal={updateGoal}
-        onDeleteGoal={deleteGoal}
-      />
+      <Box>
+        <Grid container spacing={3}>
+          {goals.map(goal => (
+            <Grid item xs={12} key={goal.id}>
+              <ImprovedGoalCard 
+                goal={goal}
+                onUpdate={(monthKey, value) => {
+                  const updatedMonthlyData = { ...goal.monthlyData, [monthKey]: value };
+                  const totalProgress = Object.values(updatedMonthlyData).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                  updateGoal(goal.id, { monthlyData: updatedMonthlyData, actualProgress: totalProgress });
+                  console.log('Updated:', monthKey, value, 'Total:', totalProgress);
+                }}
+                onDelete={deleteGoal}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     </Container>
   );
 };
