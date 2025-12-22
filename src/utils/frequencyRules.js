@@ -27,6 +27,11 @@ export const isHabitScheduledForDate = (habit, date) => {
       // Always scheduled, but completion tracked per month
       return true;
 
+    case FREQUENCY_TYPES.MONTHLY_DATES: {
+      const dayOfMonth = date.getDate();
+      return (frequencyConfig.dates || []).includes(dayOfMonth);
+    }
+
     default:
       return true;
   }
@@ -64,6 +69,9 @@ export const getExpectedCompletions = (habit, startDate, endDate) => {
       const months = new Set(days.map(d => `${d.getFullYear()}-${d.getMonth()}`)).size;
       return months * (frequencyConfig.timesPerMonth || 1);
     }
+
+    case FREQUENCY_TYPES.MONTHLY_DATES:
+      return days.filter(day => isHabitScheduledForDate(habit, day)).length;
 
     default:
       return days.length;
@@ -103,6 +111,11 @@ export const getFrequencyLabel = (habit) => {
     
     case FREQUENCY_TYPES.MONTHLY:
       return `${frequencyConfig.timesPerMonth || 1}× per month`;
+    
+    case FREQUENCY_TYPES.MONTHLY_DATES: {
+      const dates = frequencyConfig.dates || [];
+      return dates.join(', ') + (dates.length === 1 ? 'st' : 'th');
+    }
     
     default:
       return 'Daily';

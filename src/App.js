@@ -7,6 +7,7 @@ import { HabitManagement } from './components/habits/HabitManagement';
 import { Today } from './components/today/Today';
 import { Review } from './components/review/Review';
 import { YearSelector } from './components/common/YearSelector';
+import { AppLogo } from './components/common/AppLogo';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { AppProvider } from './context/AppContext';
 import { YearProvider, useYear } from './context/YearContext';
@@ -90,19 +91,22 @@ const AppContent = () => {
                 justifyContent="space-between"
                 sx={{ py: 3 }}
               >
-                <Typography 
-                  variant="h5" 
-                  sx={{ 
-                    fontWeight: 700,
-                    background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.02em'
-                  }}
-                >
-                  Goal Planner
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <AppLogo size={32} />
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    Goal Planner
+                  </Typography>
+                </Stack>
                 
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Typography variant="body2" color="text.secondary">
@@ -175,18 +179,21 @@ const AppContent = () => {
                 justifyContent="space-between"
                 sx={{ py: 2 }}
               >
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 700,
-                    background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}
-                >
-                  {navItems[currentTab].label}
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <AppLogo size={24} />
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #6B7FD7 0%, #8B7FB8 100%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}
+                  >
+                    {navItems[currentTab].label}
+                  </Typography>
+                </Stack>
                 
                 <Stack direction="row" spacing={0.5} alignItems="center">
                   <IconButton onClick={() => setDarkMode(!darkMode)} size="small">

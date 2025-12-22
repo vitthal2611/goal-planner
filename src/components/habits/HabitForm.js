@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, TextField, Button, Box, Grid, MenuItem, Chip, Typography, Tooltip } from '@mui/material';
 import { generateId } from '../../utils/calculations';
 import { useYear } from '../../context/YearContext';
-import { FREQUENCY_TYPES, DAY_NAMES } from '../../utils/frequencyConstants';
+import { FREQUENCY_TYPES, DAY_NAMES, MONTH_DATES } from '../../utils/frequencyConstants';
 
 export const HabitForm = ({ goals, onAddHabit }) => {
   const { selectedYear } = useYear();
@@ -15,7 +15,8 @@ export const HabitForm = ({ goals, onAddHabit }) => {
     frequency: FREQUENCY_TYPES.DAILY,
     daysPerWeek: 3,
     selectedDays: [0, 2, 4],
-    timesPerMonth: 12
+    timesPerMonth: 12,
+    selectedDates: [1, 15]
   });
 
   const handleChange = (e) => {
@@ -34,6 +35,8 @@ export const HabitForm = ({ goals, onAddHabit }) => {
       frequencyConfig = { days: formData.selectedDays };
     } else if (formData.frequency === FREQUENCY_TYPES.MONTHLY) {
       frequencyConfig = { timesPerMonth: formData.timesPerMonth };
+    } else if (formData.frequency === FREQUENCY_TYPES.MONTHLY_DATES) {
+      frequencyConfig = { dates: formData.selectedDates };
     }
 
     const newHabit = {
@@ -60,7 +63,8 @@ export const HabitForm = ({ goals, onAddHabit }) => {
       frequency: FREQUENCY_TYPES.DAILY,
       daysPerWeek: 3,
       selectedDays: [0, 2, 4],
-      timesPerMonth: 12
+      timesPerMonth: 12,
+      selectedDates: [1, 15]
     });
   };
 
@@ -200,6 +204,7 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                   <MenuItem value={FREQUENCY_TYPES.WEEKLY}>Weekly (X times per week)</MenuItem>
                   <MenuItem value={FREQUENCY_TYPES.SPECIFIC_DAYS}>Specific Days (Mon-Sun)</MenuItem>
                   <MenuItem value={FREQUENCY_TYPES.MONTHLY}>Monthly (X times per month)</MenuItem>
+                  <MenuItem value={FREQUENCY_TYPES.MONTHLY_DATES}>Specific Dates (1st-31st)</MenuItem>
                 </TextField>
               </Tooltip>
             </Grid>
@@ -248,6 +253,28 @@ export const HabitForm = ({ goals, onAddHabit }) => {
                   inputProps={{ min: 1, max: 31 }}
                   sx={{ bgcolor: 'background.paper' }}
                 />
+              </Grid>
+            )}
+            {formData.frequency === FREQUENCY_TYPES.MONTHLY_DATES && (
+              <Grid item xs={12}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Select dates of month</Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {MONTH_DATES.map((date) => (
+                    <Chip
+                      key={date}
+                      label={date}
+                      onClick={() => {
+                        const dates = formData.selectedDates.includes(date)
+                          ? formData.selectedDates.filter(d => d !== date)
+                          : [...formData.selectedDates, date].sort((a, b) => a - b);
+                        setFormData({ ...formData, selectedDates: dates });
+                      }}
+                      color={formData.selectedDates.includes(date) ? 'primary' : 'default'}
+                      variant={formData.selectedDates.includes(date) ? 'filled' : 'outlined'}
+                      sx={{ minWidth: 40 }}
+                    />
+                  ))}
+                </Box>
               </Grid>
             )}
             <Grid item xs={12}>

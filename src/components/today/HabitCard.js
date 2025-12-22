@@ -67,7 +67,7 @@ export const HabitCard = ({ habit, log, onToggle, isAnimating }) => {
             </Typography>
             {isMobile ? (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.6 }}>
-                {habit.time}
+                {habit.trigger} • {habit.time}
               </Typography>
             ) : (
               <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
