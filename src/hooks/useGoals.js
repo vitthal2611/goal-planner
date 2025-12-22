@@ -18,8 +18,7 @@ export const useGoals = (deleteHabitFn, habits) => {
       if (snapshot.exists()) {
         setGoals(Object.values(snapshot.val()));
       } else {
-        const initialData = getInitialData();
-        set(goalsRef, initialData.goals).catch(console.error);
+        setGoals([]);
       }
     });
     return unsubscribe;

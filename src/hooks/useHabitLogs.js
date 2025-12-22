@@ -20,8 +20,7 @@ export const useHabitLogs = () => {
       if (snapshot.exists()) {
         setHabitLogs(Object.values(snapshot.val()));
       } else {
-        const initialData = getInitialData();
-        set(logsRef, initialData.logs).catch(console.error);
+        setHabitLogs([]);
       }
     });
     return unsubscribe;

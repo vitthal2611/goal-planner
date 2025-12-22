@@ -84,7 +84,7 @@ export const Today = () => {
         <DateNavigator
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          preventFuture={true}
+          preventFuture={false}
         />
       </Box>
 

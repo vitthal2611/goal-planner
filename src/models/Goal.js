@@ -18,8 +18,8 @@ export class Goal {
     this.yearlyTarget = yearlyTarget;
     this.actualProgress = actualProgress;
     this.unit = unit;
-    this.startDate = startDate || new Date();
-    this.endDate = endDate || new Date(year || new Date().getFullYear(), 11, 31);
+    this.startDate = startDate ? new Date(startDate) : new Date();
+    this.endDate = endDate ? new Date(endDate) : new Date(year || new Date().getFullYear(), 11, 31);
     
     // Safe year calculation
     if (year) {
@@ -30,7 +30,7 @@ export class Goal {
     }
     
     this.status = status;
-    this.createdAt = createdAt;
+    this.createdAt = createdAt ? new Date(createdAt) : new Date();
     this.monthlyData = monthlyData;
     this.monthlyTargets = monthlyTargets;
   }

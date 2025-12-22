@@ -1,14 +1,16 @@
-import React from 'react';
-import { Box, Container, Grid, Typography, Divider } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Container, Grid, Typography, Divider, Tabs, Tab } from '@mui/material';
 import { SummaryCard } from '../common/SummaryCard';
 import { GoalProgressSection } from '../goals/GoalProgressSection';
 import { HabitStreakSection } from '../habits/HabitStreakSection';
+import { TimelineDashboard } from './TimelineDashboard';
 import { calculateGoalProgress } from '../../utils/calculations';
 import { calculateGoalAwareConsistency } from '../../utils/goalAwareHabitUtils';
 import { useAppContext } from '../../context/AppContext';
 
 export const Dashboard = () => {
   const { goals, habits, habitLogs, logHabit } = useAppContext();
+  const [activeTab, setActiveTab] = useState(0);
   const calculateOverallProgress = () => {
     if (goals.length === 0) return 0;
     const totalProgress = goals.reduce((sum, goal) => {
@@ -50,7 +52,7 @@ export const Dashboard = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 5 }}>
       {/* Header */}
-      <Box sx={{ mb: 7 }}>
+      <Box sx={{ mb: 6 }}>
         <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>
           Dashboard
         </Typography>
@@ -59,45 +61,58 @@ export const Dashboard = () => {
         </Typography>
       </Box>
 
-      {/* Summary Cards - Key Metrics */}
-      <Grid container spacing={3} sx={{ mb: 7 }}>
-        <Grid item xs={12} md={4}>
-          <SummaryCard
-            title="Yearly Progress"
-            value={`${Math.round(overallProgress)}%`}
-            subtitle="Average across all goals"
-            color={overallProgress >= 70 ? 'success' : overallProgress >= 50 ? 'primary' : 'warning'}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <SummaryCard
-            title="Monthly Target"
-            value={`${monthlyStatus.actual}/${monthlyStatus.target}`}
-            subtitle="This month's progress"
-            color={monthlyStatus.actual >= monthlyStatus.target * 0.8 ? 'success' : 'primary'}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <SummaryCard
-            title="Habit Consistency"
-            value={`${Math.round(habitConsistency)}%`}
-            subtitle="Last 30 days average"
-            color={habitConsistency >= 80 ? 'success' : habitConsistency >= 60 ? 'primary' : 'warning'}
-          />
-        </Grid>
-      </Grid>
+      <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ mb: 4 }}>
+        <Tab label="Overview" />
+        <Tab label="Timeline & Milestones" />
+      </Tabs>
 
-      <Divider sx={{ mb: 7 }} />
+      {activeTab === 0 && (
+        <>
+          {/* Summary Cards - Key Metrics */}
+          <Grid container spacing={3} sx={{ mb: 7 }}>
+            <Grid item xs={12} md={4}>
+              <SummaryCard
+                title="Yearly Progress"
+                value={`${Math.round(overallProgress)}%`}
+                subtitle="Average across all goals"
+                color={overallProgress >= 70 ? 'success' : overallProgress >= 50 ? 'primary' : 'warning'}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <SummaryCard
+                title="Monthly Target"
+                value={`${monthlyStatus.actual}/${monthlyStatus.target}`}
+                subtitle="This month's progress"
+                color={monthlyStatus.actual >= monthlyStatus.target * 0.8 ? 'success' : 'primary'}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <SummaryCard
+                title="Habit Consistency"
+                value={`${Math.round(habitConsistency)}%`}
+                subtitle="Last 30 days average"
+                color={habitConsistency >= 80 ? 'success' : habitConsistency >= 60 ? 'primary' : 'warning'}
+              />
+            </Grid>
+          </Grid>
 
-      {/* Detailed Progress */}
-      <Grid container spacing={{ xs: 3, sm: 4, lg: 5 }}>
-        <Grid item xs={12}>
-          <GoalProgressSection goals={goals} />
-        </Grid>
-        <Grid item xs={12}>
-          <HabitStreakSection habits={habits} habitLogs={habitLogs} onLogHabit={logHabit} />
-        </Grid>
-      </Grid>
+          <Divider sx={{ mb: 7 }} />
+
+          {/* Detailed Progress */}
+          <Grid container spacing={{ xs: 3, sm: 4, lg: 5 }}>
+            <Grid item xs={12}>
+              <GoalProgressSection goals={goals} />
+            </Grid>
+            <Grid item xs={12}>
+              <HabitStreakSection habits={habits} habitLogs={habitLogs} onLogHabit={logHabit} />
+            </Grid>
+          </Grid>
+        </>
+      )}
+
+      {activeTab === 1 && (
+        <TimelineDashboard goals={goals} habits={habits} logs={habitLogs} />
+      )}
     </Container>
   );
 };

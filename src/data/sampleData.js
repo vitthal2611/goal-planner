@@ -10,9 +10,9 @@ export const sampleGoals = [
     actualProgress: 8,
     unit: 'books',
     year: 2025,
-    startDate: new Date('2025-01-01'),
-    endDate: new Date('2025-12-31'),
-    createdAt: new Date('2025-01-01'),
+    startDate: '2025-01-01T00:00:00.000Z',
+    endDate: '2025-12-31T23:59:59.999Z',
+    createdAt: '2025-01-01T00:00:00.000Z',
     monthlyTargets: {
       '2025-01': 2, '2025-02': 2, '2025-03': 2, '2025-04': 2,
       '2025-05': 2, '2025-06': 2, '2025-07': 2, '2025-08': 2,
@@ -31,9 +31,9 @@ export const sampleGoals = [
     actualProgress: 45,
     unit: 'hours',
     year: 2025,
-    startDate: new Date('2025-01-01'),
-    endDate: new Date('2025-12-31'),
-    createdAt: new Date('2025-01-01'),
+    startDate: '2025-01-01T00:00:00.000Z',
+    endDate: '2025-12-31T23:59:59.999Z',
+    createdAt: '2025-01-01T00:00:00.000Z',
     monthlyTargets: {
       '2025-01': 17, '2025-02': 17, '2025-03': 17, '2025-04': 17,
       '2025-05': 17, '2025-06': 17, '2025-07': 17, '2025-08': 17,
@@ -52,9 +52,9 @@ export const sampleGoals = [
     actualProgress: 3500,
     unit: 'dollars',
     year: 2025,
-    startDate: new Date('2025-01-01'),
-    endDate: new Date('2025-12-31'),
-    createdAt: new Date('2025-01-01'),
+    startDate: '2025-01-01T00:00:00.000Z',
+    endDate: '2025-12-31T23:59:59.999Z',
+    createdAt: '2025-01-01T00:00:00.000Z',
     monthlyTargets: {
       '2025-01': 1000, '2025-02': 1000, '2025-03': 1000, '2025-04': 1000,
       '2025-05': 1000, '2025-06': 1000, '2025-07': 1000, '2025-08': 1000,
@@ -79,7 +79,7 @@ export const sampleHabits = [
     frequency: 'daily',
     isActive: true,
     startYear: 2025,
-    createdAt: new Date('2025-01-01')
+    createdAt: '2025-01-01T00:00:00.000Z'
   },
   {
     id: 'habit-2',
@@ -91,7 +91,7 @@ export const sampleHabits = [
     frequency: 'daily',
     isActive: true,
     startYear: 2025,
-    createdAt: new Date('2025-01-01')
+    createdAt: '2025-01-01T00:00:00.000Z'
   },
   {
     id: 'habit-3',
@@ -103,7 +103,7 @@ export const sampleHabits = [
     frequency: 'daily',
     isActive: true,
     startYear: 2025,
-    createdAt: new Date('2025-01-15')
+    createdAt: '2025-01-15T00:00:00.000Z'
   },
   {
     id: 'habit-4',
@@ -115,7 +115,7 @@ export const sampleHabits = [
     frequency: 'daily',
     isActive: true,
     startYear: 2025,
-    createdAt: new Date('2025-01-01')
+    createdAt: '2025-01-01T00:00:00.000Z'
   }
 ];
 
@@ -145,7 +145,7 @@ export const generateSampleLogs = (habits, daysBack = 30) => {
         date: logDate.toISOString().split('T')[0],
         status,
         notes: '',
-        loggedAt: logDate
+        loggedAt: logDate.toISOString()
       });
     }
   });

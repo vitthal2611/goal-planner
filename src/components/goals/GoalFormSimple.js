@@ -2,8 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, TextField, Button, Box, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Tooltip, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { ContentCopy, TrendingUp, CalendarMonth, AutoAwesome, Edit } from '@mui/icons-material';
 import { generateId } from '../../utils/calculations';
-import { format, addMonths, startOfYear, endOfYear } from 'date-fns';
-import { useYear } from '../../context/YearContext';
+import { format, addMonths, startOfMonth, endOfMonth, differenceInMonths, parseISO } from 'date-fns';
 
 const MonthRow = React.memo(({ month, value, onChange, onKeyDown, isCurrentMonth, isAutoFilled }) => {
   return (
@@ -39,50 +38,55 @@ const MonthRow = React.memo(({ month, value, onChange, onKeyDown, isCurrentMonth
 });
 
 export const GoalFormSimple = ({ onAddGoal }) => {
-  const { selectedYear } = useYear();
   const [formData, setFormData] = useState({
     title: '',
     yearlyTarget: '',
     unit: '',
-    targetYear: selectedYear
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: format(endOfMonth(addMonths(new Date(), 11)), 'yyyy-MM-dd')
   });
   
   const [monthlyTargets, setMonthlyTargets] = useState({});
   const [isAutoFilled, setIsAutoFilled] = useState(false);
   
-  // Generate 12 months for the selected year
-  const yearMonths = useMemo(() => {
+  // Generate months based on start/end date range
+  const goalMonths = useMemo(() => {
+    if (!formData.startDate || !formData.endDate) return [];
+    
+    const start = startOfMonth(parseISO(formData.startDate));
+    const end = startOfMonth(parseISO(formData.endDate));
+    const monthCount = differenceInMonths(end, start) + 1;
+    
     const months = [];
-    const startYear = parseInt(formData.targetYear);
-    for (let i = 0; i < 12; i++) {
-      months.push(addMonths(new Date(startYear, 0, 1), i));
+    for (let i = 0; i < monthCount; i++) {
+      months.push(addMonths(start, i));
     }
     return months;
-  }, [formData.targetYear]);
+  }, [formData.startDate, formData.endDate]);
   
-  // Auto-calculate monthly targets when yearly target changes
+  // Auto-calculate monthly targets when total target or dates change
   useEffect(() => {
-    if (formData.yearlyTarget && parseFloat(formData.yearlyTarget) > 0) {
-      const yearlyValue = parseFloat(formData.yearlyTarget);
-      const monthlyValue = (yearlyValue / 12).toFixed(1);
+    if (formData.yearlyTarget && parseFloat(formData.yearlyTarget) > 0 && goalMonths.length > 0) {
+      const totalValue = parseFloat(formData.yearlyTarget);
+      const monthlyValue = (totalValue / goalMonths.length).toFixed(1);
       
       const autoTargets = {};
-      yearMonths.forEach(month => {
+      goalMonths.forEach(month => {
         autoTargets[format(month, 'yyyy-MM')] = monthlyValue;
       });
       
       setMonthlyTargets(autoTargets);
       setIsAutoFilled(true);
     } else {
-      // Clear targets if no yearly target
+      // Clear targets if no total target
       const emptyTargets = {};
-      yearMonths.forEach(month => {
+      goalMonths.forEach(month => {
         emptyTargets[format(month, 'yyyy-MM')] = '';
       });
       setMonthlyTargets(emptyTargets);
       setIsAutoFilled(false);
     }
-  }, [formData.yearlyTarget, yearMonths]);
+  }, [formData.yearlyTarget, goalMonths]);
 
   const { totalTarget, avgPerMonth, filledMonths } = useMemo(() => {
     const values = Object.values(monthlyTargets).map(v => parseFloat(v) || 0);
@@ -106,20 +110,20 @@ export const GoalFormSimple = ({ onAddGoal }) => {
   }, []);
 
   const handleKeyDown = useCallback((monthKey, index) => (e) => {
-    if (e.key === 'Enter' && index < yearMonths.length - 1) {
-      const nextMonthKey = format(yearMonths[index + 1], 'yyyy-MM');
+    if (e.key === 'Enter' && index < goalMonths.length - 1) {
+      const nextMonthKey = format(goalMonths[index + 1], 'yyyy-MM');
       const nextInput = document.querySelector(`input[data-month="${nextMonthKey}"]`);
       if (nextInput) nextInput.focus();
     }
-  }, [yearMonths]);
+  }, [goalMonths]);
 
   const redistributeEvenly = () => {
-    if (formData.yearlyTarget && parseFloat(formData.yearlyTarget) > 0) {
-      const yearlyValue = parseFloat(formData.yearlyTarget);
-      const monthlyValue = (yearlyValue / 12).toFixed(1);
+    if (formData.yearlyTarget && parseFloat(formData.yearlyTarget) > 0 && goalMonths.length > 0) {
+      const totalValue = parseFloat(formData.yearlyTarget);
+      const monthlyValue = (totalValue / goalMonths.length).toFixed(1);
       
       const evenTargets = {};
-      yearMonths.forEach(month => {
+      goalMonths.forEach(month => {
         evenTargets[format(month, 'yyyy-MM')] = monthlyValue;
       });
       
@@ -139,9 +143,9 @@ export const GoalFormSimple = ({ onAddGoal }) => {
       yearlyTarget: totalTarget,
       actualProgress: 0,
       unit: formData.unit,
-      year: parseInt(formData.targetYear),
-      startDate: startOfYear(new Date(formData.targetYear, 0, 1)),
-      endDate: endOfYear(new Date(formData.targetYear, 0, 1)),
+      year: parseISO(formData.startDate).getFullYear(),
+      startDate: parseISO(formData.startDate),
+      endDate: endOfMonth(parseISO(formData.endDate)),
       monthlyTargets,
       monthlyData: {},
       status: 'active',
@@ -149,7 +153,13 @@ export const GoalFormSimple = ({ onAddGoal }) => {
     };
 
     onAddGoal(newGoal);
-    setFormData({ title: '', yearlyTarget: '', unit: '', targetYear: selectedYear });
+    setFormData({ 
+      title: '', 
+      yearlyTarget: '', 
+      unit: '', 
+      startDate: format(new Date(), 'yyyy-MM-dd'),
+      endDate: format(endOfMonth(addMonths(new Date(), 11)), 'yyyy-MM-dd')
+    });
     setMonthlyTargets({});
     setIsAutoFilled(false);
   };
@@ -164,13 +174,13 @@ export const GoalFormSimple = ({ onAddGoal }) => {
           </Typography>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Just say "Read 24 books in 2025" - we'll break it down automatically!
+          Set your goal with custom start and end dates - we'll break it down automatically!
         </Typography>
         
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Goal Input */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="What's your goal?"
@@ -182,10 +192,10 @@ export const GoalFormSimple = ({ onAddGoal }) => {
               />
             </Grid>
             
-            <Grid item xs={6} sm={3}>
+            <Grid item xs={4}>
               <TextField
                 fullWidth
-                label="Yearly Target"
+                label="Total Target"
                 name="yearlyTarget"
                 type="number"
                 value={formData.yearlyTarget}
@@ -193,11 +203,11 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                 placeholder="24"
                 required
                 inputProps={{ min: 1, step: 0.1 }}
-                helperText="Total for the year"
+                helperText="Total amount"
               />
             </Grid>
             
-            <Grid item xs={6} sm={3}>
+            <Grid item xs={4}>
               <TextField
                 fullWidth
                 label="Unit"
@@ -210,47 +220,68 @@ export const GoalFormSimple = ({ onAddGoal }) => {
               />
             </Grid>
             
-            {/* Year Selection */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Target Year</InputLabel>
-                <Select
-                  name="targetYear"
-                  value={formData.targetYear}
-                  onChange={handleChange}
-                  label="Target Year"
-                >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                    <MenuItem key={year} value={year}>{year}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Grid item xs={4}>
+              <Box sx={{ p: 1, bgcolor: 'info.50', borderRadius: 1, textAlign: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'info.main' }}>
+                  {goalMonths.length}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  months
+                </Typography>
+              </Box>
+            </Grid>
+            
+            {/* Date Selection */}
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Start Date"
+                name="startDate"
+                type="date"
+                value={formData.startDate}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+                helperText="Goal start date"
+              />
+            </Grid>
+            
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="End Date"
+                name="endDate"
+                type="date"
+                value={formData.endDate}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+                helperText="Goal end date"
+              />
             </Grid>
             
             {/* Auto-calculation info */}
-            {formData.yearlyTarget && (
-              <Grid item xs={12} sm={6}>
+            {formData.yearlyTarget && goalMonths.length > 0 && (
+              <Grid item xs={12}>
                 <Box sx={{ p: 2, bgcolor: 'success.50', borderRadius: 2 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'success.main', mb: 1 }}>
                     🤖 Auto-Calculated
                   </Typography>
                   <Typography variant="body2">
-                    {(parseFloat(formData.yearlyTarget) / 12).toFixed(1)} {formData.unit} per month
+                    {(parseFloat(formData.yearlyTarget) / goalMonths.length).toFixed(1)} {formData.unit} per month
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Evenly distributed across 12 months
+                    Evenly distributed across {goalMonths.length} months ({format(parseISO(formData.startDate), 'MMM yyyy')} - {format(parseISO(formData.endDate), 'MMM yyyy')})
                   </Typography>
                 </Box>
               </Grid>
             )}
             
             {/* Monthly Breakdown */}
-            {formData.yearlyTarget && (
+            {formData.yearlyTarget && goalMonths.length > 0 && (
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CalendarMonth color="primary" />
-                    Monthly Breakdown for {formData.targetYear}
+                    Monthly Breakdown ({goalMonths.length} months)
                   </Typography>
                   <Tooltip title="Redistribute evenly across all months">
                     <Button 
@@ -273,7 +304,7 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {yearMonths.map((month, index) => {
+                      {goalMonths.map((month, index) => {
                         const monthKey = format(month, 'yyyy-MM');
                         const currentDate = new Date();
                         const isCurrentMonth = month.getFullYear() === currentDate.getFullYear() && 
@@ -298,7 +329,7 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                 {totalTarget > 0 && (
                   <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
-                      📊 Goal Summary for {formData.targetYear}
+                      📊 Goal Summary
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={6} sm={3}>
@@ -319,7 +350,7 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                       </Grid>
                       <Grid item xs={6} sm={3}>
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                          {filledMonths}/12
+                          {filledMonths}/{goalMonths.length}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Months planned
@@ -327,10 +358,10 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                       </Grid>
                       <Grid item xs={6} sm={3}>
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                          {formData.targetYear}
+                          {goalMonths.length}m
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Target year
+                          Duration
                         </Typography>
                       </Grid>
                     </Grid>
@@ -348,7 +379,7 @@ export const GoalFormSimple = ({ onAddGoal }) => {
                 disabled={!formData.title || !formData.unit || totalTarget === 0}
                 sx={{ height: 56, fontWeight: 600 }}
               >
-                🎯 Create Goal: {totalTarget} {formData.unit} in {formData.targetYear}
+                🎯 Create Goal: {totalTarget} {formData.unit} in {goalMonths.length} months
               </Button>
             </Grid>
           </Grid>

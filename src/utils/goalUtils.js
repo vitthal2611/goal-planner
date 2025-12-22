@@ -1,15 +1,30 @@
 import { differenceInDays, differenceInCalendarQuarters, differenceInCalendarMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 export const breakdownGoalTargets = (goal) => {
-  const { yearlyTarget } = goal;
+  const { yearlyTarget, startDate, endDate } = goal;
   const target = yearlyTarget || 0;
+  
+  if (!startDate || !endDate) {
+    return {
+      yearly: target,
+      quarterly: target / 4,
+      monthly: target / 12,
+      weekly: target / 52,
+      daily: target / 365
+    };
+  }
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const totalDays = Math.max(1, differenceInDays(end, start) + 1);
+  const totalMonths = Math.max(1, differenceInCalendarMonths(end, start) + 1);
   
   return {
     yearly: target,
-    quarterly: target / 4,
-    monthly: target / 12,
-    weekly: target / 52,
-    daily: target / 365
+    quarterly: target / Math.max(1, Math.ceil(totalMonths / 3)),
+    monthly: target / totalMonths,
+    weekly: target / Math.max(1, Math.ceil(totalDays / 7)),
+    daily: target / totalDays
   };
 };
 

@@ -6,21 +6,16 @@ import { GoalManagement } from './components/goals/GoalManagement';
 import { HabitManagement } from './components/habits/HabitManagement';
 import { Today } from './components/today/Today';
 import { Review } from './components/review/Review';
-import { YearSelector } from './components/common/YearSelector';
 import { AppLogo } from './components/common/AppLogo';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { AppProvider } from './context/AppContext';
-import { YearProvider, useYear } from './context/YearContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/auth/Login';
 import { lightTheme, darkTheme } from './theme/mobileTheme';
 import ErrorBoundary from './components/ErrorBoundary';
-import { ImprovedGoalCard } from './components/goals/ImprovedGoalCard';
-import { QuickAddGoalHabit } from './components/common/QuickAddGoalHabit';
 
 const AppContent = () => {
   const { user, loading, logout, error } = useAuth();
-  const { selectedYear, setSelectedYear } = useYear();
   const [currentTab, setCurrentTab] = useState(0);
   const [darkMode, setDarkMode] = useLocalStorage('darkMode', false);
   const theme = darkMode ? darkTheme : lightTheme;
@@ -209,12 +204,6 @@ const AppContent = () => {
         )}
         
         <Container maxWidth="xl" sx={{ py: { xs: 2, md: 5 }, flex: 1 }}>
-          {!isMobile && (
-            <YearSelector 
-              selectedYear={selectedYear} 
-              onYearChange={setSelectedYear}
-            />
-          )}
           <Fade in={true} timeout={300} key={currentTab}>
             <Box>
               {currentTab === 0 && <Today />}
@@ -279,11 +268,9 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <YearProvider>
-          <AppProvider>
-            <AppContent />
-          </AppProvider>
-        </YearProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

@@ -26,12 +26,21 @@ export const Today = () => {
   // Filter habits scheduled for selected date AND linked to active goals
   const daysHabits = useMemo(() => {
     return habits.filter(habit => {
+      // First check if habit is scheduled for this date
       if (!isHabitScheduledForDate(habit, selectedDate)) return false;
       
-      const linkedGoals = goals.filter(g => habit.goalIds.includes(g.id));
-      if (linkedGoals.length === 0) return true;
+      // If habit has no linked goals, show it (backward compatibility)
+      if (!habit.goalIds || habit.goalIds.length === 0) return true;
       
-      return linkedGoals.some(goal => isGoalActive(goal, selectedDate));
+      // Check if any linked goal is active on selected date
+      const linkedGoals = goals.filter(g => habit.goalIds.includes(g.id));
+      if (linkedGoals.length === 0) return true; // Show if goals don't exist
+      
+      return linkedGoals.some(goal => {
+        // Goal must have start/end dates to be filtered
+        if (!goal.startDate || !goal.endDate) return true;
+        return isGoalActive(goal, selectedDate);
+      });
     });
   }, [habits, goals, selectedDate]);
 

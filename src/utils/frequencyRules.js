@@ -4,8 +4,30 @@ import { getDay, eachDayOfInterval } from 'date-fns';
 /**
  * Check if a habit is scheduled for a specific date
  */
-export const isHabitScheduledForDate = (habit, date) => {
+export const isHabitScheduledForDate = (habit, date, goals = []) => {
   if (!habit.isActive) return false;
+
+  const checkDate = new Date(date);
+  
+  // Check if date is after habit creation date
+  if (habit.createdAt) {
+    const createdDate = new Date(habit.createdAt);
+    if (checkDate < createdDate) return false;
+  }
+  
+  // Check linked goals' end dates
+  if (habit.goalIds && habit.goalIds.length > 0 && goals.length > 0) {
+    const linkedGoals = goals.filter(g => habit.goalIds.includes(g.id));
+    if (linkedGoals.length > 0) {
+      // If any linked goal has ended, don't show the habit
+      const hasActiveGoal = linkedGoals.some(goal => {
+        if (!goal.endDate) return true; // No end date means always active
+        const goalEndDate = new Date(goal.endDate);
+        return checkDate <= goalEndDate;
+      });
+      if (!hasActiveGoal) return false;
+    }
+  }
 
   const { frequency, frequencyConfig = {} } = habit;
 

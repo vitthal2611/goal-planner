@@ -49,8 +49,8 @@ export const GoalForm = ({ onAddGoal }) => {
     const yearlyTarget = Object.values(monthlyTargets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
     const today = new Date();
-    const startDate = formData.startDate || today;
-    const endDate = formData.endDate || new Date(formData.year, 11, 31, 23, 59, 59);
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
 
     const newGoal = {
       id: generateId(),
@@ -59,10 +59,10 @@ export const GoalForm = ({ onAddGoal }) => {
       actualProgress: 0,
       unit: formData.unit,
       year: formData.year,
-      startDate,
-      endDate,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
       status: 'active',
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       monthlyTargets
     };
 

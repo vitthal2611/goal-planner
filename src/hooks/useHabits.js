@@ -18,8 +18,7 @@ export const useHabits = () => {
       if (snapshot.exists()) {
         setHabits(Object.values(snapshot.val()));
       } else {
-        const initialData = getInitialData();
-        set(habitsRef, initialData.habits).catch(console.error);
+        setHabits([]);
       }
     });
     return unsubscribe;

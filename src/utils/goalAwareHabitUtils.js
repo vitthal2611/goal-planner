@@ -8,10 +8,15 @@ export const getHabitDateRange = (habit, goals) => {
   const linkedGoal = goals.find(g => habit.goalIds.includes(g.id));
   if (!linkedGoal) return null;
   
-  return {
-    startDate: startOfDay(typeof linkedGoal.startDate === 'string' ? parseISO(linkedGoal.startDate) : new Date(linkedGoal.startDate)),
-    endDate: startOfDay(typeof linkedGoal.endDate === 'string' ? parseISO(linkedGoal.endDate) : new Date(linkedGoal.endDate))
-  };
+  const startDate = startOfDay(typeof linkedGoal.startDate === 'string' ? parseISO(linkedGoal.startDate) : new Date(linkedGoal.startDate));
+  const endDate = startOfDay(typeof linkedGoal.endDate === 'string' ? parseISO(linkedGoal.endDate) : new Date(linkedGoal.endDate));
+  
+  // Validate dates
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return null;
+  }
+  
+  return { startDate, endDate };
 };
 
 // Step 3: Get expected habit occurrences within date range
@@ -30,64 +35,53 @@ export const getCompletedHabitCount = (habitId, logs, startDate, endDate) => {
 
 // Step 5: Calculate consistency within goal timeline
 export const calculateGoalAwareConsistency = (habit, logs, goals, days = 30) => {
-  const dateRange = getHabitDateRange(habit, goals);
-  if (!dateRange) return { consistency: 0, completed: 0, expected: 0 };
-  
   const today = startOfDay(new Date());
-  const effectiveEndDate = minDate([today, dateRange.endDate]);
-  const effectiveStartDate = maxDate([
-    dateRange.startDate,
-    subDays(effectiveEndDate, days - 1)
-  ]);
+  const startDate = subDays(today, days - 1);
   
-  const expected = getExpectedHabitOccurrences(habit, effectiveStartDate, effectiveEndDate);
-  const completed = getCompletedHabitCount(habit.id, logs, effectiveStartDate, effectiveEndDate);
+  const completed = logs.filter(log => {
+    if (log.habitId !== habit.id || log.status !== 'done') return false;
+    const logDate = startOfDay(parseISO(log.date));
+    return logDate >= startDate && logDate <= today;
+  }).length;
   
   return {
-    consistency: expected > 0 ? Math.round((completed / expected) * 100) : 0,
+    consistency: days > 0 ? Math.round((completed / days) * 100) : 0,
     completed,
-    expected
+    expected: days
   };
 };
 
 export const calculateOverallConsistency = (habit, logs, goals) => {
-  const dateRange = getHabitDateRange(habit, goals);
-  if (!dateRange) return { consistency: 0, completed: 0, expected: 0 };
-  
-  const today = startOfDay(new Date());
-  const effectiveEndDate = minDate([today, dateRange.endDate]);
-  
-  const expected = getExpectedHabitOccurrences(habit, dateRange.startDate, effectiveEndDate);
-  const completed = getCompletedHabitCount(habit.id, logs, dateRange.startDate, effectiveEndDate);
+  const completed = logs.filter(log => log.habitId === habit.id && log.status === 'done').length;
+  const total = logs.filter(log => log.habitId === habit.id).length;
   
   return {
-    consistency: expected > 0 ? Math.round((completed / expected) * 100) : 0,
+    consistency: total > 0 ? Math.round((completed / total) * 100) : 0,
     completed,
-    expected
+    expected: total
   };
 };
 
 // Step 6: Calculate current streak (only scheduled days)
 export const getCurrentStreak = (habit, logs, goals) => {
-  const dateRange = getHabitDateRange(habit, goals);
-  if (!dateRange) return 0;
-  
   const today = startOfDay(new Date());
-  const effectiveEndDate = minDate([today, dateRange.endDate]);
+  
+  // Get all completed logs for this habit, sorted by date descending
+  const completedLogs = logs
+    .filter(log => log.habitId === habit.id && log.status === 'done')
+    .sort((a, b) => b.date.localeCompare(a.date));
+  
+  if (completedLogs.length === 0) return 0;
   
   let streak = 0;
-  let checkDate = effectiveEndDate;
+  let checkDate = today;
   
-  while (checkDate >= dateRange.startDate) {
-    if (!isHabitScheduledForDate(habit, checkDate)) {
-      checkDate = subDays(checkDate, 1);
-      continue;
-    }
-    
+  // Count consecutive days from today backwards
+  while (true) {
     const dateStr = checkDate.toISOString().split('T')[0];
-    const log = logs.find(l => l.habitId === habit.id && l.date === dateStr && l.status === 'done');
+    const hasLog = completedLogs.some(log => log.date === dateStr);
     
-    if (log) {
+    if (hasLog) {
       streak++;
       checkDate = subDays(checkDate, 1);
     } else {
@@ -100,38 +94,37 @@ export const getCurrentStreak = (habit, logs, goals) => {
 
 // Step 6: Calculate best streak (only scheduled days)
 export const getBestStreak = (habit, logs, goals) => {
-  const dateRange = getHabitDateRange(habit, goals);
-  if (!dateRange) return 0;
+  // Get all completed logs for this habit, sorted by date
+  const completedLogs = logs
+    .filter(log => log.habitId === habit.id && log.status === 'done')
+    .sort((a, b) => a.date.localeCompare(b.date));
   
-  const today = startOfDay(new Date());
-  const effectiveEndDate = minDate([today, dateRange.endDate]);
-  
-  // Validate dates before calling eachDayOfInterval
-  if (isNaN(dateRange.startDate.getTime()) || isNaN(effectiveEndDate.getTime()) || dateRange.startDate > effectiveEndDate) {
-    return 0;
-  }
-  
-  const scheduledDays = eachDayOfInterval({ 
-    start: dateRange.startDate, 
-    end: effectiveEndDate 
-  }).filter(day => isHabitScheduledForDate(habit, day));
+  if (completedLogs.length === 0) return 0;
   
   let maxStreak = 0;
   let currentStreak = 0;
+  let lastDate = null;
   
-  for (const day of scheduledDays) {
-    const dateStr = day.toISOString().split('T')[0];
-    const log = logs.find(l => l.habitId === habit.id && l.date === dateStr && l.status === 'done');
+  for (const log of completedLogs) {
+    const logDate = parseISO(log.date);
     
-    if (log) {
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
+    if (!lastDate) {
+      currentStreak = 1;
     } else {
-      currentStreak = 0;
+      const daysDiff = Math.abs((logDate - lastDate) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 1) {
+        currentStreak++;
+      } else {
+        maxStreak = Math.max(maxStreak, currentStreak);
+        currentStreak = 1;
+      }
     }
+    
+    lastDate = logDate;
   }
   
-  return maxStreak;
+  return Math.max(maxStreak, currentStreak);
 };
 
 // Step 7: Get all metrics for habit card
