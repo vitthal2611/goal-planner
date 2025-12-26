@@ -26,40 +26,47 @@ export const useHabitLogs = () => {
     return unsubscribe;
   }, [user]);
   
-  const logHabit = useCallback((habitId, status, habit, dateStr = null) => {
-    if (!user) return;
+  const logHabit = useCallback(async (habitId, status, habit, dateStr = null) => {
+    if (!user) return Promise.reject('No user');
     const targetDate = dateStr || formatDate(new Date());
     const targetDateObj = dateStr ? new Date(dateStr) : new Date();
     
-    if (habit && !isHabitScheduledForDate(habit, targetDateObj)) return;
+    if (habit && !isHabitScheduledForDate(habit, targetDateObj)) {
+      return Promise.reject('Habit not scheduled for this date');
+    }
     
-    setHabitLogs(prev => {
-      const existingLog = prev.find(log => log.habitId === habitId && log.date === targetDate);
-      let updated;
-      
-      if (status === 'remove' && existingLog) {
-        updated = prev.filter(log => log.id !== existingLog.id);
-      } else if (existingLog) {
-        updated = prev.map(log => 
-          log.id === existingLog.id 
-            ? { ...log, status, loggedAt: new Date().toISOString() }
-            : log
-        );
-      } else if (status !== 'remove') {
-        const newLog = {
-          id: generateId(),
-          habitId,
-          date: targetDate,
-          status,
-          loggedAt: new Date().toISOString(),
-        };
-        updated = [...prev, newLog];
-      } else {
-        return prev;
-      }
-      
-      set(ref(db, `users/${user.uid}/habitLogs`), updated).catch(console.error);
-      return updated;
+    return new Promise((resolve, reject) => {
+      setHabitLogs(prev => {
+        const existingLog = prev.find(log => log.habitId === habitId && log.date === targetDate);
+        let updated;
+        
+        if (status === 'remove' && existingLog) {
+          updated = prev.filter(log => log.id !== existingLog.id);
+        } else if (existingLog) {
+          updated = prev.map(log => 
+            log.id === existingLog.id 
+              ? { ...log, status, loggedAt: new Date().toISOString() }
+              : log
+          );
+        } else if (status !== 'remove') {
+          const newLog = {
+            id: generateId(),
+            habitId,
+            date: targetDate,
+            status,
+            loggedAt: new Date().toISOString(),
+          };
+          updated = [...prev, newLog];
+        } else {
+          resolve();
+          return prev;
+        }
+        
+        set(ref(db, `users/${user.uid}/habitLogs`), updated)
+          .then(() => resolve())
+          .catch(reject);
+        return updated;
+      });
     });
   }, [user]);
   

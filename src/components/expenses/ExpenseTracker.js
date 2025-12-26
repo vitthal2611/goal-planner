@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { Add, Receipt, CalendarMonth, Edit, Delete, Download } from '@mui/icons-material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Card, CardContent, Divider, IconButton, Tooltip } from '@mui/material';
+import { Add, Receipt, CalendarMonth, Edit, Delete, Download, AccountBalanceWallet, TrendingUp, TrendingDown, Visibility } from '@mui/icons-material';
 import { useFirebaseSync } from '../../hooks/useFirebaseSync';
 
 export const ExpenseTracker = () => {
@@ -21,6 +21,7 @@ export const ExpenseTracker = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [monthlyBudgets, setMonthlyBudgets] = useState({});
   const [envelopes, setEnvelopes] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -64,6 +65,10 @@ export const ExpenseTracker = () => {
             setEnvelopes(data.envelopes || []);
             setTransactions(data.transactions || []);
             setMonthlyBudgets(data.monthlyBudgets || {});
+            if (data.selectedMonth) {
+              setSelectedMonth(data.selectedMonth);
+              setCurrentMonth(data.selectedMonth);
+            }
             
             // Extract all unique payment modes from existing data
             const existingModes = new Set(['Cash', 'Card', 'UPI', 'Net Banking', 'Cheque']);
@@ -94,10 +99,10 @@ export const ExpenseTracker = () => {
   }, [user, loadData]);
 
   useEffect(() => {
-    if (user && (envelopes.length > 0 || transactions.length > 0 || Object.keys(monthlyBudgets).length > 0)) {
-      saveData([], [], [], [], envelopes, transactions, monthlyBudgets);
+    if (user && (envelopes.length > 0 || transactions.length > 0 || Object.keys(monthlyBudgets).length > 0 || selectedMonth)) {
+      saveData([], [], [], [], envelopes, transactions, monthlyBudgets, selectedMonth);
     }
-  }, [envelopes, transactions, monthlyBudgets, user, saveData]);
+  }, [envelopes, transactions, monthlyBudgets, selectedMonth, user, saveData]);
 
   useEffect(() => {
     // Carry forward balances when month changes
@@ -264,22 +269,29 @@ export const ExpenseTracker = () => {
     setOpenTransaction(false);
   };
 
-  const calculateModeBalances = () => {
-    const modeBalances = {};
+  const modeBalances = useMemo(() => {
+    const balances = {};
     transactions
       .filter(t => t.date.startsWith(currentMonth))
       .forEach(t => {
-        modeBalances[t.mode] = (modeBalances[t.mode] || 0) + t.amount;
+        balances[t.mode] = (balances[t.mode] || 0) + t.amount;
       });
     
     if (currentBudget.incomes) {
       currentBudget.incomes.forEach(inc => {
-        modeBalances[inc.mode] = (modeBalances[inc.mode] || 0) - inc.amount;
+        balances[inc.mode] = (balances[inc.mode] || 0) - inc.amount;
       });
     }
     
-    return modeBalances;
-  };
+    return balances;
+  }, [transactions, currentBudget.incomes, currentMonth]);
+
+  const sortedTransactions = useMemo(() => {
+    return transactions
+      .filter(t => t.date.startsWith(currentMonth))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 20);
+  }, [transactions, currentMonth]);
 
   const handleAllocateFunds = (envelopeId) => {
     const amount = parseFloat(allocateInputs[envelopeId]) || 0;
@@ -362,36 +374,67 @@ export const ExpenseTracker = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Expense Tracker
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <TextField
-            select
-            label="Month"
-            value={currentMonth}
-            onChange={(e) => setCurrentMonth(e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          >
-            {Array.from({length: 24}, (_, i) => {
-              const year = Math.floor(i / 12) + 2025;
-              const month = (i % 12) + 1;
-              const value = `${year}-${String(month).padStart(2, '0')}`;
-              const date = new Date(year, month - 1, 1);
-              return (
-                <MenuItem key={value} value={value}>
-                  {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </MenuItem>
-              );
-            })}
-          </TextField>
-          <Button variant="outlined" startIcon={<CalendarMonth />} onClick={() => setOpenBudget(true)}>
-            Add Income
-          </Button>
-        </Box>
-      </Box>
+      <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                💰 Expense Tracker
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Manage your budget with envelope method
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <TextField
+                select
+                label="Month"
+                value={currentMonth}
+                onChange={(e) => {
+                  setCurrentMonth(e.target.value);
+                  setSelectedMonth(e.target.value);
+                }}
+                size="small"
+                sx={{ 
+                  minWidth: 150,
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
+                    '&.Mui-focused fieldset': { borderColor: 'white' }
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.8)' },
+                  '& .MuiSelect-select': { color: 'white' }
+                }}
+              >
+                {Array.from({length: 24}, (_, i) => {
+                  const year = Math.floor(i / 12) + 2025;
+                  const month = (i % 12) + 1;
+                  const value = `${year}-${String(month).padStart(2, '0')}`;
+                  const date = new Date(year, month - 1, 1);
+                  return (
+                    <MenuItem key={value} value={value}>
+                      {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </MenuItem>
+                  );
+                })}
+              </TextField>
+              <Button 
+                variant="contained" 
+                startIcon={<CalendarMonth />} 
+                onClick={() => setOpenBudget(true)}
+                sx={{ 
+                  bgcolor: 'rgba(255,255,255,0.2)', 
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                Add Income
+              </Button>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
@@ -414,34 +457,73 @@ export const ExpenseTracker = () => {
         </Alert>
       )}
 
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Transactions" />
-          <Tab label="Envelopes" />
+      <Paper sx={{ mb: 3, borderRadius: 3, overflow: 'hidden' }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, v) => setActiveTab(v)} 
+          sx={{ 
+            '& .MuiTab-root': {
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '1rem',
+              minHeight: 56
+            },
+            '& .Mui-selected': {
+              color: 'primary.main'
+            }
+          }}
+        >
+          <Tab label="📊 Transactions" />
+          <Tab label="📁 Envelopes" />
         </Tabs>
       </Paper>
 
       <Grid container spacing={3}>
         {activeTab === 0 && (
           <Grid item xs={12}>
-            <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>Payment Mode Balances</Typography>
-              <Grid container spacing={2}>
-                {Object.entries(calculateModeBalances()).map(([mode, amount]) => (
-                  <Grid item xs={6} sm={4} md={3} key={mode}>
-                    <Paper sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2, textAlign: 'center' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{mode}</Typography>
-                      <Typography variant="h6" color={amount > 0 ? 'error.main' : 'success.main'} sx={{ mb: 0.5, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                        ₹{Math.abs(amount).toLocaleString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-                        {amount > 0 ? 'Spent' : 'Available'}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
+            <Card sx={{ mb: 3, borderRadius: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <AccountBalanceWallet sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Payment Mode Balances</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {Object.entries(modeBalances).map(([mode, amount]) => (
+                    <Grid item xs={6} sm={4} md={3} key={mode}>
+                      <Card sx={{ 
+                        p: 2, 
+                        textAlign: 'center',
+                        borderRadius: 2,
+                        background: amount > 0 
+                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)'
+                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                        color: 'white',
+                        boxShadow: 2
+                      }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, opacity: 0.9 }}>
+                          {mode}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.5 }}>
+                          {amount > 0 ? <TrendingDown sx={{ mr: 0.5, fontSize: '1rem' }} /> : <TrendingUp sx={{ mr: 0.5, fontSize: '1rem' }} />}
+                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                            ₹{Math.abs(amount).toLocaleString()}
+                          </Typography>
+                        </Box>
+                        <Chip 
+                          label={amount > 0 ? 'Spent' : 'Available'} 
+                          size="small"
+                          sx={{ 
+                            bgcolor: 'rgba(255,255,255,0.2)', 
+                            color: 'white',
+                            fontSize: '0.7rem'
+                          }}
+                        />
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
             
             <Paper sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
@@ -469,9 +551,7 @@ export const ExpenseTracker = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {transactions
-                      .filter(t => t.date.startsWith(currentMonth))
-                      .slice(-20).reverse().map(transaction => {
+                    {sortedTransactions.map(transaction => {
                       const envelope = envelopes.find(e => e.id === transaction.envelopeId);
                       return (
                         <TableRow key={transaction.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
@@ -599,7 +679,7 @@ export const ExpenseTracker = () => {
         <Grid item xs={12}>
           <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom>Payment Mode Balances</Typography>
-            {Object.entries(calculateModeBalances()).map(([mode, amount]) => (
+            {Object.entries(modeBalances).map(([mode, amount]) => (
               <Box key={mode} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography variant="subtitle2">{mode}</Typography>
                 <Typography variant="h6" color={amount > 0 ? 'error.main' : 'success.main'}>

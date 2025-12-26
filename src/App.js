@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { ThemeProvider, CssBaseline, Box, Container, Fade, Paper, ToggleButtonGroup, ToggleButton, IconButton, Typography, Stack, Button, BottomNavigation, BottomNavigationAction, useMediaQuery, Snackbar, Alert } from '@mui/material';
-import { Brightness4, Brightness7, TodayOutlined, DashboardOutlined, FlagOutlined, RepeatOutlined, AssessmentOutlined, LogoutOutlined, AccountBalanceWallet, GetApp } from '@mui/icons-material';
-import { DashboardScreen } from './components/dashboard/DashboardScreen';
-import { GoalManagement } from './components/goals/GoalManagement';
-import { HabitManagement } from './components/habits/HabitManagement';
-import { Today } from './components/today/Today';
-import { Review } from './components/review/Review';
+import { Brightness4, Brightness7, LogoutOutlined, AccountBalanceWallet, GetApp, CalendarViewWeek } from '@mui/icons-material';
+
+// Import date persistence test in development
+if (process.env.NODE_ENV === 'development') {
+  import('./tests/goalDatePersistence.test.js');
+}
+
+
+
+
+
 import { ExpenseTracker } from './components/expenses/ExpenseTracker';
+import { WeekTracker } from './components/WeekTracker';
 import { AppLogo } from './components/common/AppLogo';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { AppProvider } from './context/AppContext';
@@ -49,7 +55,7 @@ const AppContent = () => {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', gap: 2 }}>
-          <FlagOutlined sx={{ fontSize: 64, color: 'primary.main' }} />
+          <CalendarViewWeek sx={{ fontSize: 64, color: 'primary.main' }} />
           <Typography variant="h5" color="text.secondary">Loading...</Typography>
         </Box>
       </ThemeProvider>
@@ -79,12 +85,8 @@ const AppContent = () => {
   }
   
   const navItems = [
-    { label: 'Today', icon: <TodayOutlined /> },
-    { label: 'Expenses', icon: <AccountBalanceWallet /> },
-    { label: 'Dashboard', icon: <DashboardOutlined /> },
-    { label: 'Goals', icon: <FlagOutlined /> },
-    { label: 'Habits', icon: <RepeatOutlined /> },
-    { label: 'Review', icon: <AssessmentOutlined /> }
+    { label: 'Dashboard', icon: <CalendarViewWeek /> },
+    { label: 'Expenses', icon: <AccountBalanceWallet /> }
   ];
 
   return (
@@ -240,16 +242,12 @@ const AppContent = () => {
         <Container maxWidth="xl" sx={{ py: { xs: 2, md: 5 }, flex: 1 }}>
           <Fade in={true} timeout={300} key={currentTab}>
             <Box>
-              {currentTab === 0 && <Today />}
+              {currentTab === 0 && <WeekTracker />}
               {currentTab === 1 && (
                 <ErrorBoundary>
                   <ExpenseTracker />
                 </ErrorBoundary>
               )}
-              {currentTab === 2 && <DashboardScreen />}
-              {currentTab === 3 && <GoalManagement />}
-              {currentTab === 4 && <HabitManagement />}
-              {currentTab === 5 && <Review />}
             </Box>
           </Fade>
         </Container>

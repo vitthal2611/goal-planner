@@ -65,6 +65,27 @@ export const sampleGoals = [
       '2025-05': 0, '2025-06': 0, '2025-07': 0, '2025-08': 0,
       '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0
     }
+  },
+  {
+    id: 'goal-4',
+    title: 'Better Day Start',
+    yearlyTarget: 365,
+    actualProgress: 26,
+    unit: 'days',
+    year: 2025,
+    startDate: '2025-01-01T00:00:00.000Z',
+    endDate: '2025-12-31T23:59:59.999Z',
+    createdAt: '2025-01-01T00:00:00.000Z',
+    monthlyTargets: {
+      '2025-01': 31, '2025-02': 28, '2025-03': 31, '2025-04': 30,
+      '2025-05': 31, '2025-06': 30, '2025-07': 31, '2025-08': 31,
+      '2025-09': 30, '2025-10': 31, '2025-11': 30, '2025-12': 31
+    },
+    monthlyData: {
+      '2025-01': 26, '2025-02': 0, '2025-03': 0, '2025-04': 0,
+      '2025-05': 0, '2025-06': 0, '2025-07': 0, '2025-08': 0,
+      '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0
+    }
   }
 ];
 
@@ -111,6 +132,18 @@ export const sampleHabits = [
     goalIds: ['goal-3'],
     trigger: 'Before bed',
     time: '21:00',
+    location: 'Bedroom',
+    frequency: 'daily',
+    isActive: true,
+    startYear: 2025,
+    createdAt: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'habit-5',
+    name: 'Wake up at 7 AM',
+    goalIds: ['goal-4'],
+    trigger: 'Alarm rings',
+    time: '07:00',
     location: 'Bedroom',
     frequency: 'daily',
     isActive: true,

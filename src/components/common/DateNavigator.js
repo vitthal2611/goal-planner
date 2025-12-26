@@ -1,17 +1,32 @@
 import React from 'react';
 import { Box, IconButton, Typography, Chip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { format, addDays, subDays, isToday, isFuture } from 'date-fns';
+import { format, addDays, subDays, isToday, isFuture, startOfWeek, endOfWeek } from 'date-fns';
 
-export const DateNavigator = ({ selectedDate, onDateChange, preventFuture = true }) => {
+export const DateNavigator = ({ 
+  selectedDate, 
+  onDateChange, 
+  preventFuture = true, 
+  onPrevious, 
+  onNext, 
+  showWeekRange = false 
+}) => {
   const handlePrevious = () => {
-    onDateChange(subDays(selectedDate, 1));
+    if (onPrevious) {
+      onPrevious();
+    } else {
+      onDateChange(subDays(selectedDate, 1));
+    }
   };
 
   const handleNext = () => {
-    const nextDate = addDays(selectedDate, 1);
-    if (preventFuture && isFuture(nextDate)) return;
-    onDateChange(nextDate);
+    if (onNext) {
+      onNext();
+    } else {
+      const nextDate = addDays(selectedDate, 1);
+      if (preventFuture && isFuture(nextDate)) return;
+      onDateChange(nextDate);
+    }
   };
 
   const isNextDisabled = preventFuture && isFuture(addDays(selectedDate, 1));
@@ -42,11 +57,15 @@ export const DateNavigator = ({ selectedDate, onDateChange, preventFuture = true
         <ChevronLeft />
       </IconButton>
 
-      <Box sx={{ textAlign: 'center', minWidth: 200 }}>
+      <Box sx={{ textAlign: 'center', minWidth: showWeekRange ? 300 : 200 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-          {format(selectedDate, 'EEEE, MMM d')}
+          {showWeekRange ? (
+            `${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d, yyyy')}`
+          ) : (
+            format(selectedDate, 'EEEE, MMM d')
+          )}
         </Typography>
-        {isTodaySelected && (
+        {isTodaySelected && !showWeekRange && (
           <Chip
             label="Today"
             size="small"

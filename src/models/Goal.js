@@ -18,19 +18,21 @@ export class Goal {
     this.yearlyTarget = yearlyTarget;
     this.actualProgress = actualProgress;
     this.unit = unit;
-    this.startDate = startDate ? new Date(startDate) : new Date();
-    this.endDate = endDate ? new Date(endDate) : new Date(year || new Date().getFullYear(), 11, 31);
+    
+    // Ensure dates are properly handled
+    this.startDate = startDate ? (startDate instanceof Date ? startDate : new Date(startDate)) : new Date();
+    this.endDate = endDate ? (endDate instanceof Date ? endDate : new Date(endDate)) : new Date(year || new Date().getFullYear(), 11, 31);
+    this.createdAt = createdAt ? (createdAt instanceof Date ? createdAt : new Date(createdAt)) : new Date();
     
     // Safe year calculation
     if (year) {
       this.year = year;
     } else {
-      const startDateObj = new Date(this.startDate);
+      const startDateObj = this.startDate;
       this.year = isNaN(startDateObj.getTime()) ? new Date().getFullYear() : startDateObj.getFullYear();
     }
     
     this.status = status;
-    this.createdAt = createdAt ? new Date(createdAt) : new Date();
     this.monthlyData = monthlyData;
     this.monthlyTargets = monthlyTargets;
   }
