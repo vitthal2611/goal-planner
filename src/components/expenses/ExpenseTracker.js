@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab } from '@mui/material';
-import { Add, Receipt, CalendarMonth, Edit, Delete } from '@mui/icons-material';
+import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Add, Receipt, CalendarMonth, Edit, Delete, Download } from '@mui/icons-material';
 import { useFirebaseSync } from '../../hooks/useFirebaseSync';
 
 export const ExpenseTracker = () => {
@@ -335,6 +335,31 @@ export const ExpenseTracker = () => {
     }));
   };
 
+  const downloadExcel = () => {
+    const monthTransactions = transactions.filter(t => t.date.startsWith(currentMonth));
+    
+    const csvContent = [
+      ['Date', 'Description', 'Amount', 'Envelope', 'Payment Mode'],
+      ...monthTransactions.map(t => {
+        const envelope = envelopes.find(e => e.id === t.envelopeId);
+        return [t.date, t.narration, t.amount, envelope?.name || '', t.mode];
+      })
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transactions-${currentMonth}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const deleteTransaction = (transactionId) => {
+    setTransactions(transactions.filter(t => t.id !== transactionId));
+    setSuccess('Transaction deleted successfully');
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -399,32 +424,97 @@ export const ExpenseTracker = () => {
       <Grid container spacing={3}>
         {activeTab === 0 && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>Payment Mode Balances</Typography>
+              <Grid container spacing={2}>
+                {Object.entries(calculateModeBalances()).map(([mode, amount]) => (
+                  <Grid item xs={6} sm={4} md={3} key={mode}>
+                    <Paper sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2, textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{mode}</Typography>
+                      <Typography variant="h6" color={amount > 0 ? 'error.main' : 'success.main'} sx={{ mb: 0.5, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                        ₹{Math.abs(amount).toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+                        {amount > 0 ? 'Spent' : 'Available'}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+            
+            <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
                 <Typography variant="h6">Transactions</Typography>
-                <Button variant="contained" startIcon={<Receipt />} onClick={() => setOpenTransaction(true)} disabled={!canSpend}>
-                  Add Transaction
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
+                  <Button variant="outlined" startIcon={<Download />} onClick={downloadExcel} size="small">
+                    Download CSV
+                  </Button>
+                  <Button variant="contained" startIcon={<Receipt />} onClick={() => setOpenTransaction(true)} disabled={!canSpend} size="small">
+                    Add Transaction
+                  </Button>
+                </Box>
               </Box>
               
-              {transactions
-                .filter(t => t.date.startsWith(currentMonth))
-                .slice(-10).reverse().map(transaction => {
-                const envelope = envelopes.find(e => e.id === transaction.envelopeId);
-                return (
-                  <Box key={transaction.id} sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1, mb: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography variant="subtitle2">{transaction.narration}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {transaction.date} • {envelope?.name} • {transaction.mode}
-                        </Typography>
-                      </Box>
-                      <Typography variant="h6" color="error">-₹{transaction.amount.toLocaleString()}</Typography>
-                    </Box>
-                  </Box>
-                );
-              })}
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: { xs: 300, sm: 650 } }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Description</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Amount</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'table-cell' } }}>Envelope</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', md: 'table-cell' } }}>Payment Mode</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 600, py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {transactions
+                      .filter(t => t.date.startsWith(currentMonth))
+                      .slice(-20).reverse().map(transaction => {
+                      const envelope = envelopes.find(e => e.id === transaction.envelopeId);
+                      return (
+                        <TableRow key={transaction.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                          <TableCell sx={{ py: { xs: 1, sm: 2 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                            {new Date(transaction.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+                          </TableCell>
+                          <TableCell sx={{ py: { xs: 1, sm: 2 }, maxWidth: { xs: 120, sm: 200 } }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                              {transaction.narration}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'block', sm: 'none' }, fontSize: '0.65rem' }}>
+                              {envelope?.name} • {transaction.mode}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right" sx={{ py: { xs: 1, sm: 2 }, color: 'error.main', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.95rem' } }}>
+                            -₹{transaction.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell sx={{ py: { xs: 1, sm: 2 }, display: { xs: 'none', sm: 'table-cell' } }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                              {envelope?.name}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ py: { xs: 1, sm: 2 }, display: { xs: 'none', md: 'table-cell' } }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                              {transaction.mode}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center" sx={{ py: { xs: 1, sm: 2 } }}>
+                            <Button 
+                              size="small" 
+                              onClick={() => deleteTransaction(transaction.id)} 
+                              color="error"
+                              sx={{ minWidth: 'auto', p: { xs: 0.5, sm: 1 } }}
+                            >
+                              <Delete fontSize="small" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Paper>
           </Grid>
         )}

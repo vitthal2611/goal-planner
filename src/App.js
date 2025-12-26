@@ -80,11 +80,11 @@ const AppContent = () => {
   
   const navItems = [
     { label: 'Today', icon: <TodayOutlined /> },
+    { label: 'Expenses', icon: <AccountBalanceWallet /> },
     { label: 'Dashboard', icon: <DashboardOutlined /> },
     { label: 'Goals', icon: <FlagOutlined /> },
     { label: 'Habits', icon: <RepeatOutlined /> },
-    { label: 'Review', icon: <AssessmentOutlined /> },
-    { label: 'Expenses', icon: <AccountBalanceWallet /> }
+    { label: 'Review', icon: <AssessmentOutlined /> }
   ];
 
   return (
@@ -241,15 +241,15 @@ const AppContent = () => {
           <Fade in={true} timeout={300} key={currentTab}>
             <Box>
               {currentTab === 0 && <Today />}
-              {currentTab === 1 && <DashboardScreen />}
-              {currentTab === 2 && <GoalManagement />}
-              {currentTab === 3 && <HabitManagement />}
-              {currentTab === 4 && <Review />}
-              {currentTab === 5 && (
+              {currentTab === 1 && (
                 <ErrorBoundary>
                   <ExpenseTracker />
                 </ErrorBoundary>
               )}
+              {currentTab === 2 && <DashboardScreen />}
+              {currentTab === 3 && <GoalManagement />}
+              {currentTab === 4 && <HabitManagement />}
+              {currentTab === 5 && <Review />}
             </Box>
           </Fade>
         </Container>
