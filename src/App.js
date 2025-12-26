@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ThemeProvider, CssBaseline, Box, Container, Fade, Paper, ToggleButtonGroup, ToggleButton, IconButton, Typography, Stack, Button, BottomNavigation, BottomNavigationAction, useMediaQuery } from '@mui/material';
-import { Brightness4, Brightness7, TodayOutlined, DashboardOutlined, FlagOutlined, RepeatOutlined, AssessmentOutlined, LogoutOutlined } from '@mui/icons-material';
+import { ThemeProvider, CssBaseline, Box, Container, Fade, Paper, ToggleButtonGroup, ToggleButton, IconButton, Typography, Stack, Button, BottomNavigation, BottomNavigationAction, useMediaQuery, Snackbar, Alert } from '@mui/material';
+import { Brightness4, Brightness7, TodayOutlined, DashboardOutlined, FlagOutlined, RepeatOutlined, AssessmentOutlined, LogoutOutlined, AccountBalanceWallet, GetApp } from '@mui/icons-material';
 import { DashboardScreen } from './components/dashboard/DashboardScreen';
 import { GoalManagement } from './components/goals/GoalManagement';
 import { HabitManagement } from './components/habits/HabitManagement';
 import { Today } from './components/today/Today';
 import { Review } from './components/review/Review';
+import { ExpenseTracker } from './components/expenses/ExpenseTracker';
 import { AppLogo } from './components/common/AppLogo';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { AppProvider } from './context/AppContext';
@@ -18,8 +19,30 @@ const AppContent = () => {
   const { user, loading, logout, error } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [darkMode, setDarkMode] = useLocalStorage('darkMode', false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const theme = darkMode ? darkTheme : lightTheme;
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -60,7 +83,8 @@ const AppContent = () => {
     { label: 'Dashboard', icon: <DashboardOutlined /> },
     { label: 'Goals', icon: <FlagOutlined /> },
     { label: 'Habits', icon: <RepeatOutlined /> },
-    { label: 'Review', icon: <AssessmentOutlined /> }
+    { label: 'Review', icon: <AssessmentOutlined /> },
+    { label: 'Expenses', icon: <AccountBalanceWallet /> }
   ];
 
   return (
@@ -107,6 +131,11 @@ const AppContent = () => {
                   <Typography variant="body2" color="text.secondary">
                     {user?.email}
                   </Typography>
+                  {showInstallPrompt && (
+                    <Button onClick={handleInstallClick} variant="outlined" startIcon={<GetApp />} size="small">
+                      Install
+                    </Button>
+                  )}
                   <IconButton onClick={() => setDarkMode(!darkMode)}>
                     {darkMode ? <Brightness7 /> : <Brightness4 />}
                   </IconButton>
@@ -191,6 +220,11 @@ const AppContent = () => {
                 </Stack>
                 
                 <Stack direction="row" spacing={0.5} alignItems="center">
+                  {showInstallPrompt && (
+                    <IconButton onClick={handleInstallClick} size="small">
+                      <GetApp fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton onClick={() => setDarkMode(!darkMode)} size="small">
                     {darkMode ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
                   </IconButton>
@@ -211,6 +245,11 @@ const AppContent = () => {
               {currentTab === 2 && <GoalManagement />}
               {currentTab === 3 && <HabitManagement />}
               {currentTab === 4 && <Review />}
+              {currentTab === 5 && (
+                <ErrorBoundary>
+                  <ExpenseTracker />
+                </ErrorBoundary>
+              )}
             </Box>
           </Fade>
         </Container>

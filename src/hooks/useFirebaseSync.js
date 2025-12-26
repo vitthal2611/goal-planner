@@ -32,7 +32,7 @@ export const useFirebaseSync = () => {
     }
   };
 
-  const saveData = async (goals, habits, logs, reviews) => {
+  const saveData = async (goals, habits, logs, reviews, envelopes, transactions, monthlyBudgets) => {
     if (!user) return;
     setSyncing(true);
     try {
@@ -41,6 +41,9 @@ export const useFirebaseSync = () => {
         habits,
         logs,
         reviews,
+        envelopes,
+        transactions,
+        monthlyBudgets,
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
