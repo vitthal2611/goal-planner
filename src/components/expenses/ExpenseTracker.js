@@ -96,9 +96,13 @@ export const ExpenseTracker = () => {
   }, [user, loadData]);
 
   useEffect(() => {
-    if (dataLoaded && user && firebaseSync?.saveData) {
+    if (!dataLoaded || !user || !firebaseSync?.saveData) return;
+    
+    const timer = setTimeout(() => {
       firebaseSync.saveData(null, null, null, null, envelopes, transactions, monthlyBudgets, selectedMonth);
-    }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, [envelopes, transactions, monthlyBudgets, selectedMonth, dataLoaded, user, firebaseSync]);
 
 
@@ -288,7 +292,11 @@ export const ExpenseTracker = () => {
   const sortedTransactions = useMemo(() => {
     return transactions
       .filter(t => t.date.startsWith(currentMonth))
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => {
+        const dateCompare = new Date(b.date) - new Date(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return b.id.localeCompare(a.id);
+      })
       .slice(0, 20);
   }, [transactions, currentMonth]);
 
