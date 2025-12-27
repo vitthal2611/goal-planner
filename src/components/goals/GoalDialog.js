@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Divider } from '@mui/material';
+import { Add, Delete, Edit } from '@mui/icons-material';
 import { formatDateForInput } from '../../utils/dateUtils';
+import { MilestoneDialog } from './MilestoneDialog';
+import { format } from 'date-fns';
 
 export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
   const [formData, setFormData] = useState({
@@ -9,8 +12,11 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
     unit: '',
     actualProgress: 0,
     startDate: '',
-    endDate: ''
+    endDate: '',
+    milestones: []
   });
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState(null);
 
   useEffect(() => {
     if (goal) {
@@ -20,7 +26,8 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
         unit: goal.unit || '',
         actualProgress: goal.actualProgress || 0,
         startDate: formatDateForInput(goal.startDate),
-        endDate: formatDateForInput(goal.endDate)
+        endDate: formatDateForInput(goal.endDate),
+        milestones: goal.milestones || []
       });
     } else {
       setFormData({
@@ -29,7 +36,8 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
         unit: '',
         actualProgress: 0,
         startDate: '',
-        endDate: ''
+        endDate: '',
+        milestones: []
       });
     }
   }, [goal, open]);
@@ -46,11 +54,36 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
       endDate: new Date(formData.endDate),
       id: goal?.id || `goal_${Date.now()}`,
       year: new Date(formData.endDate).getFullYear(),
-      createdAt: goal?.createdAt || new Date()
+      createdAt: goal?.createdAt || new Date(),
+      milestones: formData.milestones
     };
     
     onSave(goalData);
     onClose();
+  };
+
+  const handleMilestoneSave = (milestoneData) => {
+    if (editingMilestone) {
+      setFormData(prev => ({
+        ...prev,
+        milestones: prev.milestones.map(m => 
+          m.id === editingMilestone.id ? milestoneData : m
+        )
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        milestones: [...prev.milestones, milestoneData]
+      }));
+    }
+    setEditingMilestone(null);
+  };
+
+  const handleMilestoneDelete = (milestoneId) => {
+    setFormData(prev => ({
+      ...prev,
+      milestones: prev.milestones.filter(m => m.id !== milestoneId)
+    }));
   };
 
   return (
@@ -106,6 +139,55 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
               fullWidth
               InputLabelProps={{ shrink: true }}
             />
+            
+            <Divider sx={{ my: 2 }} />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">Milestones</Typography>
+              <Button
+                startIcon={<Add />}
+                onClick={() => setMilestoneDialogOpen(true)}
+                size="small"
+              >
+                Add Milestone
+              </Button>
+            </Box>
+            
+            {formData.milestones.length > 0 ? (
+              <List>
+                {formData.milestones.map((milestone) => (
+                  <ListItem key={milestone.id}>
+                    <ListItemText
+                      primary={milestone.description}
+                      secondary={format(new Date(milestone.date), 'MMM dd, yyyy')}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        onClick={() => {
+                          setEditingMilestone(milestone);
+                          setMilestoneDialogOpen(true);
+                        }}
+                        size="small"
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        edge="end"
+                        onClick={() => handleMilestoneDelete(milestone.id)}
+                        size="small"
+                      >
+                        <Delete />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                No milestones added yet
+              </Typography>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -115,6 +197,16 @@ export const GoalDialog = ({ open, onClose, onSave, goal = null }) => {
           </Button>
         </DialogActions>
       </form>
+      
+      <MilestoneDialog
+        open={milestoneDialogOpen}
+        onClose={() => {
+          setMilestoneDialogOpen(false);
+          setEditingMilestone(null);
+        }}
+        onSave={handleMilestoneSave}
+        milestone={editingMilestone}
+      />
     </Dialog>
   );
 };

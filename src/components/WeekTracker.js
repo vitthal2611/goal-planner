@@ -114,54 +114,82 @@ export const WeekTracker = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
-      <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 3 }}>
-        <CardContent sx={{ py: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Dashboard sx={{ mr: 2, fontSize: 32 }} />
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                📊 Dashboard
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Track your goals and daily habits
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h3" sx={{ 
+          fontWeight: 800, 
+          mb: 1, 
+          color: 'text.primary',
+          letterSpacing: '-0.02em'
+        }}>
+          Dashboard
+        </Typography>
+        <Typography variant="h6" sx={{ 
+          color: 'text.secondary', 
+          fontWeight: 400,
+          mb: 0
+        }}>
+          Track your goals and build consistent habits
+        </Typography>
+      </Box>
       
-      {/* Goals Configuration */}
-      <GoalConfig />
+      {/* Goals Section */}
+      <Box sx={{ mb: 8 }}>
+        <GoalConfig />
+      </Box>
       
       {/* Week Navigator */}
-      <Card sx={{ mb: 3, borderRadius: 3, overflow: 'hidden' }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <CalendarToday sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>Week Navigator</Typography>
-          </Box>
-          <DateNavigator
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            onPrevious={handlePreviousWeek}
-            onNext={handleNextWeek}
-            preventFuture={false}
-            showWeekRange={true}
-          />
-        </CardContent>
-      </Card>
+      <Box sx={{ mb: 6 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <CalendarToday sx={{ mr: 2, color: 'primary.main', fontSize: 24 }} />
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            Week Navigator
+          </Typography>
+        </Box>
+        <Card sx={{ 
+          borderRadius: 3, 
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+        }}>
+          <CardContent sx={{ py: 2.5, px: 3 }}>
+            <DateNavigator
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+              onPrevious={handlePreviousWeek}
+              onNext={handleNextWeek}
+              preventFuture={false}
+              showWeekRange={true}
+            />
+          </CardContent>
+        </Card>
+      </Box>
 
       {habits.length === 0 ? (
-        <Card sx={{ textAlign: 'center', py: 8, border: '2px dashed', borderColor: 'primary.main', borderRadius: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-          <CardContent>
-            <Box sx={{ mb: 3 }}>
-              <TrackChanges sx={{ fontSize: 64, opacity: 0.7 }} />
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-              🎯 No habits to track yet
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <TrendingUp sx={{ mr: 2, color: 'primary.main', fontSize: 24 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Habit Tracker
             </Typography>
-            <Typography variant="body1" sx={{ mb: 4, opacity: 0.8 }}>
-              Create your first habit to start building better routines
+          </Box>
+        <Card sx={{ 
+          textAlign: 'center', 
+          py: 10, 
+          border: '2px dashed', 
+          borderColor: 'primary.main', 
+          borderRadius: 3, 
+          bgcolor: 'primary.50',
+          boxShadow: 'none'
+        }}>
+          <CardContent>
+            <Box sx={{ mb: 4 }}>
+              <TrackChanges sx={{ fontSize: 72, color: 'primary.main', opacity: 0.8 }} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, color: 'primary.main' }}>
+              No habits to track yet
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 5, color: 'text.secondary', maxWidth: 400, mx: 'auto' }}>
+              Create your first habit to start building consistent, positive routines
             </Typography>
             <Button 
               variant="contained" 
@@ -169,27 +197,40 @@ export const WeekTracker = () => {
               onClick={handleAddHabit} 
               size="large"
               sx={{ 
-                bgcolor: 'white', 
-                color: 'primary.main',
-                '&:hover': { bgcolor: 'grey.100' },
-                borderRadius: 2,
-                px: 4,
-                py: 1.5
+                borderRadius: 3,
+                px: 5,
+                py: 2,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: '0 4px 16px rgba(91, 124, 153, 0.3)'
               }}
             >
               Create Your First Habit
             </Button>
           </CardContent>
         </Card>
+        </Box>
       ) : (
-        <Card sx={{ mb: 3, borderRadius: 3, boxShadow: 3 }}>
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 4, 
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          border: '1px solid',
+          borderColor: 'divider'
+        }}>
         <CardHeader 
           title={
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                📅 Week of {format(weekStart, 'dd/MM/yyyy')} to {format(weekEnd, 'dd/MM/yyyy')}
-              </Typography>
+              <TrendingUp sx={{ mr: 2, color: 'primary.main', fontSize: 28 }} />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
+                  Habit Tracker
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  {format(weekStart, 'MMM dd')} - {format(weekEnd, 'MMM dd, yyyy')}
+                </Typography>
+              </Box>
             </Box>
           }
           action={
@@ -198,38 +239,54 @@ export const WeekTracker = () => {
               startIcon={<Add />}
               onClick={handleAddHabit}
               sx={{ 
-                borderRadius: 2,
+                borderRadius: 3,
                 textTransform: 'none',
-                fontWeight: 600
+                fontWeight: 600,
+                px: 3,
+                py: 1.5,
+                boxShadow: '0 2px 8px rgba(91, 124, 153, 0.2)'
               }}
             >
               Add Habit
             </Button>
           }
-          sx={{ pb: 1 }}
+          sx={{ pb: 2, px: 4, pt: 4 }}
         />
-        <CardContent sx={{ pt: 0, overflow: 'auto', px: { xs: 1, md: 3 } }}>
-          <Table size="small" sx={{ minWidth: { xs: 800, md: 900 } }}>
+        <CardContent sx={{ pt: 0, overflow: 'auto', px: { xs: 2, md: 4 }, pb: 4 }}>
+          <Table size="medium" sx={{ minWidth: { xs: 800, md: 900 } }}>
             <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, minWidth: 180 }}>Habit Name</TableCell>
-                <TableCell sx={{ fontWeight: 600, minWidth: 80 }}>Time</TableCell>
-                <TableCell sx={{ fontWeight: 600, minWidth: 150 }}>Goal</TableCell>
-                <TableCell sx={{ fontWeight: 600, minWidth: 200 }}>Metrics</TableCell>
-                {getDayHeaders().map((dayHeader, index) => (
-                  <TableCell key={index} align="center" sx={{ 
-                    fontWeight: 600, 
-                    minWidth: 70,
-                    bgcolor: format(daysInWeek[index], 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') ? 'primary.main' : 'transparent',
-                    color: format(daysInWeek[index], 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') ? 'white' : 'inherit',
-                    boxShadow: format(daysInWeek[index], 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') ? '0 0 10px rgba(25, 118, 210, 0.5)' : 'none',
-                    border: format(daysInWeek[index], 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') ? '3px solid' : 'none',
-                    borderColor: 'primary.dark'
-                  }}>
-                    {dayHeader}
-                  </TableCell>
-                ))}
-                <TableCell align="center" sx={{ fontWeight: 600, minWidth: 80 }}>
+              <TableRow sx={{ '& .MuiTableCell-head': { bgcolor: 'grey.50', py: 2 } }}>
+                <TableCell sx={{ fontWeight: 700, minWidth: 200, fontSize: '0.95rem', color: 'text.primary' }}>Habit</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 90, fontSize: '0.95rem', color: 'text.primary' }}>Time</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 160, fontSize: '0.95rem', color: 'text.primary' }}>Goal</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 220, fontSize: '0.95rem', color: 'text.primary' }}>Progress</TableCell>
+                {getDayHeaders().map((dayHeader, index) => {
+                  const isToday = format(daysInWeek[index], 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+                  return (
+                    <TableCell key={index} align="center" sx={{ 
+                      fontWeight: 700, 
+                      minWidth: 80,
+                      fontSize: '0.9rem',
+                      bgcolor: isToday ? 'primary.main' : 'grey.50',
+                      color: isToday ? 'white' : 'text.primary',
+                      borderRadius: isToday ? 2 : 0,
+                      position: 'relative',
+                      '&::after': isToday ? {
+                        content: '"Today"',
+                        position: 'absolute',
+                        bottom: 2,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: '0.7rem',
+                        fontWeight: 500,
+                        opacity: 0.9
+                      } : {}
+                    }}>
+                      {dayHeader}
+                    </TableCell>
+                  );
+                })}
+                <TableCell align="center" sx={{ fontWeight: 700, minWidth: 90, fontSize: '0.95rem', color: 'text.primary' }}>
                   Actions
                 </TableCell>
               </TableRow>
@@ -267,40 +324,60 @@ export const WeekTracker = () => {
                 const totalPossibleDays = allDaysThisMonth.length;
                 
                 return (
-                  <TableRow key={habit.id}>
-                    <TableCell>
+                  <TableRow key={habit.id} sx={{ '&:hover': { bgcolor: 'grey.25' } }}>
+                    <TableCell sx={{ py: 2.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ width: 32, height: 32, mr: 1.5, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
+                        <Avatar sx={{ 
+                          width: 40, 
+                          height: 40, 
+                          mr: 2, 
+                          bgcolor: 'primary.main', 
+                          fontSize: '1rem',
+                          fontWeight: 600
+                        }}>
                           {habit.name.charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}>
                             {habit.name}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400 }}>
                             {habit.trigger || 'No trigger set'}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 2.5 }}>
                       <Chip 
                         label={habit.time || 'Anytime'} 
-                        size="small" 
-                        variant="outlined"
+                        size="medium" 
+                        variant={habit.time ? 'filled' : 'outlined'}
                         color={habit.time ? 'primary' : 'default'}
+                        sx={{ 
+                          fontWeight: 500,
+                          minWidth: 70,
+                          borderRadius: 2
+                        }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 2.5 }}>
                       <Chip 
                         label={getGoalName(habit.goalIds)} 
-                        size="small" 
+                        size="medium" 
                         variant="filled"
                         color={habit.goalIds?.length > 0 ? 'success' : 'default'}
-                        sx={{ fontWeight: 500 }}
+                        sx={{ 
+                          fontWeight: 500,
+                          borderRadius: 2,
+                          maxWidth: 140,
+                          '& .MuiChip-label': {
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }
+                        }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 2.5 }}>
                       {(() => {
                         try {
                           const metrics = calculateHabitMetrics(habit, logs, goals);
@@ -324,23 +401,14 @@ export const WeekTracker = () => {
                       
                       return (
                         <TableCell key={index} align="center" sx={{
+                          py: 2.5,
                           bgcolor: isToday ? 'primary.main' : 'transparent',
                           color: isToday ? 'white' : 'inherit',
-                          border: isToday ? '3px solid' : 'none',
-                          borderColor: 'primary.dark',
-                          boxShadow: isToday ? '0 0 10px rgba(25, 118, 210, 0.5)' : 'none',
+                          borderRadius: isToday ? 2 : 0,
                           position: 'relative',
-                          '&::before': isToday ? {
-                            content: '""',
-                            position: 'absolute',
-                            top: -2,
-                            left: -2,
-                            right: -2,
-                            bottom: -2,
-                            background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
-                            borderRadius: 1,
-                            zIndex: -1
-                          } : {}
+                          border: isToday ? '2px solid' : 'none',
+                          borderColor: 'primary.dark',
+                          boxShadow: isToday ? '0 2px 8px rgba(25, 118, 210, 0.3)' : 'none'
                         }}>
                           {day > now ? '-' : (
                             !isScheduled ? (
@@ -370,10 +438,10 @@ export const WeekTracker = () => {
                         </TableCell>
                       );
                     })}
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ py: 2.5 }}>
                       <Tooltip title="Delete Habit">
                         <IconButton
-                          size="small"
+                          size="medium"
                           onClick={() => {
                             if (window.confirm('Are you sure you want to delete this habit?')) {
                               deleteHabit(habit.id);
@@ -381,10 +449,15 @@ export const WeekTracker = () => {
                           }}
                           sx={{ 
                             color: 'error.main',
-                            '&:hover': { bgcolor: 'error.light', color: 'error.dark' }
+                            '&:hover': { 
+                              bgcolor: 'error.50', 
+                              color: 'error.dark',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
                           }}
                         >
-                          <Delete fontSize="small" />
+                          <Delete />
                         </IconButton>
                       </Tooltip>
                     </TableCell>

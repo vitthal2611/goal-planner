@@ -64,18 +64,18 @@ const baseComponents = {
 export const lightTheme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#5B7C99', light: '#7B9AB8', dark: '#3D5A75' },
-    secondary: { main: '#7B68A6', light: '#9B88C6', dark: '#5B4886' },
-    success: { main: '#4CAF50', light: '#6FBF73', dark: '#388E3C' },
-    warning: { main: '#FF9800', light: '#FFB74D', dark: '#F57C00' },
-    error: { main: '#E57373', light: '#EF9A9A', dark: '#D32F2F' },
-    info: { main: '#64B5F6', light: '#90CAF9', dark: '#1976D2' },
-    background: { default: '#F5F7FA', paper: '#FFFFFF' },
-    text: { primary: '#2C3E50', secondary: '#7F8C8D' },
-    divider: '#E8EAED'
+    primary: { main: '#6B7280', light: '#9CA3AF', dark: '#4B5563' },
+    secondary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED' },
+    success: { main: '#10B981', light: '#34D399', dark: '#059669' },
+    warning: { main: '#F59E0B', light: '#FBBF24', dark: '#D97706' },
+    error: { main: '#EF4444', light: '#F87171', dark: '#DC2626' },
+    info: { main: '#3B82F6', light: '#60A5FA', dark: '#2563EB' },
+    background: { default: '#F9FAFB', paper: '#FFFFFF' },
+    text: { primary: '#111827', secondary: '#6B7280' },
+    divider: '#E5E7EB'
   },
   typography: baseTypography,
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 12 },
   components: {
     ...baseComponents,
     MuiButton: {
@@ -83,10 +83,10 @@ export const lightTheme = createTheme({
         ...baseComponents.MuiButton.styleOverrides,
         root: {
           ...baseComponents.MuiButton.styleOverrides.root,
-          '&:hover': { boxShadow: '0 2px 8px rgba(91, 124, 153, 0.15)' }
+          '&:hover': { boxShadow: '0 2px 8px rgba(107, 114, 128, 0.15)' }
         },
         contained: {
-          '&:hover': { boxShadow: '0 4px 12px rgba(91, 124, 153, 0.2)' }
+          '&:hover': { boxShadow: '0 4px 12px rgba(107, 114, 128, 0.2)' }
         }
       }
     }

@@ -373,19 +373,19 @@ export const ExpenseTracker = () => {
   };
 
   return (
-    <Box>
-      <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-        <CardContent>
+    <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Card sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', mx: { xs: -2, sm: 0 } }}>
+        <CardContent sx={{ py: { xs: 2, sm: 3 }, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                💰 Expense Tracker
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: 'text.primary', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                Expense Tracker
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 Manage your budget with envelope method
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
               <TextField
                 select
                 label="Month"
@@ -395,17 +395,7 @@ export const ExpenseTracker = () => {
                   setSelectedMonth(e.target.value);
                 }}
                 size="small"
-                sx={{ 
-                  minWidth: 150,
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255,255,255,0.1)',
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
-                    '&.Mui-focused fieldset': { borderColor: 'white' }
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.8)' },
-                  '& .MuiSelect-select': { color: 'white' }
-                }}
+                sx={{ minWidth: { xs: '100%', sm: 150 }, flex: { xs: 1, sm: 'none' } }}
               >
                 {Array.from({length: 24}, (_, i) => {
                   const year = Math.floor(i / 12) + 2025;
@@ -423,11 +413,8 @@ export const ExpenseTracker = () => {
                 variant="contained" 
                 startIcon={<CalendarMonth />} 
                 onClick={() => setOpenBudget(true)}
-                sx={{ 
-                  bgcolor: 'rgba(255,255,255,0.2)', 
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                  backdropFilter: 'blur(10px)'
-                }}
+                fullWidth={true}
+                sx={{ display: { xs: 'flex', sm: 'inline-flex' } }}
               >
                 Add Income
               </Button>
@@ -457,7 +444,7 @@ export const ExpenseTracker = () => {
         </Alert>
       )}
 
-      <Paper sx={{ mb: 3, borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, overflow: 'hidden', boxShadow: 0, border: '1px solid', borderColor: 'divider', mx: { xs: -2, sm: 0 } }}>
         <Tabs 
           value={activeTab} 
           onChange={(e, v) => setActiveTab(v)} 
@@ -481,7 +468,7 @@ export const ExpenseTracker = () => {
       <Grid container spacing={3}>
         {activeTab === 0 && (
           <Grid item xs={12}>
-            <Card sx={{ mb: 3, borderRadius: 3 }}>
+            <Card sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', mx: { xs: -2, sm: 0 } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <AccountBalanceWallet sx={{ mr: 1, color: 'primary.main' }} />
@@ -494,29 +481,26 @@ export const ExpenseTracker = () => {
                         p: 2, 
                         textAlign: 'center',
                         borderRadius: 2,
-                        background: amount > 0 
-                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)'
-                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
-                        color: 'white',
-                        boxShadow: 2
+                        boxShadow: 0,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper'
                       }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, opacity: 0.9 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>
                           {mode}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.5 }}>
-                          {amount > 0 ? <TrendingDown sx={{ mr: 0.5, fontSize: '1rem' }} /> : <TrendingUp sx={{ mr: 0.5, fontSize: '1rem' }} />}
-                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          {amount > 0 ? <TrendingDown sx={{ mr: 0.5, fontSize: '1rem', color: 'error.main' }} /> : <TrendingUp sx={{ mr: 0.5, fontSize: '1rem', color: 'success.main' }} />}
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: amount > 0 ? 'error.main' : 'success.main' }}>
                             ₹{Math.abs(amount).toLocaleString()}
                           </Typography>
                         </Box>
                         <Chip 
                           label={amount > 0 ? 'Spent' : 'Available'} 
                           size="small"
-                          sx={{ 
-                            bgcolor: 'rgba(255,255,255,0.2)', 
-                            color: 'white',
-                            fontSize: '0.7rem'
-                          }}
+                          color={amount > 0 ? 'error' : 'success'}
+                          variant="outlined"
+                          sx={{ fontSize: '0.7rem' }}
                         />
                       </Card>
                     </Grid>
@@ -525,7 +509,7 @@ export const ExpenseTracker = () => {
               </CardContent>
             </Card>
             
-            <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+            <Paper sx={{ p: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', borderRadius: { xs: 2, sm: 2 }, mx: { xs: -2, sm: 0 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
                 <Typography variant="h6">Transactions</Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
@@ -601,7 +585,7 @@ export const ExpenseTracker = () => {
         
         {activeTab === 1 && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
+            <Paper sx={{ p: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', borderRadius: { xs: 2, sm: 2 }, mx: { xs: -2, sm: 0 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Envelopes</Typography>
                 <Button variant="contained" startIcon={<Add />} onClick={() => setOpenEnvelope(true)}>
@@ -619,7 +603,7 @@ export const ExpenseTracker = () => {
                   
                   return (
                     <Grid item xs={12} sm={6} key={envelope.id}>
-                      <Paper sx={{ p: 2, bgcolor: balance < allocated * 0.2 ? 'error.light' : 'background.paper' }}>
+                      <Paper sx={{ p: 2, bgcolor: balance < allocated * 0.2 ? 'error.50' : 'background.paper', boxShadow: 0, border: '1px solid', borderColor: balance < allocated * 0.2 ? 'error.light' : 'divider', borderRadius: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle1" fontWeight={600}>{envelope.name}</Typography>
@@ -677,7 +661,7 @@ export const ExpenseTracker = () => {
         )}
 
         <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 2 }}>
+          <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 2, boxShadow: 0, border: '1px solid', borderColor: 'divider', borderRadius: { xs: 2, sm: 2 }, mx: { xs: -2, sm: 0 } }}>
             <Typography variant="h6" gutterBottom>Payment Mode Balances</Typography>
             {Object.entries(modeBalances).map(([mode, amount]) => (
               <Box key={mode} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -692,7 +676,7 @@ export const ExpenseTracker = () => {
             ))}
           </Paper>
 
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', borderRadius: { xs: 2, sm: 2 }, mx: { xs: -2, sm: 0 } }}>
             <Typography variant="h6" gutterBottom>Monthly Budget - {new Date(currentMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Typography>
             
             <Box sx={{ mb: 2 }}>

@@ -11,7 +11,8 @@ export class Goal {
     status = 'active',
     createdAt = new Date(),
     monthlyData = {},
-    monthlyTargets = {}
+    monthlyTargets = {},
+    milestones = []
   }) {
     this.id = id;
     this.title = title;
@@ -35,6 +36,7 @@ export class Goal {
     this.status = status;
     this.monthlyData = monthlyData;
     this.monthlyTargets = monthlyTargets;
+    this.milestones = milestones || [];
   }
 
   updateProgress(newProgress) {
@@ -49,6 +51,27 @@ export class Goal {
 
   isCompleted() {
     return this.actualProgress >= this.yearlyTarget;
+  }
+
+  addMilestone(milestone) {
+    this.milestones.push({
+      id: `milestone_${Date.now()}`,
+      date: milestone.date,
+      description: milestone.description,
+      completed: false,
+      createdAt: new Date()
+    });
+  }
+
+  updateMilestone(milestoneId, updates) {
+    const index = this.milestones.findIndex(m => m.id === milestoneId);
+    if (index !== -1) {
+      this.milestones[index] = { ...this.milestones[index], ...updates };
+    }
+  }
+
+  removeMilestone(milestoneId) {
+    this.milestones = this.milestones.filter(m => m.id !== milestoneId);
   }
 }
 
