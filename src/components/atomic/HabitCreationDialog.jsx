@@ -37,7 +37,7 @@ const WEEKDAYS = [
   { value: 0, label: 'Sun' }
 ];
 
-export default function HabitCreationDialog({ open, onClose, onSave, existingHabitsCount = 0 }) {
+export default function HabitCreationDialog({ open, onClose, onSave, existingHabitsCount = 0, editingHabit = null }) {
   const [formData, setFormData] = useState({
     name: '',
     trigger: '',
@@ -46,6 +46,20 @@ export default function HabitCreationDialog({ open, onClose, onSave, existingHab
     frequency: 'daily',
     weeklyDays: []
   });
+
+  // Load editing habit data when dialog opens
+  React.useEffect(() => {
+    if (editingHabit) {
+      setFormData({
+        name: editingHabit.name || '',
+        trigger: editingHabit.trigger || '',
+        time: editingHabit.time || '09:00',
+        location: editingHabit.location || '',
+        frequency: editingHabit.frequency || 'daily',
+        weeklyDays: editingHabit.weeklyDays || []
+      });
+    }
+  }, [editingHabit]);
   
   const [errors, setErrors] = useState([]);
   const [showIdentityHelper, setShowIdentityHelper] = useState(false);
@@ -65,12 +79,13 @@ export default function HabitCreationDialog({ open, onClose, onSave, existingHab
   };
 
   const handleSave = () => {
-    if (existingHabitsCount >= 5) {
+    if (!editingHabit && existingHabitsCount >= 5) {
       setErrors(['Maximum 5 active habits allowed. Archive or delete existing habits first.']);
       return;
     }
 
-    const habit = new AtomicHabit(formData);
+    const habitData = editingHabit ? { ...formData, id: editingHabit.id } : formData;
+    const habit = new AtomicHabit(habitData);
     const validation = AtomicHabit.validate(formData);
     
     if (!validation.isValid) {
@@ -104,7 +119,7 @@ export default function HabitCreationDialog({ open, onClose, onSave, existingHab
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create New Habit</DialogTitle>
+      <DialogTitle>{editingHabit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
       <DialogContent>
         {errors.length > 0 && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -221,7 +236,7 @@ export default function HabitCreationDialog({ open, onClose, onSave, existingHab
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         <Button onClick={handleSave} variant="contained">
-          Create Habit
+          {editingHabit ? 'Save Changes' : 'Create Habit'}
         </Button>
       </DialogActions>
     </Dialog>

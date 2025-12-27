@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ref, set, onValue } from 'firebase/database';
-import { db } from '../config/firebase';
+import { collection, doc, onSnapshot, setDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { getInitialData } from '../data/sampleData';
 import { ensureGoalDates, parseGoalDates } from '../utils/dateUtils';
 
 export const useGoals = (deleteHabitFn, habits) => {
@@ -14,54 +13,56 @@ export const useGoals = (deleteHabitFn, habits) => {
       setGoals([]);
       return;
     }
-    const goalsRef = ref(db, `users/${user.uid}/goals`);
-    const unsubscribe = onValue(goalsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const goalsData = Object.values(snapshot.val());
-        // Parse dates consistently from Firebase
-        const processedGoals = goalsData.map(goal => parseGoalDates(goal));
-        setGoals(processedGoals);
-      } else {
-        setGoals([]);
-      }
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, 'users', user.uid, 'goals'),
+      (snapshot) => {
+        const goalsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return parseGoalDates({ id: doc.id, ...data });
+        });
+        setGoals(goalsData);
+      },
+      (error) => console.error('Goals sync error:', error)
+    );
     return unsubscribe;
   }, [user]);
   
-  const addGoal = useCallback((newGoal) => {
+  const addGoal = useCallback(async (newGoal) => {
     if (!user) return;
-    // Ensure dates are properly formatted for Firebase
-    const goalWithDates = ensureGoalDates(newGoal);
-    setGoals(prev => {
-      const updated = [...prev, goalWithDates];
-      set(ref(db, `users/${user.uid}/goals`), updated).catch(console.error);
-      return updated;
-    });
+    try {
+      const goalId = newGoal.id || `goal_${Date.now()}`;
+      const goalWithDates = ensureGoalDates(newGoal);
+      await setDoc(doc(db, 'users', user.uid, 'goals', goalId), {
+        ...goalWithDates,
+        id: goalId,
+        createdAt: newGoal.createdAt || Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Add goal error:', error);
+    }
   }, [user]);
   
-  const updateGoal = useCallback((goalId, updates) => {
+  const updateGoal = useCallback(async (goalId, updates) => {
     if (!user) return;
-    // Ensure dates are properly formatted for Firebase
-    const updatesWithDates = ensureGoalDates(updates);
-    setGoals(prev => {
-      const updated = prev.map(goal => 
-        goal.id === goalId ? { ...goal, ...updatesWithDates } : goal
-      );
-      set(ref(db, `users/${user.uid}/goals`), updated).catch(console.error);
-      return updated;
-    });
+    try {
+      const updatesWithDates = ensureGoalDates(updates);
+      await setDoc(doc(db, 'users', user.uid, 'goals', goalId), updatesWithDates, { merge: true });
+    } catch (error) {
+      console.error('Update goal error:', error);
+    }
   }, [user]);
   
-  const deleteGoal = useCallback((goalId) => {
+  const deleteGoal = useCallback(async (goalId) => {
     if (!user) return;
-    // Delete associated habits first
-    habits?.filter(h => h.goalIds?.includes(goalId)).forEach(h => deleteHabitFn(h.id));
-    // Then delete the goal
-    setGoals(prev => {
-      const updated = prev.filter(goal => goal.id !== goalId);
-      set(ref(db, `users/${user.uid}/goals`), updated.length ? updated : null).catch(console.error);
-      return updated;
-    });
+    try {
+      // Delete associated habits first
+      const associatedHabits = habits?.filter(h => h.goalIds?.includes(goalId)) || [];
+      await Promise.all(associatedHabits.map(h => deleteHabitFn(h.id)));
+      // Then delete the goal
+      await deleteDoc(doc(db, 'users', user.uid, 'goals', goalId));
+    } catch (error) {
+      console.error('Delete goal error:', error);
+    }
   }, [user, deleteHabitFn, habits]);
   
   return { goals, addGoal, updateGoal, deleteGoal };

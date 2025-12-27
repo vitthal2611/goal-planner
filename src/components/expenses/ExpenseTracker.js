@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Card, CardContent, Divider, IconButton, Tooltip } from '@mui/material';
-import { Add, Receipt, CalendarMonth, Edit, Delete, Download, AccountBalanceWallet, TrendingUp, TrendingDown, Visibility } from '@mui/icons-material';
+import { Box, Paper, Typography, Grid, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Alert, MenuItem, Tabs, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Card, CardContent, Divider, IconButton, Tooltip, BottomNavigation, BottomNavigationAction, Fab } from '@mui/material';
+import { Add, Receipt, CalendarMonth, Edit, Delete, Download, AccountBalanceWallet, TrendingUp, TrendingDown, Visibility, Upload, Today, Dashboard as DashboardIcon } from '@mui/icons-material';
 import { useFirebaseSync } from '../../hooks/useFirebaseSync';
 
 export const ExpenseTracker = () => {
   const firebaseSync = useFirebaseSync();
-  const { user, saveData, loadData, subscribeToData } = firebaseSync || {
+  const { user, loadData } = firebaseSync || {
     user: null,
-    saveData: () => Promise.resolve(),
-    loadData: () => Promise.resolve(null),
-    subscribeToData: () => () => {}
+    loadData: () => Promise.resolve(null)
   };
   
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -50,6 +49,7 @@ export const ExpenseTracker = () => {
   const [incomes, setIncomes] = useState([]);
   const [openReset, setOpenReset] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [currentView, setCurrentView] = useState('today');
 
   const currentBudget = monthlyBudgets[currentMonth] || { incomes: [], allocated: 0, envelopes: {} };
   const totalIncome = currentBudget.incomes?.reduce((sum, inc) => sum + inc.amount, 0) || 0;
@@ -70,15 +70,10 @@ export const ExpenseTracker = () => {
               setCurrentMonth(data.selectedMonth);
             }
             
-            // Extract all unique payment modes from existing data
             const existingModes = new Set(['Cash', 'Card', 'UPI', 'Net Banking', 'Cheque']);
-            
-            // Add modes from transactions
             (data.transactions || []).forEach(t => {
               if (t.mode) existingModes.add(t.mode);
             });
-            
-            // Add modes from all income entries
             Object.values(data.monthlyBudgets || {}).forEach(budget => {
               if (budget.incomes) {
                 budget.incomes.forEach(inc => {
@@ -86,23 +81,27 @@ export const ExpenseTracker = () => {
                 });
               }
             });
-            
             setPaymentModes(Array.from(existingModes));
           }
+          setDataLoaded(true);
         } catch (error) {
           console.error('Error loading data:', error);
+          setDataLoaded(true);
         }
       };
-      
       loadUserData();
+    } else {
+      setDataLoaded(true);
     }
   }, [user, loadData]);
 
   useEffect(() => {
-    if (user && (envelopes.length > 0 || transactions.length > 0 || Object.keys(monthlyBudgets).length > 0 || selectedMonth)) {
-      saveData([], [], [], [], envelopes, transactions, monthlyBudgets, selectedMonth);
+    if (dataLoaded && user && firebaseSync?.saveData) {
+      firebaseSync.saveData(null, null, null, null, envelopes, transactions, monthlyBudgets, selectedMonth);
     }
-  }, [envelopes, transactions, monthlyBudgets, selectedMonth, user, saveData]);
+  }, [envelopes, transactions, monthlyBudgets, selectedMonth, dataLoaded, user, firebaseSync]);
+
+
 
   useEffect(() => {
     // Carry forward balances when month changes
@@ -367,14 +366,92 @@ export const ExpenseTracker = () => {
     URL.revokeObjectURL(url);
   };
 
+  const downloadEnvelopes = () => {
+    const csvContent = [
+      ['Envelope Name', 'Allocated', 'Spent', 'Balance'],
+      ...envelopes.map(env => {
+        const allocated = currentBudget.envelopes[env.id] || 0;
+        const spent = transactions
+          .filter(t => t.envelopeId === env.id && t.date.startsWith(currentMonth))
+          .reduce((sum, t) => sum + t.amount, 0);
+        const balance = allocated - spent;
+        return [env.name, allocated, spent, balance];
+      })
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `envelopes-${currentMonth}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCSV = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n');
+      const headers = lines[0].split(',');
+      
+      const importedTransactions = [];
+      const newEnvelopes = new Set(envelopes.map(e => e.name));
+      const envelopeMap = {};
+      
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const values = lines[i].split(',');
+        const [date, description, amount, envelopeName, mode] = values;
+        
+        if (!envelopeName || !amount) continue;
+        
+        let envelopeId = envelopes.find(e => e.name === envelopeName)?.id;
+        if (!envelopeId) {
+          if (!envelopeMap[envelopeName]) {
+            envelopeId = `env_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+            envelopeMap[envelopeName] = envelopeId;
+          } else {
+            envelopeId = envelopeMap[envelopeName];
+          }
+        }
+        
+        importedTransactions.push({
+          id: `txn_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          date: date || new Date().toISOString().split('T')[0],
+          narration: description || '',
+          amount: parseFloat(amount) || 0,
+          envelopeId,
+          mode: mode || 'Cash',
+          category: ''
+        });
+      }
+      
+      const newEnvelopesList = Object.entries(envelopeMap).map(([name, id]) => ({
+        id,
+        name,
+        createdAt: new Date().toISOString()
+      }));
+      
+      setEnvelopes(prev => [...prev, ...newEnvelopesList]);
+      setTransactions(prev => [...prev, ...importedTransactions]);
+      setSuccess(`Imported ${importedTransactions.length} transactions`);
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
   const deleteTransaction = (transactionId) => {
     setTransactions(transactions.filter(t => t.id !== transactionId));
     setSuccess('Transaction deleted successfully');
   };
 
   return (
-    <Box sx={{ px: { xs: 2, sm: 0 } }}>
-      <Card sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', mx: { xs: -2, sm: 0 } }}>
+    <Box sx={{ pb: 7 }}>
+      <Card sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider' }}>
         <CardContent sx={{ py: { xs: 2, sm: 3 }, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
@@ -382,7 +459,7 @@ export const ExpenseTracker = () => {
                 Expense Tracker
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                Manage your budget with envelope method
+                {currentView === 'today' ? 'Today\'s Overview' : 'Monthly Dashboard'}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
@@ -444,7 +521,63 @@ export const ExpenseTracker = () => {
         </Alert>
       )}
 
-      <Paper sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, overflow: 'hidden', boxShadow: 0, border: '1px solid', borderColor: 'divider', mx: { xs: -2, sm: 0 } }}>
+      {currentView === 'today' && (
+        <Box>
+          <Card sx={{ mb: 3, boxShadow: 0, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>Today's Summary</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Today's Spending</Typography>
+                  <Typography variant="h5" color="error.main">
+                    ₹{transactions
+                      .filter(t => t.date === new Date().toISOString().split('T')[0])
+                      .reduce((sum, t) => sum + t.amount, 0)
+                      .toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">This Month</Typography>
+                  <Typography variant="h5" color="error.main">
+                    ₹{transactions
+                      .filter(t => t.date.startsWith(currentMonth))
+                      .reduce((sum, t) => sum + t.amount, 0)
+                      .toLocaleString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          <Typography variant="h6" sx={{ mb: 2 }}>Recent Transactions</Typography>
+          {sortedTransactions.slice(0, 5).map(transaction => {
+            const envelope = envelopes.find(e => e.id === transaction.envelopeId);
+            return (
+              <Card key={transaction.id} sx={{ mb: 2, boxShadow: 0, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {transaction.narration}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {envelope?.name} • {transaction.mode}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" color="error.main">
+                      -₹{transaction.amount.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      )}
+
+      {currentView === 'dashboard' && (
+        <Box>
+        <Paper sx={{ mb: 3, borderRadius: { xs: 2, sm: 3 }, overflow: 'hidden', boxShadow: 0, border: '1px solid', borderColor: 'divider' }}>
         <Tabs 
           value={activeTab} 
           onChange={(e, v) => setActiveTab(v)} 
@@ -513,6 +646,10 @@ export const ExpenseTracker = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
                 <Typography variant="h6">Transactions</Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
+                  <Button variant="outlined" startIcon={<Upload />} component="label" size="small">
+                    Import CSV
+                    <input type="file" accept=".csv" hidden onChange={handleImportCSV} />
+                  </Button>
                   <Button variant="outlined" startIcon={<Download />} onClick={downloadExcel} size="small">
                     Download CSV
                   </Button>
@@ -588,9 +725,14 @@ export const ExpenseTracker = () => {
             <Paper sx={{ p: { xs: 2, sm: 3 }, boxShadow: 0, border: '1px solid', borderColor: 'divider', borderRadius: { xs: 2, sm: 2 }, mx: { xs: -2, sm: 0 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Envelopes</Typography>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setOpenEnvelope(true)}>
-                  Add Envelope
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button variant="outlined" startIcon={<Download />} onClick={downloadEnvelopes} size="small">
+                    Download
+                  </Button>
+                  <Button variant="contained" startIcon={<Add />} onClick={() => setOpenEnvelope(true)}>
+                    Add Envelope
+                  </Button>
+                </Box>
               </Box>
               
               <Grid container spacing={2}>
@@ -722,6 +864,32 @@ export const ExpenseTracker = () => {
           </Paper>
         </Grid>
       </Grid>
+      </Box>
+      )}
+
+      <Fab
+        color="primary"
+        sx={{ position: 'fixed', bottom: 80, right: 16 }}
+        onClick={() => setOpenTransaction(true)}
+      >
+        <Add />
+      </Fab>
+
+      <BottomNavigation
+        value={currentView}
+        onChange={(e, v) => setCurrentView(v)}
+        sx={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          borderTop: 1,
+          borderColor: 'divider'
+        }}
+      >
+        <BottomNavigationAction label="Today" value="today" icon={<Today />} />
+        <BottomNavigationAction label="Dashboard" value="dashboard" icon={<DashboardIcon />} />
+      </BottomNavigation>
 
       <Dialog open={openEnvelope} onClose={() => { setOpenEnvelope(false); setEditingEnvelope(null); setNewEnvelope({ name: '' }); }}>
         <DialogTitle>{editingEnvelope ? 'Edit Envelope' : 'Add New Envelope'}</DialogTitle>

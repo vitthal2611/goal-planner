@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -6,12 +6,37 @@ import {
   Box,
   Checkbox,
   Chip,
-  Divider
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
-import { AccessTime, LocationOn, Link } from '@mui/icons-material';
+import { AccessTime, LocationOn, Link, MoreVert, Edit, Delete } from '@mui/icons-material';
 import HabitChain from './HabitChain';
 
-const TimeSection = ({ title, habits, onToggleHabit, completions }) => {
+const TimeSection = ({ title, habits, onToggleHabit, completions, onEditHabit, onDeleteHabit }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedHabit, setSelectedHabit] = useState(null);
+
+  const handleMenuOpen = (event, habit) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedHabit(habit);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedHabit(null);
+  };
+
+  const handleEdit = () => {
+    onEditHabit(selectedHabit);
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    onDeleteHabit(selectedHabit.id);
+    handleMenuClose();
+  };
+
   if (habits.length === 0) return null;
 
   return (
@@ -20,7 +45,7 @@ const TimeSection = ({ title, habits, onToggleHabit, completions }) => {
         {title}
       </Typography>
       
-      {habits.map((habit, index) => (
+      {habits.map((habit) => (
         <Card 
           key={habit.id} 
           sx={{ 
@@ -101,15 +126,37 @@ const TimeSection = ({ title, habits, onToggleHabit, completions }) => {
                   days={7} 
                 />
               </Box>
+
+              <IconButton
+                size="small"
+                onClick={(e) => handleMenuOpen(e, habit)}
+              >
+                <MoreVert />
+              </IconButton>
             </Box>
           </CardContent>
         </Card>
       ))}
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleEdit}>
+          <Edit sx={{ mr: 1, fontSize: 20 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+          <Delete sx={{ mr: 1, fontSize: 20 }} />
+          Delete
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };
 
-export default function TodayView({ groupedHabits, onToggleHabit, completions }) {
+export default function TodayView({ groupedHabits, onToggleHabit, completions, onEditHabit, onDeleteHabit }) {
   const hasAnyHabits = Object.values(groupedHabits).some(habits => habits.length > 0);
 
   if (!hasAnyHabits) {
@@ -136,6 +183,8 @@ export default function TodayView({ groupedHabits, onToggleHabit, completions })
         habits={groupedHabits.Morning} 
         onToggleHabit={onToggleHabit}
         completions={completions}
+        onEditHabit={onEditHabit}
+        onDeleteHabit={onDeleteHabit}
       />
       
       <TimeSection 
@@ -143,6 +192,8 @@ export default function TodayView({ groupedHabits, onToggleHabit, completions })
         habits={groupedHabits.Afternoon} 
         onToggleHabit={onToggleHabit}
         completions={completions}
+        onEditHabit={onEditHabit}
+        onDeleteHabit={onDeleteHabit}
       />
       
       <TimeSection 
@@ -150,6 +201,8 @@ export default function TodayView({ groupedHabits, onToggleHabit, completions })
         habits={groupedHabits.Evening} 
         onToggleHabit={onToggleHabit}
         completions={completions}
+        onEditHabit={onEditHabit}
+        onDeleteHabit={onDeleteHabit}
       />
     </Box>
   );
