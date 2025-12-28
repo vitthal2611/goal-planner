@@ -51,7 +51,7 @@ const EnvelopeBudget = () => {
   const [newTransaction, setNewTransaction] = useState({ envelope: '', amount: '', description: '' });
   const [notification, setNotification] = useState({ type: '', message: '' });
   const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
-  const [showTransactions, setShowTransactions] = useState(false);
+  const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
 
   // Get current period's data
   const getCurrentPeriodData = () => {
@@ -347,28 +347,29 @@ const EnvelopeBudget = () => {
               ))}
             </select>
           </div>
-          <div className="control-group">
-            <label>Monthly Income</label>
-            <input 
-              type="number" 
-              step="0.01"
-              min="0"
-              value={income} 
-              onChange={(e) => setIncome(parseFloat(e.target.value) || 0)} 
-              placeholder="0.00"
-            />
-          </div>
-          <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
-            🔄 Start Next Period
-          </button>
-          <button className="btn btn-secondary" onClick={exportData}>
-            📤 Export
-          </button>
-          <label className="btn btn-secondary">
-            📥 Import
-            <input type="file" accept=".json" onChange={importData} style={{display: 'none'}} />
-          </label>
         </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-btn ${activeView === 'daily' ? 'active' : ''}`}
+          onClick={() => setActiveView('daily')}
+        >
+          ⚡ Daily
+        </button>
+        <button 
+          className={`tab-btn ${activeView === 'spending' ? 'active' : ''}`}
+          onClick={() => setActiveView('spending')}
+        >
+          💳 Spending
+        </button>
+        <button 
+          className={`tab-btn ${activeView === 'budget' ? 'active' : ''}`}
+          onClick={() => setActiveView('budget')}
+        >
+          📊 Budget
+        </button>
       </div>
 
       {notification.message && (
@@ -396,220 +397,310 @@ const EnvelopeBudget = () => {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h3>💼 Budget Allocation</h3>
-        </div>
-        <div className="card-content">
-          <div className="budget-grid">
-            {Object.keys(envelopes).map(category => (
-              <div key={category} className="category-card">
-                <div className="category-title">
-                  {category === 'needs' ? '🏠 Needs' : 
-                   category === 'savings' ? '💰 Savings' : '🎯 Wants'}
+      {/* Conditional Views */}
+      {activeView === 'daily' ? (
+        <>
+          {/* Quick Expense Interface */}
+          <div className="card">
+            <div className="card-header">
+              <h3>⚡ Quick Expense</h3>
+            </div>
+            <div className="card-content">
+              <div className="quick-expense-form">
+                <div className="quick-form-row">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    placeholder="₹ Amount" 
+                    value={newTransaction.amount}
+                    onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
+                    className="quick-amount"
+                  />
+                  <select 
+                    value={newTransaction.envelope} 
+                    onChange={(e) => setNewTransaction({...newTransaction, envelope: e.target.value})}
+                    className="quick-envelope"
+                  >
+                    <option value="">Select Envelope</option>
+                    {Object.keys(envelopes).map(category => 
+                      Object.keys(envelopes[category]).map(name => (
+                        <option key={`${category}.${name}`} value={`${category}.${name}`}>
+                          {name}
+                        </option>
+                      ))
+                    )}
+                  </select>
                 </div>
-                {Object.keys(envelopes[category]).map(name => (
-                  <div key={name} className="envelope-input">
-                    <label>{name}:</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      min="0"
-                      value={envelopes[category][name].budgeted}
-                      onChange={(e) => allocateBudget(category, name, e.target.value)}
-                      placeholder="0.00"
-                    />
-                    <button 
-                      className="btn-delete"
-                      onClick={() => setDeleteConfirm({ type: 'envelope', id: `${category}.${name}`, name })}
-                      title="Delete envelope"
-                    >
-                      🗑️
-                    </button>
+                <div className="quick-form-row">
+                  <input 
+                    type="text" 
+                    placeholder="Description (optional)" 
+                    value={newTransaction.description}
+                    onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
+                    className="quick-description"
+                  />
+                  <button className="btn btn-success quick-add-btn" onClick={addTransaction}>
+                    ➕ Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Today's Transactions */}
+          <div className="card">
+            <div className="card-header">
+              <h3>📅 Today's Expenses</h3>
+            </div>
+            <div className="table-container">
+              <table className="envelope-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Envelope</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.filter(t => t.date === new Date().toISOString().split('T')[0]).reverse().map(transaction => (
+                    <tr key={transaction.id}>
+                      <td>{transaction.description}</td>
+                      <td style={{textTransform: 'capitalize'}}>
+                        {transaction.envelope.replace('.', ' - ')}
+                      </td>
+                      <td>₹{transaction.amount.toLocaleString()}</td>
+                      <td>
+                        <button 
+                          className="btn-delete"
+                          onClick={() => setDeleteConfirm({ 
+                            type: 'transaction', 
+                            id: transaction.id, 
+                            name: transaction.description 
+                          })}
+                          title="Delete transaction"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.filter(t => t.date === new Date().toISOString().split('T')[0]).length === 0 && (
+                    <tr>
+                      <td colSpan="4" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No expenses today</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : activeView === 'spending' ? (
+        <>
+          {/* Envelope Status */}
+          <div className="card">
+            <div className="card-header">
+              <h3>📊 Envelope Status</h3>
+            </div>
+            <div className="table-container">
+              <table className="envelope-table">
+                <thead>
+                  <tr>
+                    <th>Envelope</th>
+                    <th>Category</th>
+                    <th>Budgeted</th>
+                    <th>Spent</th>
+                    <th>Remaining</th>
+                    <th>Rollover</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(envelopes).map(category => 
+                    Object.keys(envelopes[category]).map(name => {
+                      const env = envelopes[category][name];
+                      const remaining = env.budgeted + env.rollover - env.spent;
+                      const status = getStatus(env);
+                      return (
+                        <tr key={`${category}.${name}`}>
+                          <td style={{textTransform: 'capitalize'}}>{name}</td>
+                          <td style={{textTransform: 'capitalize'}}>{category}</td>
+                          <td>₹{env.budgeted.toLocaleString()}</td>
+                          <td>₹{env.spent.toLocaleString()}</td>
+                          <td>₹{remaining.toLocaleString()}</td>
+                          <td>₹{env.rollover.toLocaleString()}</td>
+                          <td>
+                            <span className={`status ${status}`}>
+                              {status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div className="card">
+            <div className="card-header">
+              <h3>📝 Recent Transactions</h3>
+            </div>
+            <div className="table-container">
+              <table className="envelope-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Envelope</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.slice(-10).reverse().map(transaction => (
+                    <tr key={transaction.id}>
+                      <td>{transaction.date}</td>
+                      <td>{transaction.description}</td>
+                      <td style={{textTransform: 'capitalize'}}>
+                        {transaction.envelope.replace('.', ' - ')}
+                      </td>
+                      <td>₹{transaction.amount.toLocaleString()}</td>
+                      <td>
+                        <button 
+                          className="btn-delete"
+                          onClick={() => setDeleteConfirm({ 
+                            type: 'transaction', 
+                            id: transaction.id, 
+                            name: transaction.description 
+                          })}
+                          title="Delete transaction"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No transactions yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Budget Controls */}
+          <div className="card">
+            <div className="card-header">
+              <h3>💼 Budget Controls</h3>
+            </div>
+            <div className="card-content">
+              <div className="control-group">
+                <label>Monthly Income</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  value={income} 
+                  onChange={(e) => setIncome(parseFloat(e.target.value) || 0)} 
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="budget-actions">
+                <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
+                  🔄 Start Next Period
+                </button>
+                <button className="btn btn-secondary" onClick={exportData}>
+                  📤 Export
+                </button>
+                <label className="btn btn-secondary">
+                  📥 Import
+                  <input type="file" accept=".json" onChange={importData} style={{display: 'none'}} />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Budget Allocation */}
+          <div className="card">
+            <div className="card-header">
+              <h3>💼 Budget Allocation</h3>
+            </div>
+            <div className="card-content">
+              <div className="budget-grid">
+                {Object.keys(envelopes).map(category => (
+                  <div key={category} className="category-card">
+                    <div className="category-title">
+                      {category === 'needs' ? '🏠 Needs' : 
+                       category === 'savings' ? '💰 Savings' : '🎯 Wants'}
+                    </div>
+                    {Object.keys(envelopes[category]).map(name => (
+                      <div key={name} className="envelope-input">
+                        <label>{name}:</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          min="0"
+                          value={envelopes[category][name].budgeted}
+                          onChange={(e) => allocateBudget(category, name, e.target.value)}
+                          placeholder="0.00"
+                        />
+                        <button 
+                          className="btn-delete"
+                          onClick={() => setDeleteConfirm({ type: 'envelope', id: `${category}.${name}`, name })}
+                          title="Delete envelope"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Quick Add Expense - Floating */}
-      <div className="quick-expense-float">
-        <div className="quick-expense-form">
-          <div className="quick-form-row">
-            <input 
-              type="number" 
-              step="0.01"
-              min="0"
-              placeholder="₹ Amount" 
-              value={newTransaction.amount}
-              onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
-              className="quick-amount"
-            />
-            <select 
-              value={newTransaction.envelope} 
-              onChange={(e) => setNewTransaction({...newTransaction, envelope: e.target.value})}
-              className="quick-envelope"
-            >
-              <option value="">Select Envelope</option>
-              {Object.keys(envelopes).map(category => 
-                Object.keys(envelopes[category]).map(name => (
-                  <option key={`${category}.${name}`} value={`${category}.${name}`}>
-                    {name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-          <div className="quick-form-row">
-            <input 
-              type="text" 
-              placeholder="Description (optional)" 
-              value={newTransaction.description}
-              onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
-              className="quick-description"
-            />
-            <button className="btn btn-success quick-add-btn" onClick={addTransaction}>
-              ➕ Add
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3>📊 Envelope Status</h3>
-        </div>
-        <div className="table-container">
-          <table className="envelope-table">
-            <thead>
-              <tr>
-                <th>Envelope</th>
-                <th>Category</th>
-                <th>Budgeted</th>
-                <th>Spent</th>
-                <th>Remaining</th>
-                <th>Rollover</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(envelopes).map(category => 
-                Object.keys(envelopes[category]).map(name => {
-                  const env = envelopes[category][name];
-                  const remaining = env.budgeted + env.rollover - env.spent;
-                  const status = getStatus(env);
-                  return (
-                    <tr key={`${category}.${name}`}>
-                      <td style={{textTransform: 'capitalize'}}>{name}</td>
-                      <td style={{textTransform: 'capitalize'}}>{category}</td>
-                      <td>₹{env.budgeted.toLocaleString()}</td>
-                      <td>₹{env.spent.toLocaleString()}</td>
-                      <td>₹{remaining.toLocaleString()}</td>
-                      <td>₹{env.rollover.toLocaleString()}</td>
-                      <td>
-                        <span className={`status ${status}`}>
-                          {status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3>📝 Recent Transactions</h3>
-          <button 
-            className="btn btn-secondary"
-            onClick={() => setShowTransactions(!showTransactions)}
-          >
-            {showTransactions ? 'Hide' : 'Show'} Transactions
-          </button>
-        </div>
-        {showTransactions && (
-          <div className="table-container">
-            <table className="envelope-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Envelope</th>
-                  <th>Amount</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.slice(-10).reverse().map(transaction => (
-                  <tr key={transaction.id}>
-                    <td>{transaction.date}</td>
-                    <td>{transaction.description}</td>
-                    <td style={{textTransform: 'capitalize'}}>
-                      {transaction.envelope.replace('.', ' - ')}
-                    </td>
-                    <td>₹{transaction.amount.toLocaleString()}</td>
-                    <td>
-                      <button 
-                        className="btn-delete"
-                        onClick={() => setDeleteConfirm({ 
-                          type: 'transaction', 
-                          id: transaction.id, 
-                          name: transaction.description 
-                        })}
-                        title="Delete transaction"
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {transactions.length === 0 && (
-                  <tr>
-                    <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No transactions yet</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3>📈 Monthly Insights</h3>
-        </div>
-        <div className="card-content">
-          <div className="insights-grid">
-            <div className="insight-item healthy">
-              <div className="insight-label">✅ Healthy Envelopes</div>
-              <div className="insight-value">
-                {insights.healthy.length > 0 ? insights.healthy.join(', ') : 'None'}
+          {/* Monthly Insights */}
+          <div className="card">
+            <div className="card-header">
+              <h3>📈 Monthly Insights</h3>
+            </div>
+            <div className="card-content">
+              <div className="insights-grid">
+                <div className="insight-item healthy">
+                  <div className="insight-label">✅ Healthy Envelopes</div>
+                  <div className="insight-value">
+                    {insights.healthy.length > 0 ? insights.healthy.join(', ') : 'None'}
+                  </div>
+                </div>
+                <div className="insight-item warning">
+                  <div className="insight-label">⚠️ Warning Envelopes</div>
+                  <div className="insight-value">
+                    {insights.warnings.length > 0 ? insights.warnings.join(', ') : 'None'}
+                  </div>
+                </div>
+                <div className="insight-item blocked">
+                  <div className="insight-label">🚫 Blocked Envelopes</div>
+                  <div className="insight-value">
+                    {insights.blocked.length > 0 ? insights.blocked.join(', ') : 'None'}
+                  </div>
+                </div>
+                <div className="insight-item blocked">
+                  <div className="insight-label">❌ Blocked Transactions</div>
+                  <div className="insight-value">{blockedTransactions.length} transactions</div>
+                </div>
               </div>
             </div>
-            <div className="insight-item warning">
-              <div className="insight-label">⚠️ Warning Envelopes</div>
-              <div className="insight-value">
-                {insights.warnings.length > 0 ? insights.warnings.join(', ') : 'None'}
-              </div>
-            </div>
-            <div className="insight-item blocked">
-              <div className="insight-label">🚫 Blocked Envelopes</div>
-              <div className="insight-value">
-                {insights.blocked.length > 0 ? insights.blocked.join(', ') : 'None'}
-              </div>
-            </div>
-            <div className="insight-item blocked">
-              <div className="insight-label">❌ Blocked Transactions</div>
-              <div className="insight-value">{blockedTransactions.length} transactions</div>
-            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {deleteConfirm.type && (
         <div className="modal-overlay" onClick={() => setDeleteConfirm({ type: '', id: '', name: '' })}>
