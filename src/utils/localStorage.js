@@ -1,54 +1,57 @@
-// localStorage utility functions
-const STORAGE_KEY = 'envelopeBudget_v1';
+// Firebase storage utility functions
+import { saveData, getData } from '../services/database.js';
+import { auth } from '../config/firebase.js';
+import { getGlobalEnvelopes } from './globalEnvelopes.js';
 
-export const saveToLocalStorage = (data) => {
+const getStoragePath = () => {
+  const user = auth.currentUser;
+  return user ? `users/${user.uid}/envelopeBudget_v1` : 'envelopeBudget_v1';
+};
+
+export const saveToLocalStorage = async (data) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('No authenticated user for saving');
+      return { success: false, error: 'No authenticated user' };
+    }
+    console.log('Saving to path:', getStoragePath()); // Debug log
+    const result = await saveData(getStoragePath(), {
       ...data,
       lastUpdated: new Date().toISOString()
-    }));
+    });
+    return result;
   } catch (error) {
-    console.error('Failed to save to localStorage:', error);
+    console.error('Failed to save to Firebase:', error);
+    return { success: false, error: error.message };
   }
 };
 
-export const loadFromLocalStorage = () => {
+export const loadFromLocalStorage = async () => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : null;
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('No authenticated user');
+      return null;
+    }
+    const result = await getData(getStoragePath());
+    console.log('Firebase result:', result); // Debug log
+    return result.success ? result.data : null;
   } catch (error) {
-    console.error('Failed to load from localStorage:', error);
+    console.error('Failed to load from Firebase:', error);
     return null;
   }
 };
 
-export const clearLocalStorage = () => {
+export const clearLocalStorage = async () => {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const result = await saveData(getStoragePath(), null);
+    return result;
   } catch (error) {
-    console.error('Failed to clear localStorage:', error);
+    console.error('Failed to clear Firebase data:', error);
+    return { success: false, error: error.message };
   }
 };
 
-// Default envelope structure
-export const getDefaultEnvelopes = () => ({
-  needs: {
-    housing: { budgeted: 0, spent: 0, rollover: 0 },
-    groceries: { budgeted: 0, spent: 0, rollover: 0 },
-    utilities: { budgeted: 0, spent: 0, rollover: 0 },
-    transport: { budgeted: 0, spent: 0, rollover: 0 },
-    medical: { budgeted: 0, spent: 0, rollover: 0 },
-    emi: { budgeted: 0, spent: 0, rollover: 0 },
-    insurance: { budgeted: 0, spent: 0, rollover: 0 }
-  },
-  savings: {
-    emergency: { budgeted: 0, spent: 0, rollover: 0 },
-    sip: { budgeted: 0, spent: 0, rollover: 0 },
-    longterm: { budgeted: 0, spent: 0, rollover: 0 }
-  },
-  wants: {
-    dining: { budgeted: 0, spent: 0, rollover: 0 },
-    shopping: { budgeted: 0, spent: 0, rollover: 0 },
-    entertainment: { budgeted: 0, spent: 0, rollover: 0 }
-  }
-});
+// Use global envelope structure
+export const getDefaultEnvelopes = getGlobalEnvelopes;

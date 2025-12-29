@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { saveToLocalStorage, loadFromLocalStorage, getDefaultEnvelopes } from '../utils/localStorage';
+import { addGlobalEnvelope, removeGlobalEnvelope } from '../utils/globalEnvelopes';
+import { auth } from '../config/firebase';
 import './EnvelopeBudget.css';
 
 const EnvelopeBudget = () => {
@@ -56,50 +58,134 @@ const EnvelopeBudget = () => {
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
     const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
+    // Get date range for current budget period
+    const getPeriodDateRange = () => {
+        const [startStr, endStr] = currentPeriod.split('_to_');
+        const startDate = startStr; // YYYY-MM-DD format
+        const endDate = endStr; // YYYY-MM-DD format
+        return { min: startDate, max: endDate };
+    };
+
+    const dateRange = getPeriodDateRange();
+    const [budgetInputs, setBudgetInputs] = useState({});
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     // Get current period's data
-    const getCurrentPeriodData = () => {
-        return monthlyData[currentPeriod] || {
-            income: 0,
-            envelopes: getDefaultEnvelopes(),
-            transactions: [],
-            blockedTransactions: []
+    const getCurrentPeriodData = async () => {
+        const defaultEnvelopes = await getDefaultEnvelopes();
+        const periodData = monthlyData[currentPeriod];
+        
+        if (!periodData) {
+            return {
+                income: 0,
+                envelopes: defaultEnvelopes,
+                transactions: [],
+                blockedTransactions: []
+            };
+        }
+        
+        // Merge default envelope structure with saved allocations
+        const mergedEnvelopes = {};
+        Object.keys(defaultEnvelopes).forEach(category => {
+            mergedEnvelopes[category] = {};
+            Object.keys(defaultEnvelopes[category]).forEach(name => {
+                mergedEnvelopes[category][name] = {
+                    budgeted: periodData.envelopes?.[category]?.[name]?.budgeted || 0,
+                    spent: periodData.envelopes?.[category]?.[name]?.spent || 0,
+                    rollover: periodData.envelopes?.[category]?.[name]?.rollover || 0
+                };
+            });
+        });
+        
+        return {
+            income: periodData.income || 0,
+            envelopes: mergedEnvelopes,
+            transactions: periodData.transactions || [],
+            blockedTransactions: periodData.blockedTransactions || []
         };
     };
 
-    const currentData = getCurrentPeriodData();
+    const [currentData, setCurrentData] = useState({ income: 0, envelopes: {}, transactions: [], blockedTransactions: [] });
     const { income, envelopes, transactions, blockedTransactions } = currentData;
 
+    // Load current period data
     useEffect(() => {
-        const savedData = loadFromLocalStorage();
-        if (savedData && savedData.monthlyData) {
-            setMonthlyData(savedData.monthlyData);
-            setCurrentPeriod(savedData.currentPeriod || getCurrentBudgetPeriod());
-        }
+        const loadCurrentData = async () => {
+            if (dataLoaded) {
+                const data = await getCurrentPeriodData();
+                setCurrentData(data);
+            }
+        };
+        loadCurrentData();
+    }, [monthlyData, currentPeriod, dataLoaded]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const savedData = await loadFromLocalStorage();
+                console.log('Loaded data:', savedData);
+                if (savedData && savedData.monthlyData && Object.keys(savedData.monthlyData).length > 0) {
+                    setMonthlyData(savedData.monthlyData);
+                    if (savedData.currentPeriod) {
+                        setCurrentPeriod(savedData.currentPeriod);
+                    }
+                } else {
+                    console.log('No saved data found, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        };
+        
+        // Wait for auth state and load data
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log('User authenticated, loading data for:', user.uid);
+                setDataLoaded(false);
+                await loadData();
+                setDataLoaded(true);
+            } else {
+                console.log('User logged out');
+                setDataLoaded(false);
+            }
+        });
+        
+        return () => unsubscribe();
     }, []);
 
-    const saveData = useCallback(() => {
-        saveToLocalStorage({
-            monthlyData,
-            currentPeriod
-        });
-    }, [monthlyData, currentPeriod]);
+    const saveData = useCallback(async () => {
+        try {
+            // Only save if data is loaded and we have actual data
+            if (dataLoaded && Object.keys(monthlyData).length > 0) {
+                console.log('Saving data:', { monthlyData, currentPeriod });
+                await saveToLocalStorage({
+                    monthlyData,
+                    currentPeriod
+                });
+            } else {
+                console.log('Skipping save - data not loaded or empty');
+            }
+        } catch (error) {
+            console.error('Error saving data:', error);
+        }
+    }, [monthlyData, currentPeriod, dataLoaded]);
 
     useEffect(() => {
         saveData();
     }, [saveData]);
 
-    const updatePeriodData = (updates) => {
+    const updatePeriodData = async (updates) => {
+        const currentPeriodData = await getCurrentPeriodData();
         setMonthlyData(prev => ({
             ...prev,
             [currentPeriod]: {
-                ...getCurrentPeriodData(),
+                ...currentPeriodData,
                 ...updates
             }
         }));
     };
 
-    const addIncome = () => {
+    const addIncome = async () => {
         const { amount, description } = incomeTransaction;
 
         if (!amount || parseFloat(amount) <= 0) {
@@ -112,14 +198,14 @@ const EnvelopeBudget = () => {
         const transactionRecord = {
             id: Date.now() + Math.random(),
             date: incomeTransaction.date,
-            envelope: 'income.INCOME',
+            envelope: 'INCOME',
             amount: incomeAmount,
             description: description || 'Monthly Income',
             paymentMethod: incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod,
             type: 'income'
         };
 
-        updatePeriodData({
+        await updatePeriodData({
             income: income + incomeAmount,
             transactions: [...transactions, transactionRecord]
         });
@@ -129,7 +215,7 @@ const EnvelopeBudget = () => {
         showNotification('success', '✓ Income Added!');
     };
 
-    const addEnvelope = () => {
+    const addEnvelope = async () => {
         const { category, name } = newEnvelope;
 
         if (!category || !name.trim()) {
@@ -137,26 +223,21 @@ const EnvelopeBudget = () => {
             return;
         }
 
-        if (envelopes[category] && envelopes[category][name.toLowerCase()]) {
+        const defaultEnvelopes = await getDefaultEnvelopes();
+        if (defaultEnvelopes[category] && defaultEnvelopes[category][name.toLowerCase()]) {
             showNotification('error', 'Envelope already exists');
             return;
         }
 
-        const updatedEnvelopes = {
-            ...envelopes,
-            [category]: {
-                ...envelopes[category],
-                [name.toLowerCase()]: {
-                    budgeted: 0,
-                    spent: 0,
-                    rollover: 0
-                }
-            }
-        };
-
-        updatePeriodData({ envelopes: updatedEnvelopes });
+        // Add to global structure (affects all periods)
+        await addGlobalEnvelope(category, name.toLowerCase());
+        
+        // Refresh current data
+        const updatedData = await getCurrentPeriodData();
+        setCurrentData(updatedData);
+        
         setNewEnvelope({ category: '', name: '' });
-        showNotification('success', `✓ ${name} envelope added!`);
+        showNotification('success', `✓ ${name} envelope added to all periods!`);
     };
 
     const setIncome = (value) => {
@@ -285,19 +366,63 @@ const EnvelopeBudget = () => {
         updatePeriodData({ envelopes: updatedEnvelopes });
     };
 
-    const deleteTransaction = (id) => {
-        setTransactions(prev => prev.filter(t => t.id !== id));
+    const deleteTransaction = async (id) => {
+        const transaction = transactions.find(t => t.id === id);
+        if (!transaction) return;
+        
+        // If it's an income transaction, subtract from total income
+        if (transaction.type === 'income') {
+            await updatePeriodData({
+                income: income - transaction.amount,
+                transactions: transactions.filter(t => t.id !== id)
+            });
+        } else {
+            // Regular expense transaction - add back to envelope
+            const [category, name] = transaction.envelope.split('.');
+            if (envelopes[category]?.[name]) {
+                const updatedEnvelopes = {
+                    ...envelopes,
+                    [category]: {
+                        ...envelopes[category],
+                        [name]: {
+                            ...envelopes[category][name],
+                            spent: envelopes[category][name].spent - transaction.amount
+                        }
+                    }
+                };
+                
+                await updatePeriodData({
+                    envelopes: updatedEnvelopes,
+                    transactions: transactions.filter(t => t.id !== id)
+                });
+            } else {
+                // Just remove transaction if envelope doesn't exist
+                await updatePeriodData({
+                    transactions: transactions.filter(t => t.id !== id)
+                });
+            }
+        }
+        
         showNotification('success', 'Transaction deleted');
     };
 
-    const deleteEnvelope = (category, name) => {
+    const deleteEnvelope = async (category, name) => {
+        // Remove from global structure (affects all periods)
+        await removeGlobalEnvelope(category, name);
+        
+        // Update current period
         setEnvelopes(prev => {
             const updated = { ...prev };
             delete updated[category][name];
             return updated;
         });
         setTransactions(prev => prev.filter(t => t.envelope !== `${category}.${name}`));
-        showNotification('success', 'Envelope deleted');
+        
+        // Refresh current data
+        const updatedData = await getCurrentPeriodData();
+        setCurrentData(updatedData);
+        
+        showNotification('success', 'Envelope deleted from all periods');
     };
 
     const confirmDelete = () => {
@@ -371,19 +496,90 @@ const EnvelopeBudget = () => {
         showNotification('success', 'Data exported successfully');
     };
 
-    const importData = (event) => {
+    const importExpenses = (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
+        if (!confirm('This will add expenses from CSV. Continue?')) {
+            event.target.value = '';
+            return;
+        }
+
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
-                const data = JSON.parse(e.target.result);
-                setMonthlyData(data.monthlyData || {});
-                setCurrentPeriod(data.currentPeriod || getCurrentBudgetPeriod());
-                showNotification('success', 'Data imported successfully');
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const values = line.split(',').map(v => v.trim());
+                    const expense = {
+                        date: values[0],
+                        envelope: values[1],
+                        amount: parseFloat(values[2]),
+                        description: values[3] || 'Bulk import',
+                        paymentMethod: values[4] || 'UPI'
+                    };
+                    
+                    // Validate expense
+                    if (!expense.date || !expense.envelope || !expense.amount) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    const [category, name] = expense.envelope.split('.');
+                    const env = envelopes[category]?.[name];
+                    
+                    if (!env) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    const available = env.budgeted + env.rollover - env.spent;
+                    if (available < expense.amount) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Add expense
+                    const updatedEnvelopes = {
+                        ...envelopes,
+                        [category]: {
+                            ...envelopes[category],
+                            [name]: {
+                                ...envelopes[category][name],
+                                spent: envelopes[category][name].spent + expense.amount
+                            }
+                        }
+                    };
+                    
+                    const transactionRecord = {
+                        id: Date.now() + Math.random() + i,
+                        date: expense.date,
+                        envelope: expense.envelope,
+                        amount: expense.amount,
+                        description: expense.description,
+                        paymentMethod: expense.paymentMethod
+                    };
+                    
+                    await updatePeriodData({
+                        envelopes: updatedEnvelopes,
+                        transactions: [...transactions, transactionRecord]
+                    });
+                    
+                    successCount++;
+                }
+                
+                showNotification('success', `✓ Imported ${successCount} expenses. ${errorCount} errors.`);
             } catch (error) {
-                showNotification('error', 'Invalid file format');
+                showNotification('error', 'Invalid CSV format');
             }
         };
         reader.readAsText(file);
@@ -501,11 +697,15 @@ const EnvelopeBudget = () => {
                                     >
                                         <option value="">Select Envelope</option>
                                         {Object.keys(envelopes).map(category =>
-                                            Object.keys(envelopes[category]).map(name => (
-                                                <option key={`${category}.${name}`} value={`${category}.${name}`}>
-                                                    {name.toUpperCase()}
-                                                </option>
-                                            ))
+                                            Object.keys(envelopes[category]).map(name => {
+                                                const env = envelopes[category][name];
+                                                const balance = env.budgeted + env.rollover - env.spent;
+                                                return (
+                                                    <option key={`${category}.${name}`} value={`${category}.${name}`}>
+                                                        {name.toUpperCase()} - ₹{balance.toLocaleString()}
+                                                    </option>
+                                                );
+                                            })
                                         )}
                                     </select>
                                     <input
@@ -520,6 +720,8 @@ const EnvelopeBudget = () => {
                                     <input
                                         type="date"
                                         value={newTransaction.date}
+                                        min={dateRange.min}
+                                        max={dateRange.max}
                                         onChange={(e) => setNewTransaction({...newTransaction, date: e.target.value})}
                                         className="quick-date"
                                     />
@@ -739,6 +941,8 @@ const EnvelopeBudget = () => {
                                     <input
                                         type="date"
                                         value={incomeTransaction.date}
+                                        min={dateRange.min}
+                                        max={dateRange.max}
                                         onChange={(e) => setIncomeTransaction({...incomeTransaction, date: e.target.value})}
                                         className="income-input"
                                     />
@@ -786,8 +990,8 @@ const EnvelopeBudget = () => {
                                     📤 Export
                                 </button>
                                 <label className="btn btn-secondary">
-                                    📥 Import
-                                    <input type="file" accept=".json" onChange={importData} style={{display: 'none'}} />
+                                    📥 Import Expenses (CSV)
+                                    <input type="file" accept=".csv" onChange={importExpenses} style={{display: 'none'}} />
                                 </label>
                             </div>
                         </div>
@@ -835,13 +1039,26 @@ const EnvelopeBudget = () => {
                                         </div>
                                         {Object.keys(envelopes[category]).map(name => (
                                             <div key={name} className="envelope-input">
-                                                <label>{name}:</label>
+                                                <label>{name.toUpperCase()}:</label>
                                                 <input
                                                     type="number"
                                                     step="0.01"
                                                     min="0"
-                                                    value={envelopes[category][name].budgeted}
-                                                    onChange={(e) => allocateBudget(category, name, e.target.value)}
+                                                    value={budgetInputs[`${category}.${name}`] ?? envelopes[category][name].budgeted}
+                                                    onChange={(e) => {
+                                                        setBudgetInputs(prev => ({
+                                                            ...prev,
+                                                            [`${category}.${name}`]: e.target.value
+                                                        }));
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        allocateBudget(category, name, e.target.value);
+                                                        setBudgetInputs(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[`${category}.${name}`];
+                                                            return updated;
+                                                        });
+                                                    }}
                                                     placeholder="0.00"
                                                 />
                                                 <button
