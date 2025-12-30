@@ -2,26 +2,27 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { saveToLocalStorage, loadFromLocalStorage, getDefaultEnvelopes } from '../utils/localStorage';
 import { addGlobalEnvelope, removeGlobalEnvelope } from '../utils/globalEnvelopes';
 import { auth } from '../config/firebase';
+import { saveData, getData } from '../services/database';
 import './EnvelopeBudget.css';
 
 const EnvelopeBudget = () => {
-    // Generate budget period (25th to 24th)
-    // Generate list of budget periods (last 6 months + next 6 months)
+    // Generate budget period (1st to last day of month)
+    // Generate list of budget periods (Jan 2026 + next 3 years)
     const generatePeriodOptions = () => {
         const periods = [];
-        const today = new Date();
+        const startYear = 2026;
+        const startMonth = 0; // January (0-indexed)
 
-        for (let i = -6; i <= 6; i++) {
-            const startDate = new Date(today.getFullYear(), today.getMonth() + i, 25);
-            const startYear = startDate.getFullYear();
-            const startMonth = startDate.getMonth() + 1;
-
-            const endDate = new Date(startYear, startMonth, 24); // Next month, 24th
-            const endYear = endDate.getFullYear();
-            const endMonth = endDate.getMonth() + 1;
-
-            const periodKey = `${startYear}-${String(startMonth).padStart(2, '0')}-25_to_${endYear}-${String(endMonth).padStart(2, '0')}-24`;
-            const periodLabel = `${startYear}/${String(startMonth).padStart(2, '0')}/25 to ${endYear}/${String(endMonth).padStart(2, '0')}/24`;
+        for (let i = 0; i <= 36; i++) { // 36 months = 3 years
+            const date = new Date(startYear, startMonth + i, 1);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const periodLabel = `${monthNames[month]} ${year}`;
 
             periods.push({ key: periodKey, label: periodLabel });
         }
@@ -30,52 +31,78 @@ const EnvelopeBudget = () => {
     };
 
     const getCurrentBudgetPeriod = () => {
-        const today = new Date();
-        const currentDay = today.getDate();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-
-        if (currentDay >= 25) {
-            // Current period: 25th of this month to 24th of next month
-            const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-            const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-            return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-25_to_${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-24`;
-        } else {
-            // Current period: 25th of last month to 24th of this month
-            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-            const lastYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-            return `${lastYear}-${String(lastMonth + 1).padStart(2, '0')}-25_to_${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-24`;
-        }
+        return '2026-01'; // Default to Jan 2026
     };
 
     const [currentPeriod, setCurrentPeriod] = useState(getCurrentBudgetPeriod());
     const [monthlyData, setMonthlyData] = useState({});
     const [newTransaction, setNewTransaction] = useState({ envelope: '', amount: '', description: '', paymentMethod: 'UPI', date: new Date().toISOString().split('T')[0] });
     const [customPaymentMethod, setCustomPaymentMethod] = useState('');
-    const [incomeTransaction, setIncomeTransaction] = useState({ amount: '', description: '', paymentMethod: 'UPI', date: new Date().toISOString().split('T')[0] });
+    const [incomeTransaction, setIncomeTransaction] = useState({ amount: '', description: '', paymentMethod: '', date: new Date().toISOString().split('T')[0] });
     const [customIncomePayment, setCustomIncomePayment] = useState('');
+    const [customPaymentMethods, setCustomPaymentMethods] = useState([]);
     const [newEnvelope, setNewEnvelope] = useState({ category: '', name: '' });
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
     const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
     // Get date range for current budget period
     const getPeriodDateRange = () => {
-        const [startStr, endStr] = currentPeriod.split('_to_');
-        const startDate = startStr; // YYYY-MM-DD format
-        const endDate = endStr; // YYYY-MM-DD format
+        const [year, month] = currentPeriod.split('-').map(Number);
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate(); // Last day of month
+        const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
         return { min: startDate, max: endDate };
+    };
+
+    const getPreviousPeriod = (currentPeriodStr) => {
+        const [year, month] = currentPeriodStr.split('-').map(Number);
+        
+        const prevMonth = month === 1 ? 12 : month - 1;
+        const prevYear = month === 1 ? year - 1 : year;
+        
+        return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
     };
 
     const dateRange = getPeriodDateRange();
     const [budgetInputs, setBudgetInputs] = useState({});
     const [dataLoaded, setDataLoaded] = useState(false);
+    const [rolloverConfirm, setRolloverConfirm] = useState(false);
 
-    // Get current period's data
+    // Get current period's data with automatic rollover calculation
     const getCurrentPeriodData = async () => {
         const defaultEnvelopes = await getDefaultEnvelopes();
         const periodData = monthlyData[currentPeriod];
         
         if (!periodData) {
+            // Check if we need to calculate rollover from previous period
+            const previousPeriod = getPreviousPeriod(currentPeriod);
+            const previousData = monthlyData[previousPeriod];
+            
+            if (previousData && previousData.envelopes) {
+                // Calculate rollover from previous period
+                const rolledOverEnvelopes = {};
+                Object.keys(defaultEnvelopes).forEach(category => {
+                    rolledOverEnvelopes[category] = {};
+                    Object.keys(defaultEnvelopes[category]).forEach(name => {
+                        const prevEnv = previousData.envelopes?.[category]?.[name];
+                        const rolloverAmount = prevEnv ? Math.max(0, prevEnv.budgeted + prevEnv.rollover - prevEnv.spent) : 0;
+                        
+                        rolledOverEnvelopes[category][name] = {
+                            budgeted: 0,
+                            spent: 0,
+                            rollover: rolloverAmount
+                        };
+                    });
+                });
+                
+                return {
+                    income: 0,
+                    envelopes: rolledOverEnvelopes,
+                    transactions: [],
+                    blockedTransactions: []
+                };
+            }
+            
             return {
                 income: 0,
                 envelopes: defaultEnvelopes,
@@ -114,6 +141,22 @@ const EnvelopeBudget = () => {
             if (dataLoaded) {
                 const data = await getCurrentPeriodData();
                 setCurrentData(data);
+                
+                // Save rollover data if it was calculated
+                if (!monthlyData[currentPeriod] && data.envelopes) {
+                    const hasRollover = Object.values(data.envelopes).some(category =>
+                        Object.values(category).some(env => env.rollover > 0)
+                    );
+                    
+                    if (hasRollover) {
+                        await updatePeriodData({
+                            income: data.income,
+                            envelopes: data.envelopes,
+                            transactions: data.transactions,
+                            blockedTransactions: data.blockedTransactions
+                        });
+                    }
+                }
             }
         };
         loadCurrentData();
@@ -143,6 +186,13 @@ const EnvelopeBudget = () => {
                 console.log('User authenticated, loading data for:', user.uid);
                 setDataLoaded(false);
                 await loadData();
+                
+                // Load custom payment methods from Firebase
+                const paymentMethodsResult = await getData(`users/${user.uid}/customPaymentMethods`);
+                if (paymentMethodsResult.success && paymentMethodsResult.data) {
+                    setCustomPaymentMethods(paymentMethodsResult.data);
+                }
+                
                 setDataLoaded(true);
             } else {
                 console.log('User logged out');
@@ -185,6 +235,19 @@ const EnvelopeBudget = () => {
         }));
     };
 
+    const addCustomPaymentMethod = async (method) => {
+        if (method && !customPaymentMethods.includes(method)) {
+            const updatedMethods = [...customPaymentMethods, method];
+            setCustomPaymentMethods(updatedMethods);
+            
+            // Save to Firebase
+            const user = auth.currentUser;
+            if (user) {
+                await saveData(`users/${user.uid}/customPaymentMethods`, updatedMethods);
+            }
+        }
+    };
+
     const addIncome = async () => {
         const { amount, description } = incomeTransaction;
 
@@ -195,13 +258,19 @@ const EnvelopeBudget = () => {
 
         const incomeAmount = parseFloat(amount);
 
+        const paymentMethod = incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod;
+        
+        if (incomeTransaction.paymentMethod === 'Custom' && customIncomePayment) {
+            addCustomPaymentMethod(customIncomePayment);
+        }
+
         const transactionRecord = {
             id: Date.now() + Math.random(),
             date: incomeTransaction.date,
             envelope: 'INCOME',
             amount: incomeAmount,
             description: description || 'Monthly Income',
-            paymentMethod: incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod,
+            paymentMethod: paymentMethod,
             type: 'income'
         };
 
@@ -210,8 +279,7 @@ const EnvelopeBudget = () => {
             transactions: [...transactions, transactionRecord]
         });
 
-        setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod === 'Custom' ? 'UPI' : incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0] });
-        setCustomIncomePayment('');
+        setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0] });
         showNotification('success', '✓ Income Added!');
     };
 
@@ -308,13 +376,19 @@ const EnvelopeBudget = () => {
             }
         };
 
+        const paymentMethod = newTransaction.paymentMethod === 'Custom' ? customPaymentMethod : newTransaction.paymentMethod;
+        
+        if (newTransaction.paymentMethod === 'Custom' && customPaymentMethod) {
+            addCustomPaymentMethod(customPaymentMethod);
+        }
+
         const transactionRecord = {
             id: Date.now() + Math.random(),
             date: newTransaction.date,
             envelope,
             amount: expenseAmount,
             description: description || 'Quick expense',
-            paymentMethod: newTransaction.paymentMethod === 'Custom' ? customPaymentMethod : newTransaction.paymentMethod
+            paymentMethod: paymentMethod
         };
 
         updatePeriodData({
@@ -326,10 +400,9 @@ const EnvelopeBudget = () => {
             envelope: newTransaction.envelope,
             amount: '',
             description: '',
-            paymentMethod: newTransaction.paymentMethod === 'Custom' ? 'UPI' : newTransaction.paymentMethod,
+            paymentMethod: newTransaction.paymentMethod,
             date: new Date().toISOString().split('T')[0]
         });
-        setCustomPaymentMethod('');
 
         showNotification('success', '✓ Added!');
     };
@@ -436,52 +509,107 @@ const EnvelopeBudget = () => {
     };
 
     const getNextBudgetPeriod = (currentPeriodStr) => {
-        // Extract start date from current period
-        const startDateStr = currentPeriodStr.split('_to_')[0];
-        const [year, month, day] = startDateStr.split('-').map(Number);
-
-        // Calculate next period start (add 1 month)
+        const [year, month] = currentPeriodStr.split('-').map(Number);
+        
         const nextMonth = month === 12 ? 1 : month + 1;
         const nextYear = month === 12 ? year + 1 : year;
-
-        // Calculate next period end (add 1 month to end date)
-        const endMonth = nextMonth === 12 ? 1 : nextMonth + 1;
-        const endYear = nextMonth === 12 ? nextYear + 1 : nextYear;
-
-        return `${nextYear}-${String(nextMonth).padStart(2, '0')}-25_to_${endYear}-${String(endMonth).padStart(2, '0')}-24`;
+        
+        return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
     };
     const rolloverToNextPeriod = () => {
-        // Calculate next period
         const nextPeriod = getNextBudgetPeriod(currentPeriod);
-
-        // Rollover unused funds to next period
-        const rolledOverEnvelopes = { ...envelopes };
-        Object.keys(rolledOverEnvelopes).forEach(category => {
-            Object.keys(rolledOverEnvelopes[category]).forEach(name => {
-                const env = rolledOverEnvelopes[category][name];
+        const today = new Date();
+        const currentDay = today.getDate();
+        
+        // Check if there are unused funds to rollover
+        const hasUnusedFunds = Object.values(envelopes).some(category =>
+            Object.values(category).some(env => {
                 const unused = env.budgeted + env.rollover - env.spent;
-                rolledOverEnvelopes[category][name] = {
-                    budgeted: 0,
-                    spent: 0,
-                    rollover: Math.max(0, unused)
-                };
-            });
-        });
-
-        // Set data for next period
-        setMonthlyData(prev => ({
-            ...prev,
-            [nextPeriod]: {
-                income: 0,
-                envelopes: rolledOverEnvelopes,
-                transactions: [],
-                blockedTransactions: []
+                return unused > 0;
+            })
+        );
+        
+        if (!hasUnusedFunds) {
+            showNotification('info', 'No unused funds to rollover');
+            return;
+        }
+        
+        // Smart rollover logic - check if near end of month
+        const [currentYear, currentMonth] = currentPeriod.split('-').map(Number);
+        const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const todayDate = new Date();
+        const dayOfMonth = todayDate.getDate();
+        
+        if (dayOfMonth >= lastDayOfMonth - 5) { // Last 5 days of month
+            const nextPeriodLabel = nextPeriod.replace(/-/g, '-');
+            if (confirm(`Smart Rollover: Roll unused balances to next period (${nextPeriodLabel})?`)) {
+                confirmRollover(nextPeriod);
             }
-        }));
+        } else {
+            // Not near end - show period selection
+            setRolloverConfirm(true);
+        }
+    };
+    
+    const confirmRollover = async (targetPeriod) => {
+        try {
+            // Calculate rollover amounts
+            const defaultEnvelopes = await getDefaultEnvelopes();
+            const rolledOverEnvelopes = {};
+            let totalRollover = 0;
+            
+            Object.keys(defaultEnvelopes).forEach(category => {
+                rolledOverEnvelopes[category] = {};
+                Object.keys(defaultEnvelopes[category]).forEach(name => {
+                    const env = envelopes[category]?.[name] || { budgeted: 0, spent: 0, rollover: 0 };
+                    const unused = env.budgeted + env.rollover - env.spent;
+                    const rolloverAmount = Math.max(0, unused);
+                    
+                    rolledOverEnvelopes[category][name] = {
+                        budgeted: 0,
+                        spent: 0,
+                        rollover: rolloverAmount
+                    };
+                    
+                    totalRollover += rolloverAmount;
+                });
+            });
 
-        // Switch to next period
-        setCurrentPeriod(nextPeriod);
-        showNotification('success', 'Started next period with rollover balances');
+            // Check if target period already exists
+            const existingData = monthlyData[targetPeriod];
+            if (existingData) {
+                // Merge with existing rollover amounts
+                Object.keys(rolledOverEnvelopes).forEach(category => {
+                    Object.keys(rolledOverEnvelopes[category]).forEach(name => {
+                        const existing = existingData.envelopes?.[category]?.[name];
+                        if (existing) {
+                            rolledOverEnvelopes[category][name].rollover += existing.rollover;
+                            rolledOverEnvelopes[category][name].budgeted = existing.budgeted;
+                            rolledOverEnvelopes[category][name].spent = existing.spent;
+                        }
+                    });
+                });
+            }
+
+            // Set data for target period
+            setMonthlyData(prev => ({
+                ...prev,
+                [targetPeriod]: {
+                    income: existingData?.income || 0,
+                    envelopes: rolledOverEnvelopes,
+                    transactions: existingData?.transactions || [],
+                    blockedTransactions: existingData?.blockedTransactions || []
+                }
+            }));
+
+            // Switch to target period
+            setCurrentPeriod(targetPeriod);
+            setRolloverConfirm(false);
+            showNotification('success', `Rollover completed! ₹${totalRollover.toLocaleString()} rolled over to ${targetPeriod}`);
+        } catch (error) {
+            console.error('Rollover failed:', error);
+            showNotification('error', 'Rollover failed. Please try again.');
+        }
     };
 
     const exportData = () => {
@@ -610,24 +738,63 @@ const EnvelopeBudget = () => {
     const totalSpent = Object.values(envelopes).reduce((sum, category) =>
         sum + Object.values(category).reduce((catSum, env) => catSum + env.spent, 0), 0);
 
+    const getPaymentMethodBalances = () => {
+        const balances = {};
+        transactions.forEach(transaction => {
+            const method = transaction.paymentMethod || 'Unknown';
+            if (!balances[method]) balances[method] = 0;
+            
+            if (transaction.type === 'income') {
+                balances[method] += transaction.amount;
+            } else {
+                balances[method] -= transaction.amount;
+            }
+        });
+        return balances;
+    };
+
+    const paymentBalances = getPaymentMethodBalances();
+
     return (
         <div className="envelope-budget">
             <div className="header">
                 <h1>💰 Envelope Budget Tracker</h1>
                 <div className="header-controls">
                     <div className="control-group">
-                        <label>Budget Period (25th to 24th)</label>
-                        <select
-                            value={currentPeriod}
-                            onChange={(e) => setCurrentPeriod(e.target.value)}
-                            className="period-selector"
-                        >
-                            {generatePeriodOptions().map(period => (
-                                <option key={period.key} value={period.key}>
-                                    {period.label}
-                                </option>
-                            ))}
-                        </select>
+                        <label>Budget Period (Monthly)</label>
+                        <div className="period-navigation">
+                            <button 
+                                className="btn btn-secondary period-nav-btn"
+                                onClick={() => {
+                                    const prevPeriod = getPreviousPeriod(currentPeriod);
+                                    setCurrentPeriod(prevPeriod);
+                                }}
+                                title="Previous Month"
+                            >
+                                ◀
+                            </button>
+                            <select
+                                value={currentPeriod}
+                                onChange={(e) => setCurrentPeriod(e.target.value)}
+                                className="period-selector"
+                            >
+                                {generatePeriodOptions().map(period => (
+                                    <option key={period.key} value={period.key}>
+                                        {period.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-secondary period-nav-btn"
+                                onClick={() => {
+                                    const nextPeriod = getNextBudgetPeriod(currentPeriod);
+                                    setCurrentPeriod(nextPeriod);
+                                }}
+                                title="Next Month"
+                            >
+                                ▶
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -678,6 +845,25 @@ const EnvelopeBudget = () => {
                     <div className="summary-label">Remaining</div>
                 </div>
             </div>
+
+            {/* Payment Method Overview */}
+            {Object.keys(paymentBalances).length > 0 && (
+                <div className="card">
+                    <div className="card-header">
+                        <h3>💳 Payment Method Overview</h3>
+                    </div>
+                    <div className="card-content">
+                        <div className="summary-grid">
+                            {Object.entries(paymentBalances).map(([method, amount]) => (
+                                <div key={method} className="summary-card">
+                                    <div className="summary-value">₹{amount.toLocaleString()}</div>
+                                    <div className="summary-label">{method}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Conditional Views */}
             {activeView === 'daily' ? (
@@ -742,12 +928,11 @@ const EnvelopeBudget = () => {
                                         }}
                                         className="quick-payment"
                                     >
-                                        <option value="UPI">💳 UPI</option>
-                                        <option value="Credit Card">💳 Credit Card</option>
-                                        <option value="Debit Card">💳 Debit Card</option>
-                                        <option value="Cash">💵 Cash</option>
-                                        <option value="Net Banking">🏦 Net Banking</option>
-                                        <option value="Custom">➕ Add Custom</option>
+                                        <option value="">Select Payment Method</option>
+                                        {customPaymentMethods.map(method => (
+                                            <option key={method} value={method}>{method}</option>
+                                        ))}
+                                        <option value="Custom">➕ Add New</option>
                                     </select>
                                     {newTransaction.paymentMethod === 'Custom' && (
                                         <input
@@ -961,12 +1146,11 @@ const EnvelopeBudget = () => {
                                         }}
                                         className="income-input"
                                     >
-                                        <option value="UPI">💳 UPI</option>
-                                        <option value="Credit Card">💳 Credit Card</option>
-                                        <option value="Debit Card">💳 Debit Card</option>
-                                        <option value="Cash">💵 Cash</option>
-                                        <option value="Net Banking">🏦 Net Banking</option>
-                                        <option value="Custom">➕ Add Custom</option>
+                                        <option value="">Select Payment Method</option>
+                                        {customPaymentMethods.map(method => (
+                                            <option key={method} value={method}>{method}</option>
+                                        ))}
+                                        <option value="Custom">➕ Add New</option>
                                     </select>
                                     {incomeTransaction.paymentMethod === 'Custom' && (
                                         <input
@@ -983,16 +1167,12 @@ const EnvelopeBudget = () => {
                                 </div>
                             </div>
                             <div className="budget-actions">
-                                <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
-                                    🔄 Start Next Period
-                                </button>
                                 <button className="btn btn-secondary" onClick={exportData}>
                                     📤 Export
                                 </button>
-                                <label className="btn btn-secondary">
-                                    📥 Import Expenses (CSV)
-                                    <input type="file" accept=".csv" onChange={importExpenses} style={{display: 'none'}} />
-                                </label>
+                                <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
+                                    🔄 Rollover Unused Funds
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1109,6 +1289,43 @@ const EnvelopeBudget = () => {
                         </div>
                     </div>
                 </>
+            )}
+
+            {rolloverConfirm && (
+                <div className="modal-overlay" onClick={() => setRolloverConfirm(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>🔄 Rollover to Which Period?</h3>
+                        <p>Select the target budget period for rollover:</p>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto', margin: '20px 0' }}>
+                            {generatePeriodOptions().filter(period => period.key !== currentPeriod).map(period => (
+                                <button
+                                    key={period.key}
+                                    onClick={() => confirmRollover(period.key)}
+                                    style={{
+                                        display: 'block',
+                                        width: '100%',
+                                        padding: '10px',
+                                        margin: '5px 0',
+                                        backgroundColor: '#f8f9fa',
+                                        border: '1px solid #dee2e6',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left'
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                                >
+                                    {period.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={() => setRolloverConfirm(false)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {deleteConfirm.type && (
