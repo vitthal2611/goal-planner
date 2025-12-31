@@ -18,6 +18,7 @@
     --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --radius: 12px;
     --radius-lg: 16px;
+    --touch-target: 44px;
 }
 
 * {
@@ -26,18 +27,130 @@
     padding: 0;
 }
 
+/* Enhanced mobile viewport and scroll behavior */
+html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
     color: var(--gray-900);
     line-height: 1.6;
     min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: contain;
+    touch-action: manipulation;
 }
 
+/* Touch-friendly interactive elements */
+.btn, button, input, select, textarea, [role="button"] {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    touch-action: manipulation;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 480px) { /* Small phones */
+    :root {
+        --touch-target: 48px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) { /* Large phones/small tablets */
+    :root {
+        --touch-target: 44px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) { /* Tablets */
+    :root {
+        --touch-target: 40px;
+    }
+}
+
+@media (min-width: 1025px) { /* Desktop */
+    :root {
+        --touch-target: 36px;
+    }
+}
+
+/* Enhanced mobile gestures and interactions */
 .envelope-budget {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Improved swipe indicators with better visibility */
+.swipe-indicator {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1002;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.swipe-indicator.left {
+    right: 20px;
+}
+
+.swipe-indicator.right {
+    left: 20px;
+}
+
+.swipe-indicator.show {
+    opacity: 1;
+}
+
+/* Enhanced pull to refresh with better visual feedback */
+.pull-to-refresh {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 0 0 16px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1001;
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.pull-to-refresh.hidden {
+    transform: translateX(-50%) translateY(-100%);
+}
+
+/* Haptic feedback simulation */
+@keyframes haptic {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+.haptic-feedback {
+    animation: haptic 0.1s ease-in-out;
 }
 
 /* Header with glassmorphism effect */
@@ -95,17 +208,44 @@ body {
 }
 
 .control-group input {
-    padding: 8px 12px;
+    padding: 12px 16px;
     border: 1px solid var(--gray-300);
     border-radius: var(--radius);
-    font-size: 14px;
+    font-size: 16px;
     transition: border-color 0.2s;
+    min-height: var(--touch-target);
+    touch-action: manipulation;
 }
 
 .control-group input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+/* Mobile input optimizations */
+.control-group input[type="number"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+.control-group input[type="email"] {
+    inputmode: email;
+    autocomplete: email;
+}
+
+.control-group input[type="tel"] {
+    inputmode: tel;
+    autocomplete: tel;
+}
+
+.control-group input[type="url"] {
+    inputmode: url;
+    autocomplete: url;
+}
+
+.control-group input[type="search"] {
+    inputmode: search;
 }
 
 /* Modern buttons with enhanced styling */
@@ -119,9 +259,14 @@ body {
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     position: relative;
     overflow: hidden;
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn::before {
@@ -137,6 +282,20 @@ body {
 
 .btn:hover::before {
     left: 100%;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+@media (hover: none) {
+    .btn:hover::before {
+        left: -100%;
+    }
+    .btn:active {
+        transform: scale(0.95);
+        background-color: var(--primary-hover);
+    }
 }
 
 .btn-primary {
@@ -176,7 +335,7 @@ body {
     background: #dc2626;
 }
 
-/* Quick Add Expense - Floating Interface */
+/* Quick Add Expense - Mobile-optimized */
 .quick-expense-float {
     position: fixed;
     bottom: 20px;
@@ -213,6 +372,9 @@ body {
     font-size: 16px;
     font-weight: 600;
     background: white;
+    min-height: var(--touch-target);
+    inputmode: decimal;
+    autocomplete: off;
 }
 
 .quick-envelope {
@@ -222,6 +384,7 @@ body {
     border-radius: var(--radius);
     font-size: 14px;
     background: white;
+    min-height: var(--touch-target);
 }
 
 .quick-description {
@@ -231,6 +394,8 @@ body {
     border-radius: var(--radius);
     font-size: 14px;
     background: white;
+    min-height: var(--touch-target);
+    autocomplete: off;
 }
 
 .quick-payment {
@@ -241,6 +406,17 @@ body {
     font-size: 14px;
     background: white;
     cursor: pointer;
+    min-height: var(--touch-target);
+}
+
+.quick-date {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: white;
+    min-height: var(--touch-target);
 }
 
 .quick-add-btn {
@@ -250,10 +426,11 @@ body {
     font-weight: 700;
     white-space: nowrap;
     min-width: 80px;
+    min-height: var(--touch-target);
 }
 
 /* Mobile optimization for quick add */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
     .quick-expense-float {
         bottom: 10px;
         width: 95%;
@@ -261,6 +438,8 @@ body {
 
     .quick-expense-form {
         padding: 12px;
+        backdrop-filter: none;
+        background: white;
     }
 
     .quick-form-row {
@@ -271,29 +450,74 @@ body {
     .quick-amount,
     .quick-envelope,
     .quick-description,
-    .quick-payment {
+    .quick-payment,
+    .quick-date {
         width: 100%;
         flex: none;
+        font-size: 16px;
+        padding: 16px;
+        min-height: 48px;
+    }
+
+    .quick-add-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .quick-expense-float {
+        bottom: 15px;
+        width: 92%;
+    }
+
+    .quick-expense-form {
+        padding: 14px;
+    }
+
+    .quick-form-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .quick-amount,
+    .quick-envelope {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .quick-description {
+        flex: 2;
+        min-width: 200px;
+    }
+
+    .quick-payment,
+    .quick-date {
+        flex: 1;
+        min-width: 120px;
     }
 
     .quick-add-btn {
         width: 100%;
         padding: 14px;
-        font-size: 16px;
+        font-size: 15px;
     }
 }
 .btn-delete {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: 12px;
     border-radius: var(--radius);
     transition: background 0.2s;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 48px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 16px;
 }
 
 .btn-delete:hover {
@@ -317,6 +541,8 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 20px;
+    backdrop-filter: blur(4px);
 }
 
 .modal {
@@ -325,12 +551,39 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     max-width: 400px;
-    width: 90%;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-600);
+    transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+    background-color: var(--gray-100);
 }
 
 .modal h3 {
     margin-bottom: 16px;
     color: var(--gray-900);
+    padding-right: 40px;
 }
 
 .modal p {
@@ -342,6 +595,43 @@ body {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Mobile modal optimizations */
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: 10px;
+        align-items: flex-end;
+    }
+    
+    .modal {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        max-height: 85vh;
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
 }
 
 /* Modern cards with enhanced styling */
@@ -459,17 +749,19 @@ body {
     font-size: 14px;
 }
 
-/* Table */
+/* Table - Mobile-first responsive design */
 .table-container {
     overflow-x: auto;
     border-radius: var(--radius);
     border: 1px solid var(--gray-200);
+    -webkit-overflow-scrolling: touch;
 }
 
 .envelope-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    display: table;
 }
 
 .envelope-table th {
@@ -480,16 +772,134 @@ body {
     font-weight: 600;
     color: var(--gray-700);
     border-bottom: 1px solid var(--gray-200);
+    white-space: nowrap;
 }
 
 .envelope-table td {
     padding: 12px 16px;
     border-bottom: 1px solid var(--gray-100);
     font-size: 14px;
+    white-space: nowrap;
 }
 
 .envelope-table tr:last-child td {
     border-bottom: none;
+}
+
+/* Mobile card view - hidden by default */
+.mobile-card-view {
+    display: none;
+}
+
+.mobile-transaction-card,
+.mobile-envelope-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+}
+
+.mobile-transaction-card:active,
+.mobile-envelope-card:active {
+    box-shadow: var(--shadow);
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: 600;
+    gap: 12px;
+}
+
+.mobile-card-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+    font-size: 14px;
+}
+
+.mobile-card-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mobile-card-label {
+    font-size: 12px;
+    color: var(--gray-600);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-card-value {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+/* Responsive table behavior - keep table visible on mobile for Today's Expenses */
+@media (max-width: 768px) {
+    .envelope-table {
+        display: table !important;
+        font-size: 12px;
+        width: 100%;
+    }
+    
+    .envelope-table th,
+    .envelope-table td {
+        padding: 8px 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 80px;
+    }
+    
+    .envelope-table th:first-child,
+    .envelope-table td:first-child {
+        max-width: 30px;
+    }
+    
+    .envelope-table th:last-child,
+    .envelope-table td:last-child {
+        max-width: 40px;
+    }
+    
+    .mobile-card-view {
+        display: none !important;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 480px) {
+    .envelope-table {
+        display: none !important;
+    }
+    
+    .mobile-card-view {
+        display: block !important;
+    }
+    
+    .mobile-transaction-card,
+    .mobile-envelope-card {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .mobile-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
 }
 
 /* Status indicators */
@@ -605,57 +1015,86 @@ body {
     color: var(--gray-600);
 }
 
-/* Mobile-first responsive design */
-@media (max-width: 768px) {
+/* Mobile-first responsive design with enhanced touch targets */
+@media (max-width: 480px) {
     .envelope-budget {
         padding: 12px;
     }
 
     .header {
-        padding: 20px 16px;
-        margin-bottom: 20px;
+        padding: 16px 12px;
+        margin-bottom: 16px;
     }
 
     .header h1 {
-        font-size: 24px;
-        margin-bottom: 16px;
+        font-size: 22px;
+        margin-bottom: 12px;
         text-align: center;
+        line-height: 1.2;
+    }
+
+    .period-navigation {
+        flex-direction: row;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 12px;
+        backdrop-filter: none;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .period-nav-btn {
+        flex: 0 0 auto;
+        width: 48px;
+        padding: 12px;
+        font-size: 16px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .period-selector {
+        flex: 1;
+        min-width: auto;
+        padding: 12px 40px 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        min-height: 48px;
+        border: 2px solid rgba(59, 130, 246, 0.2);
     }
 
     .header-controls {
-        flex-direction: column;
-        gap: 16px;
+        gap: 12px;
+        width: 100%;
     }
 
     .control-group {
         width: 100%;
     }
 
-    .control-group input,
-    .control-group select {
-        width: 100%;
-        padding: 12px;
-        font-size: 16px; /* Prevents zoom on iOS */
-    }
-
     .btn {
         width: 100%;
         justify-content: center;
-        padding: 14px 20px;
+        padding: 16px 20px;
         font-size: 16px;
+        min-height: 48px;
+        font-weight: 600;
     }
 
     .summary-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 8px;
     }
 
     .summary-card {
-        padding: 16px;
+        padding: 12px;
     }
 
     .summary-value {
         font-size: 20px;
+        margin-bottom: 4px;
     }
 
     .summary-label {
@@ -663,167 +1102,408 @@ body {
     }
 
     .card {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
+        border-radius: 12px;
     }
 
     .card-header {
-        padding: 16px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        padding: 12px;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-header h3 {
+        font-size: 16px;
+        margin: 0;
     }
 
     .card-content {
-        padding: 16px;
+        padding: 12px;
     }
 
+    /* Enhanced tab navigation for mobile */
+    .tab-navigation {
+        margin: 12px 0;
+        padding: 3px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 70px;
+        z-index: 90;
+    }
+
+    .tab-btn {
+        padding: 14px 8px;
+        font-size: 14px;
+        min-height: 48px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        transform: scale(1.02);
+    }
+
+    /* Mobile form improvements */
+    .quick-expense-form {
+        padding: 12px;
+        backdrop-filter: none;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .quick-form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .quick-amount,
+    .quick-envelope,
+    .quick-description,
+    .quick-payment,
+    .quick-date {
+        width: 100%;
+        flex: none;
+        font-size: 16px;
+        padding: 16px;
+        min-height: 48px;
+        border-radius: 8px;
+        border: 2px solid var(--gray-300);
+        transition: border-color 0.2s ease;
+    }
+
+    .quick-amount:focus,
+    .quick-envelope:focus,
+    .quick-description:focus,
+    .quick-payment:focus,
+    .quick-date:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .quick-add-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        min-height: 48px;
+        border-radius: 8px;
+        font-weight: 700;
+    }
+
+    /* Enhanced mobile table cards */
+    .mobile-transaction-card,
+    .mobile-envelope-card {
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+
+    .mobile-transaction-card:active,
+    .mobile-envelope-card:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .mobile-card-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .mobile-card-content {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .mobile-card-label {
+        font-size: 11px;
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .mobile-card-value {
+        font-weight: 600;
+        color: var(--gray-900);
+        font-size: 14px;
+    }
+
+    /* Enhanced delete buttons */
+    .btn-delete {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 18px;
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: scale(1.05);
+    }
+
+    .btn-delete:active {
+        background: rgba(239, 68, 68, 0.3);
+        transform: scale(0.95);
+    }
+
+    /* Income form mobile optimization */
+    .income-form {
+        gap: 10px;
+    }
+
+    .income-input {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 48px;
+        border-radius: 8px;
+        border: 2px solid var(--gray-300);
+    }
+
+    .income-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Budget allocation mobile */
     .budget-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
     }
 
     .category-card {
-        padding: 16px;
+        padding: 12px;
+        border-radius: 12px;
     }
 
     .envelope-input {
-        flex-direction: column;
+        margin-bottom: 8px;
         align-items: stretch;
-        gap: 8px;
-        margin-bottom: 16px;
+        flex-direction: column;
+        gap: 6px;
     }
 
     .envelope-input label {
         min-width: auto;
+        font-size: 13px;
         font-weight: 600;
+        color: var(--gray-700);
     }
 
     .envelope-input input {
-        width: 100%;
-        padding: 12px;
+        padding: 12px 16px;
         font-size: 16px;
-    }
-
-    .btn-delete {
-        align-self: flex-end;
-        padding: 8px;
-        min-width: 44px;
         min-height: 44px;
+        border-radius: 8px;
     }
 
-    .transaction-form {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .form-group {
-        min-width: auto;
-        width: 100%;
-    }
-
-    .form-group select,
-    .form-group input {
-        width: 100%;
+    /* Add envelope form mobile */
+    .add-envelope-form {
         padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .envelope-form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .envelope-select,
+    .envelope-input-field {
+        width: 100%;
+        flex: none;
+        padding: 16px;
+        font-size: 16px;
+        min-height: 48px;
+        border-radius: 8px;
+    }
+
+    /* Modal improvements for mobile */
+    .modal-overlay {
+        padding: 8px;
+        align-items: flex-end;
+    }
+    
+    .modal {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        border-radius: 16px 16px 0 0;
+        max-height: 90vh;
+        animation: slideUp 0.3s ease-out;
+        padding: 20px;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 48px;
         font-size: 16px;
     }
 
-    .table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .modal h3 {
+        font-size: 18px;
+        margin-bottom: 12px;
+        padding-right: 40px;
     }
 
-    .envelope-table {
-        min-width: 600px;
+    .modal p {
+        font-size: 14px;
+        margin-bottom: 16px;
     }
 
-    .envelope-table th,
-    .envelope-table td {
-        padding: 8px 6px;
-        font-size: 12px;
-    }
-
-    .status {
-        padding: 2px 6px;
-        font-size: 10px;
-    }
-
+    /* Insights grid mobile */
     .insights-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 8px;
     }
 
     .insight-item {
         padding: 12px;
+        border-radius: 8px;
     }
 
-    .modal {
-        width: 95%;
-        margin: 20px;
-        padding: 20px;
+    .insight-label {
+        font-size: 13px;
+        margin-bottom: 4px;
     }
 
-    .modal-actions {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .modal-actions .btn {
-        width: 100%;
+    .insight-value {
+        font-size: 13px;
     }
 }
 
-/* Period Navigation - Enhanced Styling */
+@media (min-width: 481px) and (max-width: 768px) {
+    .period-navigation {
+        flex-direction: row;
+        gap: 10px;
+        padding: 8px;
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    .period-nav-btn {
+        flex: 0 0 auto;
+        min-width: 48px;
+    }
+    
+    .period-selector {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .budget-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .insights-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Performance optimizations for mobile devices */
+@media (max-width: 768px) {
+    /* Disable expensive effects on mobile for better performance */
+    .btn::before {
+        display: none;
+    }
+    
+    .card {
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    .header {
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    .summary-card {
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    .quick-expense-form {
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    /* Optimize animations for mobile */
+    * {
+        animation-duration: 0.2s !important;
+        transition-duration: 0.2s !important;
+    }
+    
+    /* Reduce box shadows for better performance */
+    .card,
+    .summary-card,
+    .mobile-transaction-card,
+    .mobile-envelope-card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Optimize scroll performance */
+    .table-container {
+        -webkit-overflow-scrolling: touch;
+        will-change: scroll-position;
+    }
+    
+    /* Reduce transform effects on mobile */
+    .card:hover {
+        transform: none;
+    }
+    
+    .summary-card:hover {
+        transform: none;
+    }
+}
+
 .period-navigation {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 16px;
-    padding: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.period-nav-btn {
-    padding: 12px 16px;
-    min-width: 48px;
-    height: 48px;
-    font-size: 18px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary), #1d4ed8);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-.period-nav-btn:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-}
-
-.period-nav-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .period-selector {
-    flex: 1;
-    min-width: 200px;
+    width: 100%;
+    max-width: 300px;
     padding: 14px 20px;
     border: 2px solid rgba(59, 130, 246, 0.2);
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    background: white;
     color: var(--gray-800);
     cursor: pointer;
     transition: all 0.3s ease;
@@ -833,52 +1513,18 @@ body {
     background-repeat: no-repeat;
     background-size: 16px;
     padding-right: 48px;
+    min-height: var(--touch-target);
+    touch-action: manipulation;
 }
 
 .period-selector:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    background: white;
 }
 
 .period-selector:hover {
     border-color: var(--primary);
-    background: white;
-}
-
-.period-selector option {
-    padding: 12px;
-    font-size: 16px;
-    font-weight: 500;
-    background: white;
-    color: var(--gray-800);
-}
-
-@media (max-width: 768px) {
-    .period-navigation {
-        flex-direction: column;
-        gap: 16px;
-        padding: 16px;
-        border-radius: 20px;
-    }
-    
-    .period-nav-btn {
-        width: 100%;
-        padding: 16px;
-        font-size: 16px;
-        height: 56px;
-        border-radius: 16px;
-    }
-    
-    .period-selector {
-        width: 100%;
-        min-width: auto;
-        padding: 16px 20px;
-        font-size: 18px;
-        border-radius: 16px;
-        padding-right: 56px;
-    }
 }
 
 /* Hide number input arrows */
@@ -891,31 +1537,110 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
+/* Enhanced loading and feedback states */
 .loading {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 40px;
+    padding: 60px 20px;
+    color: var(--gray-600);
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--gray-200);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 16px;
+    font-weight: 500;
     color: var(--gray-600);
 }
 
-.error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-    padding: 12px 16px;
-    border-radius: var(--radius);
-    margin-bottom: 16px;
+/* Enhanced touch feedback */
+.touch-feedback {
+    position: relative;
+    overflow: hidden;
 }
 
-.success {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #166534;
-    padding: 12px 16px;
-    border-radius: var(--radius);
-    margin-bottom: 16px;
+.touch-feedback::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+    pointer-events: none;
+    z-index: 1;
 }
+
+.touch-feedback:active::before {
+    width: 200px;
+    height: 200px;
+}
+
+/* Improved notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    z-index: 1000;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification.success {
+    background: var(--success);
+    color: white;
+}
+
+.notification.error {
+    background: var(--danger);
+    color: white;
+}
+
+.notification.info {
+    background: var(--primary);
+    color: white;
+}
+.mobile-card-view {
+    display: none;
+}
+
 /* Tab Navigation */
 .tab-navigation {
     display: flex;
@@ -967,8 +1692,9 @@ input[type="number"] {
     }
 
     .tab-btn {
-        padding: 14px 12px;
+        padding: 16px 12px;
         font-size: 14px;
+        min-height: 48px;
     }
 }
 /* Income Form */

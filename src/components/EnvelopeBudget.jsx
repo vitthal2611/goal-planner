@@ -3,6 +3,7 @@ import { saveToLocalStorage, loadFromLocalStorage, getDefaultEnvelopes } from '.
 import { addGlobalEnvelope, removeGlobalEnvelope } from '../utils/globalEnvelopes';
 import { auth } from '../config/firebase';
 import { saveData, getData } from '../services/database';
+import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import './EnvelopeBudget.css';
 
 const EnvelopeBudget = () => {
@@ -47,6 +48,25 @@ const EnvelopeBudget = () => {
     const [editingPayment, setEditingPayment] = useState({ id: null, method: '' });
     const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
     const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
+    
+    // Mobile gesture support
+    const swipeGesture = useSwipeGesture(
+        () => {
+            // Swipe left - next period
+            const nextPeriod = getNextBudgetPeriod(currentPeriod);
+            setCurrentPeriod(nextPeriod);
+        },
+        () => {
+            // Swipe right - previous period
+            const prevPeriod = getPreviousPeriod(currentPeriod);
+            setCurrentPeriod(prevPeriod);
+        }
+    );
+    
+    const pullToRefresh = usePullToRefresh(() => {
+        // Refresh current data
+        window.location.reload();
+    });
     // Get date range for current budget period
     const getPeriodDateRange = () => {
         const [year, month] = currentPeriod.split('-').map(Number);
@@ -812,27 +832,18 @@ const EnvelopeBudget = () => {
     const paymentBalances = getPaymentMethodBalances();
 
     return (
-        <div className="envelope-budget">
+        <div className="envelope-budget" {...swipeGesture} {...pullToRefresh}>
             <div className="header">
                 <h1>💰 Envelope Budget Tracker</h1>
                 <div className="header-controls">
                     <div className="control-group">
                         <label>Budget Period (Monthly)</label>
                         <div className="period-navigation">
-                            <button 
-                                className="btn btn-secondary period-nav-btn"
-                                onClick={() => {
-                                    const prevPeriod = getPreviousPeriod(currentPeriod);
-                                    setCurrentPeriod(prevPeriod);
-                                }}
-                                title="Previous Month"
-                            >
-                                ◀
-                            </button>
                             <select
                                 value={currentPeriod}
                                 onChange={(e) => setCurrentPeriod(e.target.value)}
                                 className="period-selector"
+                                aria-label="Select budget period"
                             >
                                 {generatePeriodOptions().map(period => (
                                     <option key={period.key} value={period.key}>
@@ -840,16 +851,6 @@ const EnvelopeBudget = () => {
                                     </option>
                                 ))}
                             </select>
-                            <button 
-                                className="btn btn-secondary period-nav-btn"
-                                onClick={() => {
-                                    const nextPeriod = getNextBudgetPeriod(currentPeriod);
-                                    setCurrentPeriod(nextPeriod);
-                                }}
-                                title="Next Month"
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -858,19 +859,19 @@ const EnvelopeBudget = () => {
             {/* Tab Navigation */}
             <div className="tab-navigation">
                 <button
-                    className={`tab-btn ${activeView === 'daily' ? 'active' : ''}`}
+                    className={`tab-btn touch-feedback ${activeView === 'daily' ? 'active' : ''}`}
                     onClick={() => setActiveView('daily')}
                 >
                     ⚡ Daily
                 </button>
                 <button
-                    className={`tab-btn ${activeView === 'spending' ? 'active' : ''}`}
+                    className={`tab-btn touch-feedback ${activeView === 'spending' ? 'active' : ''}`}
                     onClick={() => setActiveView('spending')}
                 >
                     💳 Spending
                 </button>
                 <button
-                    className={`tab-btn ${activeView === 'budget' ? 'active' : ''}`}
+                    className={`tab-btn touch-feedback ${activeView === 'budget' ? 'active' : ''}`}
                     onClick={() => setActiveView('budget')}
                 >
                     📊 Budget
@@ -878,7 +879,7 @@ const EnvelopeBudget = () => {
             </div>
 
             {notification.message && (
-                <div className={notification.type}>
+                <div className={`notification ${notification.type}`}>
                     {notification.message}
                 </div>
             )}
@@ -908,7 +909,7 @@ const EnvelopeBudget = () => {
                     <div className="card-header">
                         <h3>💳 Payment Method Overview</h3>
                         <button 
-                            className="btn btn-primary"
+                            className="btn btn-primary touch-feedback"
                             onClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
                         >
                             🔄 Transfer
@@ -942,6 +943,7 @@ const EnvelopeBudget = () => {
                                         value={newTransaction.envelope}
                                         onChange={(e) => setNewTransaction({...newTransaction, envelope: e.target.value})}
                                         className="quick-envelope"
+                                        aria-label="Select envelope"
                                     >
                                         <option value="">Select Envelope</option>
                                         {Object.keys(envelopes)
@@ -971,6 +973,9 @@ const EnvelopeBudget = () => {
                                         value={newTransaction.amount}
                                         onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
                                         className="quick-amount"
+                                        inputMode="decimal"
+                                        autoComplete="off"
+                                        aria-label="Transaction amount"
                                     />
                                     <input
                                         type="date"
@@ -988,6 +993,8 @@ const EnvelopeBudget = () => {
                                         value={newTransaction.description}
                                         onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
                                         className="quick-description"
+                                        autoComplete="off"
+                                        aria-label="Transaction description"
                                     />
                                     <select
                                         value={newTransaction.paymentMethod}
@@ -996,6 +1003,7 @@ const EnvelopeBudget = () => {
                                             if (e.target.value !== 'Custom') setCustomPaymentMethod('');
                                         }}
                                         className="quick-payment"
+                                        aria-label="Select payment method"
                                     >
                                         <option value="">Select Payment Method</option>
                                         {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
@@ -1010,11 +1018,13 @@ const EnvelopeBudget = () => {
                                             value={customPaymentMethod}
                                             onChange={(e) => setCustomPaymentMethod(e.target.value)}
                                             className="quick-payment"
+                                            autoComplete="off"
+                                            aria-label="Custom payment method name"
                                         />
                                     )}
                                 </div>
                                 <div className="quick-form-row">
-                                    <button className="btn btn-success quick-add-btn" onClick={addTransaction}>
+                                    <button className="btn btn-success quick-add-btn touch-feedback" onClick={addTransaction}>
                                         ➕ Add Expense
                                     </button>
                                 </div>
@@ -1027,48 +1037,91 @@ const EnvelopeBudget = () => {
                         <div className="card-header">
                             <h3>📅 Today's Expenses</h3>
                         </div>
-                        <div className="table-container">
-                            <table className="envelope-table">
-                                <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Envelope</th>
-                                    <th>Amount</th>
-                                    <th>Payment</th>
-                                    <th>Action</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {transactions.filter(t => t.date === newTransaction.date).reverse().map(transaction => (
-                                    <tr key={transaction.id}>
-                                        <td>{transaction.description}</td>
-                                        <td style={{textTransform: 'uppercase'}}>
-                                            {transaction.envelope.replace('.', ' - ')}
-                                        </td>
-                                        <td>₹{transaction.amount.toLocaleString()}</td>
-                                        <td>{transaction.paymentMethod || 'UPI'}</td>
-                                        <td>
-                                            <button
-                                                className="btn-delete"
-                                                onClick={() => setDeleteConfirm({
-                                                    type: 'transaction',
-                                                    id: transaction.id,
-                                                    name: transaction.description
-                                                })}
-                                                title="Delete transaction"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {transactions.filter(t => t.date === newTransaction.date).length === 0 && (
+                        <div className="card-content">
+                            <div className="table-container">
+                                <table className="envelope-table">
+                                    <thead>
                                     <tr>
-                                        <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No expenses on selected date</td>
+                                        <th>Time</th>
+                                        <th>Description</th>
+                                        <th>Envelope</th>
+                                        <th>Amount</th>
+                                        <th>Payment</th>
+                                        <th>Action</th>
                                     </tr>
-                                )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {transactions.filter(t => t.date === newTransaction.date).reverse().map((transaction, index) => (
+                                        <tr key={transaction.id}>
+                                            <td>#{index + 1}</td>
+                                            <td>{transaction.description}</td>
+                                            <td style={{textTransform: 'uppercase'}}>
+                                                {transaction.envelope.replace('.', ' - ')}
+                                            </td>
+                                            <td style={{fontWeight: '600', color: 'var(--danger)'}}>₹{transaction.amount.toLocaleString()}</td>
+                                            <td>{transaction.paymentMethod || 'UPI'}</td>
+                                            <td>
+                                                <button
+                                                    className="btn-delete"
+                                                    onClick={() => setDeleteConfirm({
+                                                        type: 'transaction',
+                                                        id: transaction.id,
+                                                        name: transaction.description
+                                                    })}
+                                                    title="Delete transaction"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {transactions.filter(t => t.date === newTransaction.date).length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No expenses on selected date</td>
+                                        </tr>
+                                    )}
+                                    </tbody>
+                                </table>
+                                <div className="mobile-card-view">
+                                    {transactions.filter(t => t.date === newTransaction.date).reverse().map((transaction, index) => (
+                                        <div key={transaction.id} className="mobile-transaction-card">
+                                            <div className="mobile-card-header">
+                                                <span>#{index + 1} - {transaction.description}</span>
+                                                <button
+                                                    className="btn-delete"
+                                                    onClick={() => setDeleteConfirm({
+                                                        type: 'transaction',
+                                                        id: transaction.id,
+                                                        name: transaction.description
+                                                    })}
+                                                    title="Delete transaction"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div className="mobile-card-content">
+                                                <div className="mobile-card-field">
+                                                    <span className="mobile-card-label">Envelope</span>
+                                                    <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>
+                                                        {transaction.envelope.replace('.', ' - ')}
+                                                    </span>
+                                                </div>
+                                                <div className="mobile-card-field">
+                                                    <span className="mobile-card-label">Amount</span>
+                                                    <span className="mobile-card-value" style={{fontWeight: '600', color: 'var(--danger)'}}>₹{transaction.amount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="mobile-card-field">
+                                                    <span className="mobile-card-label">Payment</span>
+                                                    <span className="mobile-card-value">{transaction.paymentMethod || 'UPI'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {transactions.filter(t => t.date === newTransaction.date).length === 0 && (
+                                        <div style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No expenses on selected date</div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </>
@@ -1117,6 +1170,41 @@ const EnvelopeBudget = () => {
                                 )}
                                 </tbody>
                             </table>
+                            <div className="mobile-card-view">
+                                {Object.keys(envelopes).map(category =>
+                                    Object.keys(envelopes[category]).map(name => {
+                                        const env = envelopes[category][name];
+                                        const remaining = env.budgeted + env.rollover - env.spent;
+                                        const status = getStatus(env);
+                                        return (
+                                            <div key={`${category}.${name}`} className="mobile-envelope-card">
+                                                <div className="mobile-card-header">
+                                                    <span style={{textTransform: 'uppercase'}}>{name}</span>
+                                                    <span className={`status ${status}`}>{status}</span>
+                                                </div>
+                                                <div className="mobile-card-content">
+                                                    <div className="mobile-card-field">
+                                                        <span className="mobile-card-label">Category</span>
+                                                        <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>{category}</span>
+                                                    </div>
+                                                    <div className="mobile-card-field">
+                                                        <span className="mobile-card-label">Budgeted</span>
+                                                        <span className="mobile-card-value">₹{env.budgeted.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="mobile-card-field">
+                                                        <span className="mobile-card-label">Spent</span>
+                                                        <span className="mobile-card-value">₹{env.spent.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="mobile-card-field">
+                                                        <span className="mobile-card-label">Remaining</span>
+                                                        <span className="mobile-card-value">₹{remaining.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -1189,6 +1277,49 @@ const EnvelopeBudget = () => {
                                 )}
                                 </tbody>
                             </table>
+                            <div className="mobile-card-view">
+                                {transactions.slice(-10).reverse().map(transaction => (
+                                    <div key={transaction.id} className="mobile-transaction-card">
+                                        <div className="mobile-card-header">
+                                            <span>{transaction.description}</span>
+                                            <button
+                                                className="btn-delete"
+                                                onClick={() => setDeleteConfirm({
+                                                    type: 'transaction',
+                                                    id: transaction.id,
+                                                    name: transaction.description
+                                                })}
+                                                title="Delete transaction"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                        <div className="mobile-card-content">
+                                            <div className="mobile-card-field">
+                                                <span className="mobile-card-label">Date</span>
+                                                <span className="mobile-card-value">{transaction.date}</span>
+                                            </div>
+                                            <div className="mobile-card-field">
+                                                <span className="mobile-card-label">Amount</span>
+                                                <span className="mobile-card-value">₹{transaction.amount.toLocaleString()}</span>
+                                            </div>
+                                            <div className="mobile-card-field">
+                                                <span className="mobile-card-label">Envelope</span>
+                                                <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>
+                                                    {transaction.envelope.replace('.', ' - ')}
+                                                </span>
+                                            </div>
+                                            <div className="mobile-card-field">
+                                                <span className="mobile-card-label">Payment</span>
+                                                <span className="mobile-card-value">{transaction.paymentMethod || 'Unknown'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {transactions.length === 0 && (
+                                    <div style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No transactions yet</div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </>
@@ -1211,6 +1342,9 @@ const EnvelopeBudget = () => {
                                         value={incomeTransaction.amount}
                                         onChange={(e) => setIncomeTransaction({...incomeTransaction, amount: e.target.value})}
                                         className="income-input"
+                                        inputMode="decimal"
+                                        autoComplete="off"
+                                        aria-label="Income amount"
                                     />
                                     <input
                                         type="date"
@@ -1226,6 +1360,8 @@ const EnvelopeBudget = () => {
                                         value={incomeTransaction.description}
                                         onChange={(e) => setIncomeTransaction({...incomeTransaction, description: e.target.value})}
                                         className="income-input"
+                                        autoComplete="off"
+                                        aria-label="Income description"
                                     />
                                     <select
                                         value={incomeTransaction.paymentMethod}
@@ -1383,6 +1519,13 @@ const EnvelopeBudget = () => {
             {transferModal.show && (
                 <div className="modal-overlay" onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="modal-close"
+                            onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}
+                            aria-label="Close modal"
+                        >
+                            ×
+                        </button>
                         <h3>🔄 Transfer Between Payment Methods</h3>
                         <div style={{ margin: '20px 0' }}>
                             <div style={{ marginBottom: '15px' }}>
@@ -1439,6 +1582,13 @@ const EnvelopeBudget = () => {
             {rolloverConfirm && (
                 <div className="modal-overlay" onClick={() => setRolloverConfirm(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="modal-close"
+                            onClick={() => setRolloverConfirm(false)}
+                            aria-label="Close modal"
+                        >
+                            ×
+                        </button>
                         <h3>🔄 Rollover to Which Period?</h3>
                         <p>Select the target budget period for rollover:</p>
                         <div style={{ maxHeight: '300px', overflowY: 'auto', margin: '20px 0' }}>
@@ -1476,6 +1626,13 @@ const EnvelopeBudget = () => {
             {deleteConfirm.type && (
                 <div className="modal-overlay" onClick={() => setDeleteConfirm({ type: '', id: '', name: '' })}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="modal-close"
+                            onClick={() => setDeleteConfirm({ type: '', id: '', name: '' })}
+                            aria-label="Close modal"
+                        >
+                            ×
+                        </button>
                         <h3>Confirm Delete</h3>
                         <p>Are you sure you want to delete {deleteConfirm.type} "{deleteConfirm.name}"?</p>
                         <div className="modal-actions">

@@ -25,7 +25,12 @@ function App() {
   };
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '50px' }}>Loading...</div>;
+    return (
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading your budget...</div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -34,9 +39,44 @@ function App() {
 
   return (
     <div>
-      <div style={{ textAlign: 'right', padding: '10px' }}>
-        <span>Welcome, {user.email} </span>
-        <button onClick={handleLogout} style={{ marginLeft: '10px', padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        padding: '12px 16px', 
+        background: 'white',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        flexWrap: 'wrap',
+        gap: '8px'
+      }}>
+        <span style={{ 
+          fontSize: '14px', 
+          color: '#666',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '200px'
+        }}>Welcome, {user.email}</span>
+        <button 
+          onClick={handleLogout} 
+          style={{ 
+            minHeight: '44px',
+            minWidth: '44px',
+            padding: '8px 16px', 
+            backgroundColor: '#dc3545', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '8px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            touchAction: 'manipulation'
+          }}
+          aria-label="Logout"
+        >
           Logout
         </button>
       </div>

@@ -46,13 +46,13 @@ const Auth = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px'
+      padding: '16px'
     }}>
       <div style={{
         background: 'white',
         borderRadius: '16px',
         boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-        padding: '40px',
+        padding: window.innerWidth <= 480 ? '24px' : '40px',
         width: '100%',
         maxWidth: '400px',
         textAlign: 'center'
@@ -95,13 +95,14 @@ const Auth = () => {
               onChange={(e) => setEmail(e.target.value)}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '14px 16px',
                 border: '2px solid #e1e5e9',
                 borderRadius: '8px',
-                fontSize: '1rem',
+                fontSize: '16px',
                 outline: 'none',
                 transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                minHeight: '48px'
               }}
               onFocus={(e) => e.target.style.borderColor = '#667eea'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
@@ -124,13 +125,14 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '14px 16px',
                 border: '2px solid #e1e5e9',
                 borderRadius: '8px',
-                fontSize: '1rem',
+                fontSize: '16px',
                 outline: 'none',
                 transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                minHeight: '48px'
               }}
               onFocus={(e) => e.target.style.borderColor = '#667eea'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
@@ -143,12 +145,13 @@ const Auth = () => {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '14px',
+              padding: '16px',
+              minHeight: '48px',
               background: loading ? '#ccc' : 'linear-gradient(135deg, #667eea, #764ba2)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '1rem',
+              fontSize: '16px',
               fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
