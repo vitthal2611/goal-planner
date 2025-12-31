@@ -44,6 +44,8 @@ const EnvelopeBudget = () => {
     const [newEnvelope, setNewEnvelope] = useState({ category: '', name: '' });
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
+    const [editingPayment, setEditingPayment] = useState({ id: null, method: '' });
+    const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
     const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
     // Get date range for current budget period
     const getPeriodDateRange = () => {
@@ -203,7 +205,7 @@ const EnvelopeBudget = () => {
         return () => unsubscribe();
     }, []);
 
-    const saveData = useCallback(async () => {
+    const saveLocalData = useCallback(async () => {
         try {
             // Only save if data is loaded and we have actual data
             if (dataLoaded && Object.keys(monthlyData).length > 0) {
@@ -221,8 +223,8 @@ const EnvelopeBudget = () => {
     }, [monthlyData, currentPeriod, dataLoaded]);
 
     useEffect(() => {
-        saveData();
-    }, [saveData]);
+        saveLocalData();
+    }, [saveLocalData]);
 
     const updatePeriodData = async (updates) => {
         const currentPeriodData = await getCurrentPeriodData();
@@ -233,6 +235,58 @@ const EnvelopeBudget = () => {
                 ...updates
             }
         }));
+    };
+
+    const transferBetweenPaymentMethods = async () => {
+        const { from, to, amount } = transferModal;
+        const transferAmount = parseFloat(amount);
+        
+        if (!from || !to || !transferAmount || transferAmount <= 0) {
+            showNotification('error', 'Fill all transfer details');
+            return;
+        }
+        
+        if (from === to) {
+            showNotification('error', 'Cannot transfer to same payment method');
+            return;
+        }
+        
+        const transferOut = {
+            id: Date.now() + Math.random(),
+            date: new Date().toISOString().split('T')[0],
+            envelope: 'TRANSFER',
+            amount: transferAmount,
+            description: `Transfer to ${to}`,
+            paymentMethod: from,
+            type: 'transfer-out'
+        };
+        
+        const transferIn = {
+            id: Date.now() + Math.random() + 1,
+            date: new Date().toISOString().split('T')[0],
+            envelope: 'TRANSFER',
+            amount: transferAmount,
+            description: `Transfer from ${from}`,
+            paymentMethod: to,
+            type: 'transfer-in'
+        };
+        
+        await updatePeriodData({
+            transactions: [...transactions, transferOut, transferIn]
+        });
+        
+        setTransferModal({ show: false, from: '', to: '', amount: '' });
+        showNotification('success', `₹${transferAmount.toLocaleString()} transferred from ${from} to ${to}`);
+    };
+
+    const updateTransactionPayment = async (transactionId, newPaymentMethod) => {
+        const updatedTransactions = transactions.map(t => 
+            t.id === transactionId ? { ...t, paymentMethod: newPaymentMethod } : t
+        );
+        
+        await updatePeriodData({ transactions: updatedTransactions });
+        setEditingPayment({ id: null, method: '' });
+        showNotification('success', 'Payment method updated');
     };
 
     const addCustomPaymentMethod = async (method) => {
@@ -744,8 +798,10 @@ const EnvelopeBudget = () => {
             const method = transaction.paymentMethod || 'Unknown';
             if (!balances[method]) balances[method] = 0;
             
-            if (transaction.type === 'income') {
+            if (transaction.type === 'income' || transaction.type === 'transfer-in') {
                 balances[method] += transaction.amount;
+            } else if (transaction.type === 'transfer-out') {
+                balances[method] -= transaction.amount;
             } else {
                 balances[method] -= transaction.amount;
             }
@@ -851,6 +907,12 @@ const EnvelopeBudget = () => {
                 <div className="card">
                     <div className="card-header">
                         <h3>💳 Payment Method Overview</h3>
+                        <button 
+                            className="btn btn-primary"
+                            onClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
+                        >
+                            🔄 Transfer
+                        </button>
                     </div>
                     <div className="card-content">
                         <div className="summary-grid">
@@ -882,9 +944,16 @@ const EnvelopeBudget = () => {
                                         className="quick-envelope"
                                     >
                                         <option value="">Select Envelope</option>
-                                        {Object.keys(envelopes).map(category =>
-                                            Object.keys(envelopes[category]).map(name => {
-                                                const env = envelopes[category][name];
+                                        {Object.keys(envelopes)
+                                            .flatMap(category =>
+                                                Object.keys(envelopes[category]).map(name => ({
+                                                    category,
+                                                    name,
+                                                    env: envelopes[category][name]
+                                                }))
+                                            )
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(({ category, name, env }) => {
                                                 const balance = env.budgeted + env.rollover - env.spent;
                                                 return (
                                                     <option key={`${category}.${name}`} value={`${category}.${name}`}>
@@ -892,7 +961,7 @@ const EnvelopeBudget = () => {
                                                     </option>
                                                 );
                                             })
-                                        )}
+                                        }
                                     </select>
                                     <input
                                         type="number"
@@ -929,7 +998,7 @@ const EnvelopeBudget = () => {
                                         className="quick-payment"
                                     >
                                         <option value="">Select Payment Method</option>
-                                        {customPaymentMethods.map(method => (
+                                        {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
                                             <option key={method} value={method}>{method}</option>
                                         ))}
                                         <option value="Custom">➕ Add New</option>
@@ -1077,7 +1146,27 @@ const EnvelopeBudget = () => {
                                             {transaction.envelope.replace('.', ' - ')}
                                         </td>
                                         <td>₹{transaction.amount.toLocaleString()}</td>
-                                        <td>{transaction.paymentMethod || 'UPI'}</td>
+                                        <td 
+                                            onDoubleClick={() => setEditingPayment({ id: transaction.id, method: transaction.paymentMethod || '' })}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {editingPayment.id === transaction.id ? (
+                                                <select
+                                                    value={editingPayment.method}
+                                                    onChange={(e) => setEditingPayment({ ...editingPayment, method: e.target.value })}
+                                                    onBlur={() => updateTransactionPayment(transaction.id, editingPayment.method)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && updateTransactionPayment(transaction.id, editingPayment.method)}
+                                                    autoFocus
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
+                                                        <option key={method} value={method}>{method}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                transaction.paymentMethod || 'Unknown'
+                                            )}
+                                        </td>
                                         <td>
                                             <button
                                                 className="btn-delete"
@@ -1147,7 +1236,7 @@ const EnvelopeBudget = () => {
                                         className="income-input"
                                     >
                                         <option value="">Select Payment Method</option>
-                                        {customPaymentMethods.map(method => (
+                                        {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
                                             <option key={method} value={method}>{method}</option>
                                         ))}
                                         <option value="Custom">➕ Add New</option>
@@ -1289,6 +1378,62 @@ const EnvelopeBudget = () => {
                         </div>
                     </div>
                 </>
+            )}
+
+            {transferModal.show && (
+                <div className="modal-overlay" onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>🔄 Transfer Between Payment Methods</h3>
+                        <div style={{ margin: '20px 0' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label>From:</label>
+                                <select
+                                    value={transferModal.from}
+                                    onChange={(e) => setTransferModal({ ...transferModal, from: e.target.value })}
+                                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                                >
+                                    <option value="">Select source payment method</option>
+                                    {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
+                                        <option key={method} value={method}>{method}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label>To:</label>
+                                <select
+                                    value={transferModal.to}
+                                    onChange={(e) => setTransferModal({ ...transferModal, to: e.target.value })}
+                                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                                >
+                                    <option value="">Select destination payment method</option>
+                                    {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
+                                        <option key={method} value={method}>{method}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label>Amount:</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="₹ Transfer Amount"
+                                    value={transferModal.amount}
+                                    onChange={(e) => setTransferModal({ ...transferModal, amount: e.target.value })}
+                                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-success" onClick={transferBetweenPaymentMethods}>
+                                Transfer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {rolloverConfirm && (
