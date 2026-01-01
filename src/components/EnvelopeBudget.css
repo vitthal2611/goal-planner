@@ -700,24 +700,53 @@ body {
 
 .envelope-input {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: white;
 }
 
-.envelope-input label {
-    min-width: 80px;
+.envelope-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.envelope-header label {
     font-size: 14px;
-    color: var(--gray-600);
+    font-weight: 600;
+    color: var(--gray-700);
     text-transform: capitalize;
 }
 
 .envelope-input input {
-    flex: 1;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid var(--gray-300);
     border-radius: var(--radius);
     font-size: 14px;
+}
+
+.increment-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.increment-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--success);
+    border-radius: var(--radius);
+    font-size: 13px;
+}
+
+.increment-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 /* Transaction form */
@@ -1733,6 +1762,136 @@ input[type="number"] {
         flex: none;
     }
 }
+/* Sortable table headers */
+.envelope-table th[style*="cursor: pointer"] {
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.envelope-table th[style*="cursor: pointer"]:hover {
+    background-color: var(--gray-100);
+}
+
+.envelope-table th[style*="cursor: pointer"]:active {
+    background-color: var(--gray-200);
+}
+
+/* Transaction Filters */
+.transaction-filters {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-row:last-child {
+    margin-bottom: 0;
+}
+
+.filter-select,
+.filter-input {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: white;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.filter-clear-btn {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-select,
+    .filter-input {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .filter-clear-btn {
+        width: 100%;
+    }
+}
+
+/* Transactions Section */
+.transactions-summary {
+    margin-bottom: 24px;
+}
+
+.transactions-details {
+    margin-top: 20px;
+}
+
+.transactions-details h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Transaction type styling */
+.transaction-type {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Enhanced mobile card view for transactions */
+@media (max-width: 480px) {
+    .transactions-summary .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .transactions-summary .summary-card {
+        padding: 12px 8px;
+    }
+    
+    .transactions-summary .summary-value {
+        font-size: 18px;
+    }
+    
+    .transactions-summary .summary-label {
+        font-size: 11px;
+    }
+    
+    .transactions-details h4 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+}
+
 /* Add Envelope Form */
 .add-envelope-form {
     background: var(--gray-50);

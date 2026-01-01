@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist",
     "deploy:vercel": "npm run build && vercel --prod",
+    "deploy:firebase": "npm run build && firebase deploy",
     "analyze": "npm run build && npx vite-bundle-analyzer dist"
   },
   "dependencies": {
