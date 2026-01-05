@@ -3,6 +3,7 @@ import { saveToLocalStorage, loadFromLocalStorage, getDefaultEnvelopes } from '.
 import { addGlobalEnvelope, removeGlobalEnvelope } from '../utils/globalEnvelopes';
 import { auth } from '../config/firebase';
 import { saveData, getData } from '../services/database';
+import { backupTransactions } from '../services/backup';
 import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import './EnvelopeBudget.css';
 
@@ -745,6 +746,21 @@ const EnvelopeBudget = () => {
         a.click();
         URL.revokeObjectURL(url);
         showNotification('success', 'Data exported successfully');
+    };
+
+    const handleBackup = async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showNotification('error', 'Please login to backup data');
+            return;
+        }
+        
+        const result = await backupTransactions(user.uid);
+        if (result.success) {
+            showNotification('success', 'Backup downloaded successfully');
+        } else {
+            showNotification('error', `Backup failed: ${result.error}`);
+        }
     };
 
     const importExpenses = (event) => {
@@ -1722,6 +1738,9 @@ const EnvelopeBudget = () => {
                             <div className="budget-actions">
                                 <button className="btn btn-secondary" onClick={exportData}>
                                     📤 Export
+                                </button>
+                                <button className="btn btn-warning" onClick={handleBackup}>
+                                    💾 Backup All Data
                                 </button>
                                 <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
                                     🔄 Rollover Unused Funds

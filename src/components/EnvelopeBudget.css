@@ -88,6 +88,17 @@ body {
     touch-action: pan-y;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    /* Prevent pull-to-refresh on mobile browsers */
+    overscroll-behavior-y: contain;
+}
+
+/* Safe area handling for notched devices */
+@supports (padding: max(0px)) {
+    .envelope-budget {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
 }
 
 /* Improved swipe indicators with better visibility */
@@ -227,6 +238,7 @@ body {
 .control-group input[type="number"] {
     -webkit-appearance: none;
     -moz-appearance: textfield;
+    inputmode: decimal;
 }
 
 .control-group input[type="email"] {
@@ -246,6 +258,18 @@ body {
 
 .control-group input[type="search"] {
     inputmode: search;
+}
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    select, textarea, input[type="text"], input[type="password"], 
+    input[type="datetime"], input[type="datetime-local"], 
+    input[type="date"], input[type="month"], input[type="time"], 
+    input[type="week"], input[type="number"], input[type="email"], 
+    input[type="url"], input[type="search"], input[type="tel"], 
+    input[type="color"] {
+        font-size: 16px !important;
+    }
 }
 
 /* Modern buttons with enhanced styling */
@@ -871,7 +895,7 @@ body {
     color: var(--gray-900);
 }
 
-/* Responsive table behavior - keep table visible on mobile for Today's Expenses */
+/* Responsive table behavior - keep table visible on mobile for Today's Expenses and Spending */
 @media (max-width: 768px) {
     .envelope-table {
         display: table !important;
@@ -910,12 +934,25 @@ body {
 }
 
 @media (max-width: 480px) {
+    /* Always use table design on mobile */
     .envelope-table {
-        display: none !important;
+        display: table !important;
+        font-size: 11px;
+        width: 100%;
+    }
+    
+    .envelope-table th,
+    .envelope-table td {
+        padding: 6px 3px;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 70px;
     }
     
     .mobile-card-view {
-        display: block !important;
+        display: none !important;
     }
     
     .mobile-transaction-card,
@@ -1048,6 +1085,9 @@ body {
 @media (max-width: 480px) {
     .envelope-budget {
         padding: 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
     }
 
     .header {
@@ -1160,7 +1200,7 @@ body {
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         position: sticky;
-        top: 70px;
+        top: max(70px, env(safe-area-inset-top));
         z-index: 90;
     }
 
@@ -1227,7 +1267,6 @@ body {
         font-weight: 700;
     }
 
-    /* Enhanced mobile table cards */
     .mobile-transaction-card,
     .mobile-envelope-card {
         padding: 12px;
@@ -1627,7 +1666,7 @@ input[type="number"] {
 /* Improved notification styles */
 .notification {
     position: fixed;
-    top: 20px;
+    top: max(20px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
     padding: 12px 20px;
