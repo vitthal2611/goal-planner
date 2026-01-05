@@ -1,18 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { saveToLocalStorage, loadFromLocalStorage, getDefaultEnvelopes } from '../utils/localStorage';
 import { addGlobalEnvelope, removeGlobalEnvelope } from '../utils/globalEnvelopes';
 import { auth } from '../config/firebase';
 import { saveData, getData } from '../services/database';
 import { backupTransactions } from '../services/backup';
 import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
+import { sanitizeInput, sanitizeCSVData, validatePaymentMethod } from '../utils/sanitize';
+import QuickExpenseForm from './QuickExpenseForm';
+import TransactionsList from './TransactionsList';
 import './EnvelopeBudget.css';
+import './MobileEnhancements.css';
 
 const EnvelopeBudget = () => {
     // Generate budget period (1st to last day of month)
-    // Generate list of budget periods (Jan 2026 + next 3 years)
+    // Generate list of budget periods (current year + next 3 years)
     const generatePeriodOptions = () => {
         const periods = [];
-        const startYear = 2026;
+        const startYear = new Date().getFullYear(); // Use current year instead of hardcoded 2026
         const startMonth = 0; // January (0-indexed)
 
         for (let i = 0; i <= 36; i++) { // 36 months = 3 years
@@ -33,12 +37,14 @@ const EnvelopeBudget = () => {
     };
 
     const getCurrentBudgetPeriod = () => {
-        return '2026-01'; // Default to Jan 2026
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`; // Default to current month/year
     };
 
     const [currentPeriod, setCurrentPeriod] = useState(getCurrentBudgetPeriod());
     const [monthlyData, setMonthlyData] = useState({});
-    const [newTransaction, setNewTransaction] = useState({ envelope: '', amount: '', description: '', paymentMethod: 'UPI', date: new Date().toISOString().split('T')[0] });
     const [customPaymentMethod, setCustomPaymentMethod] = useState('');
     const [incomeTransaction, setIncomeTransaction] = useState({ amount: '', description: '', paymentMethod: '', date: new Date().toISOString().split('T')[0] });
     const [customIncomePayment, setCustomIncomePayment] = useState('');
@@ -50,6 +56,8 @@ const EnvelopeBudget = () => {
     const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
     const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+    const [swipeIndicator, setSwipeIndicator] = useState({ show: false, direction: '' });
+    const [quickActionSheet, setQuickActionSheet] = useState(false);
     const [filters, setFilters] = useState({
         type: '',
         envelope: '',
@@ -63,11 +71,15 @@ const EnvelopeBudget = () => {
     const swipeGesture = useSwipeGesture(
         () => {
             // Swipe left - next period
+            setSwipeIndicator({ show: true, direction: 'left' });
+            setTimeout(() => setSwipeIndicator({ show: false, direction: '' }), 500);
             const nextPeriod = getNextBudgetPeriod(currentPeriod);
             setCurrentPeriod(nextPeriod);
         },
         () => {
             // Swipe right - previous period
+            setSwipeIndicator({ show: true, direction: 'right' });
+            setTimeout(() => setSwipeIndicator({ show: false, direction: '' }), 500);
             const prevPeriod = getPreviousPeriod(currentPeriod);
             setCurrentPeriod(prevPeriod);
         }
@@ -75,6 +87,9 @@ const EnvelopeBudget = () => {
     
     const pullToRefresh = usePullToRefresh(() => {
         // Refresh current data
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
         window.location.reload();
     });
     // Get date range for current budget period
@@ -321,14 +336,20 @@ const EnvelopeBudget = () => {
     };
 
     const addCustomPaymentMethod = async (method) => {
-        if (method && !customPaymentMethods.includes(method)) {
-            const updatedMethods = [...customPaymentMethods, method];
+        if (method && !customPaymentMethods.includes(method) && validatePaymentMethod(method)) {
+            const sanitizedMethod = sanitizeInput(method);
+            const updatedMethods = [...customPaymentMethods, sanitizedMethod];
             setCustomPaymentMethods(updatedMethods);
             
             // Save to Firebase
             const user = auth.currentUser;
             if (user) {
-                await saveData(`users/${user.uid}/customPaymentMethods`, updatedMethods);
+                try {
+                    await saveData(`users/${user.uid}/customPaymentMethods`, updatedMethods);
+                } catch (error) {
+                    console.error('Failed to save payment method:', error);
+                    showNotification('error', 'Failed to save payment method');
+                }
             }
         }
     };
@@ -343,10 +364,15 @@ const EnvelopeBudget = () => {
 
         const incomeAmount = parseFloat(amount);
 
-        const paymentMethod = incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod;
+        let paymentMethod = incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod;
         
         if (incomeTransaction.paymentMethod === 'Custom' && customIncomePayment) {
-            addCustomPaymentMethod(customIncomePayment);
+            if (!validatePaymentMethod(customIncomePayment)) {
+                showNotification('error', 'Invalid payment method format');
+                return;
+            }
+            paymentMethod = sanitizeInput(customIncomePayment);
+            await addCustomPaymentMethod(paymentMethod);
         }
 
         const transactionRecord = {
@@ -354,18 +380,24 @@ const EnvelopeBudget = () => {
             date: incomeTransaction.date,
             envelope: 'INCOME',
             amount: incomeAmount,
-            description: description || 'Monthly Income',
-            paymentMethod: paymentMethod,
+            description: sanitizeInput(description || 'Monthly Income'),
+            paymentMethod: sanitizeInput(paymentMethod),
             type: 'income'
         };
 
-        await updatePeriodData({
-            income: income + incomeAmount,
-            transactions: [...transactions, transactionRecord]
-        });
+        try {
+            await updatePeriodData({
+                income: income + incomeAmount,
+                transactions: [...transactions, transactionRecord]
+            });
 
-        setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0] });
-        showNotification('success', '✓ Income Added!');
+            setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0] });
+            setCustomIncomePayment('');
+            showNotification('success', '✓ Income Added!');
+        } catch (error) {
+            console.error('Failed to add income:', error);
+            showNotification('error', 'Failed to add income');
+        }
     };
 
     const addEnvelope = async () => {
@@ -411,6 +443,10 @@ const EnvelopeBudget = () => {
 
     const showNotification = (type, message) => {
         setNotification({ type, message });
+        // Haptic feedback simulation
+        if (navigator.vibrate) {
+            navigator.vibrate(type === 'success' ? [50] : [100, 50, 100]);
+        }
         setTimeout(() => setNotification({ type: '', message: '' }), 3000);
     };
 
@@ -421,8 +457,8 @@ const EnvelopeBudget = () => {
         return 'healthy';
     };
 
-    const addTransaction = () => {
-        const { envelope, amount, description } = newTransaction;
+    const addTransaction = async (transactionData) => {
+        const { envelope, amount, description, paymentMethod } = transactionData;
 
         if (!amount || parseFloat(amount) <= 0) {
             showNotification('error', 'Enter valid amount');
@@ -461,35 +497,31 @@ const EnvelopeBudget = () => {
             }
         };
 
-        const paymentMethod = newTransaction.paymentMethod === 'Custom' ? customPaymentMethod : newTransaction.paymentMethod;
-        
-        if (newTransaction.paymentMethod === 'Custom' && customPaymentMethod) {
-            addCustomPaymentMethod(customPaymentMethod);
-        }
-
         const transactionRecord = {
             id: Date.now() + Math.random(),
-            date: newTransaction.date,
+            date: transactionData.date,
             envelope,
             amount: expenseAmount,
-            description: description || 'Quick expense',
-            paymentMethod: paymentMethod
+            description: sanitizeInput(description || 'Quick expense'),
+            paymentMethod: sanitizeInput(paymentMethod)
         };
 
-        updatePeriodData({
-            envelopes: updatedEnvelopes,
-            transactions: [...transactions, transactionRecord]
-        });
+        try {
+            await updatePeriodData({
+                envelopes: updatedEnvelopes,
+                transactions: [...transactions, transactionRecord]
+            });
 
-        setNewTransaction({
-            envelope: newTransaction.envelope,
-            amount: '',
-            description: '',
-            paymentMethod: newTransaction.paymentMethod,
-            date: new Date().toISOString().split('T')[0]
-        });
+            // Smart scroll to show success on mobile
+            if (window.innerWidth <= 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
 
-        showNotification('success', '✓ Added!');
+            showNotification('success', '✓ Added!');
+        } catch (error) {
+            console.error('Failed to add transaction:', error);
+            showNotification('error', 'Failed to add transaction');
+        }
     };
 
     const allocateBudget = (category, name, amount) => {
@@ -787,7 +819,7 @@ const EnvelopeBudget = () => {
                     if (!line) continue;
                     
                     const values = line.split(',').map(v => v.trim());
-                    const expense = {
+                    const rawExpense = {
                         date: values[0],
                         envelope: values[1],
                         amount: parseFloat(values[2]),
@@ -795,8 +827,17 @@ const EnvelopeBudget = () => {
                         paymentMethod: values[4] || 'UPI'
                     };
                     
+                    // Sanitize CSV data to prevent XSS
+                    const expense = sanitizeCSVData(rawExpense);
+                    
                     // Validate expense
                     if (!expense.date || !expense.envelope || !expense.amount) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Validate payment method format
+                    if (!validatePaymentMethod(expense.paymentMethod)) {
                         errorCount++;
                         continue;
                     }
@@ -836,17 +877,22 @@ const EnvelopeBudget = () => {
                         paymentMethod: expense.paymentMethod
                     };
                     
-                    await updatePeriodData({
-                        envelopes: updatedEnvelopes,
-                        transactions: [...transactions, transactionRecord]
-                    });
-                    
-                    successCount++;
+                    try {
+                        await updatePeriodData({
+                            envelopes: updatedEnvelopes,
+                            transactions: [...transactions, transactionRecord]
+                        });
+                        successCount++;
+                    } catch (error) {
+                        console.error('Failed to import expense:', error);
+                        errorCount++;
+                    }
                 }
                 
                 showNotification('success', `✓ Imported ${successCount} expenses. ${errorCount} errors.`);
             } catch (error) {
-                showNotification('error', 'Invalid CSV format');
+                console.error('CSV import error:', error);
+                showNotification('error', 'Invalid CSV format or import failed');
             }
         };
         reader.readAsText(file);
@@ -871,16 +917,23 @@ const EnvelopeBudget = () => {
         return { healthy, blocked, warnings };
     };
 
-    const insights = getInsights();
-    const totalBudgeted = Object.values(envelopes).reduce((sum, category) =>
-        sum + Object.values(category).reduce((catSum, env) => catSum + env.budgeted, 0), 0);
-    const totalSpent = Object.values(envelopes).reduce((sum, category) =>
-        sum + Object.values(category).reduce((catSum, env) => catSum + env.spent, 0), 0);
+    // Memoize expensive calculations for better performance
+    const insights = useMemo(() => getInsights(), [envelopes]);
+    const totalBudgeted = useMemo(() => 
+        Object.values(envelopes).reduce((sum, category) =>
+            sum + Object.values(category).reduce((catSum, env) => catSum + env.budgeted, 0), 0), 
+        [envelopes]
+    );
+    const totalSpent = useMemo(() => 
+        Object.values(envelopes).reduce((sum, category) =>
+            sum + Object.values(category).reduce((catSum, env) => catSum + env.spent, 0), 0), 
+        [envelopes]
+    );
 
-    const getPaymentMethodBalances = () => {
+    const getPaymentMethodBalances = useMemo(() => {
         const balances = {};
         transactions.forEach(transaction => {
-            const method = transaction.paymentMethod || 'Unknown';
+            const method = sanitizeInput(transaction.paymentMethod || 'Unknown');
             if (!balances[method]) balances[method] = 0;
             
             if (transaction.type === 'income' || transaction.type === 'transfer-in') {
@@ -892,9 +945,9 @@ const EnvelopeBudget = () => {
             }
         });
         return balances;
-    };
+    }, [transactions]);
 
-    const paymentBalances = getPaymentMethodBalances();
+    const paymentBalances = getPaymentMethodBalances;
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -1021,6 +1074,19 @@ const EnvelopeBudget = () => {
 
     return (
         <div className="envelope-budget" {...swipeGesture} {...pullToRefresh}>
+            {/* Swipe Indicators */}
+            {swipeIndicator.show && (
+                <div className={`swipe-indicator ${swipeIndicator.direction} show`}>
+                    {swipeIndicator.direction === 'left' ? '← Next Period' : '→ Previous Period'}
+                </div>
+            )}
+            {/* Pull to Refresh Indicator */}
+            {pullToRefresh.isPulling && (
+                <div className="pull-to-refresh">
+                    ↓ Pull to refresh
+                </div>
+            )}
+            
             <div className="header">
                 <h1>💰 Envelope Budget Tracker</h1>
                 <div className="header-controls">
@@ -1126,198 +1192,24 @@ const EnvelopeBudget = () => {
             {activeView === 'daily' ? (
                 <>
                     {/* Quick Expense Interface */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>⚡ Quick Expense</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="quick-expense-form">
-                                <div className="quick-form-row">
-                                    <select
-                                        value={newTransaction.envelope}
-                                        onChange={(e) => setNewTransaction({...newTransaction, envelope: e.target.value})}
-                                        className="quick-envelope"
-                                        aria-label="Select envelope"
-                                    >
-                                        <option value="">Select Envelope</option>
-                                        {Object.keys(envelopes)
-                                            .flatMap(category =>
-                                                Object.keys(envelopes[category]).map(name => ({
-                                                    category,
-                                                    name,
-                                                    env: envelopes[category][name]
-                                                }))
-                                            )
-                                            .sort((a, b) => a.name.localeCompare(b.name))
-                                            .map(({ category, name, env }) => {
-                                                const balance = env.budgeted + env.rollover - env.spent;
-                                                return (
-                                                    <option key={`${category}.${name}`} value={`${category}.${name}`}>
-                                                        {name.toUpperCase()} - ₹{balance.toLocaleString()}
-                                                    </option>
-                                                );
-                                            })
-                                        }
-                                    </select>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="₹ Amount"
-                                        value={newTransaction.amount}
-                                        onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
-                                        className="quick-amount"
-                                        inputMode="decimal"
-                                        autoComplete="off"
-                                        aria-label="Transaction amount"
-                                    />
-                                    <input
-                                        type="date"
-                                        value={newTransaction.date}
-                                        min={dateRange.min}
-                                        max={dateRange.max}
-                                        onChange={(e) => setNewTransaction({...newTransaction, date: e.target.value})}
-                                        className="quick-date"
-                                    />
-                                </div>
-                                <div className="quick-form-row">
-                                    <input
-                                        type="text"
-                                        placeholder="Description (optional)"
-                                        value={newTransaction.description}
-                                        onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
-                                        className="quick-description"
-                                        autoComplete="off"
-                                        aria-label="Transaction description"
-                                    />
-                                    <select
-                                        value={newTransaction.paymentMethod}
-                                        onChange={(e) => {
-                                            setNewTransaction({...newTransaction, paymentMethod: e.target.value});
-                                            if (e.target.value !== 'Custom') setCustomPaymentMethod('');
-                                        }}
-                                        className="quick-payment"
-                                        aria-label="Select payment method"
-                                    >
-                                        <option value="">Select Payment Method</option>
-                                        {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
-                                            <option key={method} value={method}>{method}</option>
-                                        ))}
-                                        <option value="Custom">➕ Add New</option>
-                                    </select>
-                                    {newTransaction.paymentMethod === 'Custom' && (
-                                        <input
-                                            type="text"
-                                            placeholder="Enter payment method"
-                                            value={customPaymentMethod}
-                                            onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                                            className="quick-payment"
-                                            autoComplete="off"
-                                            aria-label="Custom payment method name"
-                                        />
-                                    )}
-                                </div>
-                                <div className="quick-form-row">
-                                    <button className="btn btn-success quick-add-btn touch-feedback" onClick={addTransaction}>
-                                        ➕ Add Expense
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <QuickExpenseForm
+                        envelopes={envelopes}
+                        customPaymentMethods={customPaymentMethods}
+                        dateRange={dateRange}
+                        onAddTransaction={addTransaction}
+                        onAddCustomPaymentMethod={addCustomPaymentMethod}
+                        onShowNotification={showNotification}
+                    />
 
                     {/* Today's Transactions */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>📅 Today's Expenses</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="table-container">
-                                <table className="envelope-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Description</th>
-                                        <th>Envelope</th>
-                                        <th>Amount</th>
-                                        <th>Payment</th>
-                                        <th>Action</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {transactions.filter(t => t.date === newTransaction.date).reverse().map((transaction, index) => (
-                                        <tr key={transaction.id}>
-                                            <td>#{index + 1}</td>
-                                            <td>{transaction.description}</td>
-                                            <td style={{textTransform: 'uppercase'}}>
-                                                {transaction.envelope.replace('.', ' - ')}
-                                            </td>
-                                            <td style={{fontWeight: '600', color: 'var(--danger)'}}>₹{transaction.amount.toLocaleString()}</td>
-                                            <td>{transaction.paymentMethod || 'UPI'}</td>
-                                            <td>
-                                                <button
-                                                    className="btn-delete"
-                                                    onClick={() => setDeleteConfirm({
-                                                        type: 'transaction',
-                                                        id: transaction.id,
-                                                        name: transaction.description
-                                                    })}
-                                                    title="Delete transaction"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {transactions.filter(t => t.date === newTransaction.date).length === 0 && (
-                                        <tr>
-                                            <td colSpan="6" style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No expenses on selected date</td>
-                                        </tr>
-                                    )}
-                                    </tbody>
-                                </table>
-                                <div className="mobile-card-view">
-                                    {transactions.filter(t => t.date === newTransaction.date).reverse().map((transaction, index) => (
-                                        <div key={transaction.id} className="mobile-transaction-card">
-                                            <div className="mobile-card-header">
-                                                <span>#{index + 1} - {transaction.description}</span>
-                                                <button
-                                                    className="btn-delete"
-                                                    onClick={() => setDeleteConfirm({
-                                                        type: 'transaction',
-                                                        id: transaction.id,
-                                                        name: transaction.description
-                                                    })}
-                                                    title="Delete transaction"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                            <div className="mobile-card-content">
-                                                <div className="mobile-card-field">
-                                                    <span className="mobile-card-label">Envelope</span>
-                                                    <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>
-                                                        {transaction.envelope.replace('.', ' - ')}
-                                                    </span>
-                                                </div>
-                                                <div className="mobile-card-field">
-                                                    <span className="mobile-card-label">Amount</span>
-                                                    <span className="mobile-card-value" style={{fontWeight: '600', color: 'var(--danger)'}}>₹{transaction.amount.toLocaleString()}</span>
-                                                </div>
-                                                <div className="mobile-card-field">
-                                                    <span className="mobile-card-label">Payment</span>
-                                                    <span className="mobile-card-value">{transaction.paymentMethod || 'UPI'}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {transactions.filter(t => t.date === newTransaction.date).length === 0 && (
-                                        <div style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No expenses on selected date</div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <TransactionsList
+                        transactions={transactions}
+                        onDeleteTransaction={deleteTransaction}
+                        onUpdatePaymentMethod={updateTransactionPayment}
+                        customPaymentMethods={customPaymentMethods}
+                        title="📅 Today's Expenses"
+                        filterDate={new Date().toISOString().split('T')[0]}
+                    />
                 </>
             ) : activeView === 'spending' ? (
                 <>
@@ -1896,9 +1788,80 @@ const EnvelopeBudget = () => {
                 </>
             )}
 
+            {/* Quick Actions for Mobile */}
+            <div className="quick-actions">
+                <button 
+                    className="quick-action-btn"
+                    style={{ background: 'var(--success)', color: 'white' }}
+                    onClick={() => setQuickActionSheet(true)}
+                    title="Quick Add"
+                >
+                    +
+                </button>
+            </div>
+
+            {/* Bottom Sheet Modal */}
+            {quickActionSheet && (
+                <>
+                    <div 
+                        className="modal-overlay" 
+                        onClick={() => setQuickActionSheet(false)}
+                        style={{ background: 'rgba(0,0,0,0.3)' }}
+                    />
+                    <div className={`bottom-sheet ${quickActionSheet ? 'open' : ''}`}>
+                        <div className="bottom-sheet-handle"></div>
+                        <div style={{ padding: '0 20px 20px' }}>
+                            <h3 style={{ margin: '0 0 20px', textAlign: 'center' }}>Quick Actions</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <button 
+                                    className="btn btn-success"
+                                    onClick={() => {
+                                        setActiveView('daily');
+                                        setQuickActionSheet(false);
+                                    }}
+                                    style={{ width: '100%', padding: '16px' }}
+                                >
+                                    💸 Add Expense
+                                </button>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        setActiveView('budget');
+                                        setQuickActionSheet(false);
+                                    }}
+                                    style={{ width: '100%', padding: '16px' }}
+                                >
+                                    💰 Add Income
+                                </button>
+                                <button 
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setActiveView('spending');
+                                        setQuickActionSheet(false);
+                                    }}
+                                    style={{ width: '100%', padding: '16px' }}
+                                >
+                                    📊 View Budget
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Floating Action Button for Mobile */}
+            <button 
+                className="fab"
+                onClick={() => setActiveView('daily')}
+                title="Quick Add Expense"
+                aria-label="Quick Add Expense"
+            >
+                +
+            </button>
+
             {transferModal.show && (
                 <div className="modal-overlay" onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
                         <button 
                             className="modal-close"
                             onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}
@@ -1961,7 +1924,7 @@ const EnvelopeBudget = () => {
 
             {rolloverConfirm && (
                 <div className="modal-overlay" onClick={() => setRolloverConfirm(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
                         <button 
                             className="modal-close"
                             onClick={() => setRolloverConfirm(false)}
@@ -2005,7 +1968,7 @@ const EnvelopeBudget = () => {
 
             {deleteConfirm.type && (
                 <div className="modal-overlay" onClick={() => setDeleteConfirm({ type: '', id: '', name: '' })}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
                         <button 
                             className="modal-close"
                             onClick={() => setDeleteConfirm({ type: '', id: '', name: '' })}
