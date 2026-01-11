@@ -1,0 +1,114 @@
+/* Minimal Mobile Visibility Enhancements */
+
+/* Core mobile improvements */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  .btn, button, input, select, textarea {
+    min-height: 48px;
+    font-size: 16px; /* Prevent iOS zoom */
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+  
+  /* Better text readability */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Enhanced tab navigation */
+  .tab-btn {
+    min-height: 56px;
+    font-size: 14px;
+    padding: 12px 8px;
+  }
+  
+  .tab-btn.active {
+    transform: scale(1.05);
+  }
+  
+  /* Improved form layout */
+  .quick-form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .quick-expense-form {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  /* Better card spacing */
+  .card {
+    margin: 8px 0;
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  /* Enhanced summary cards */
+  .summary-card {
+    min-height: 80px;
+    padding: 16px 12px;
+  }
+  
+  .summary-value {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  
+  /* Improved table readability */
+  .envelope-table {
+    font-size: 14px;
+  }
+  
+  .envelope-table th,
+  .envelope-table td {
+    padding: 12px 8px;
+  }
+  
+  /* Better modal experience */
+  .modal {
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    max-height: 85vh;
+    width: 100%;
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+    margin: 4px 0;
+  }
+  
+  /* Enhanced header */
+  .header h1 {
+    font-size: 22px;
+    text-align: center;
+  }
+}
+
+/* Mobile-specific utilities */
+.mobile-touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.mobile-text-large {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Quick mobile fixes */
+@media (max-width: 480px) {
+  .tab-btn {
+    min-width: 70px;
+    font-size: 12px;
+  }
+  
+  .summary-grid {
+    gap: 8px;
+  }
+  
+  .envelope-table {
+    font-size: 12px;
+  }
+}

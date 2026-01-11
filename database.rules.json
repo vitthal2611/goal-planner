@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "transactions": {
+          "$transactionId": {
+            ".validate": "newData.hasChildren(['amount', 'description', 'category', 'date']) && newData.child('amount').isNumber() && newData.child('amount').val() > 0 && newData.child('description').isString() && newData.child('description').val().length <= 200 && newData.child('category').isString() && newData.child('category').val().length <= 50"
+          }
+        },
+        "envelopes": {
+          "$envelopeId": {
+            ".validate": "newData.hasChildren(['name', 'budgetAmount', 'currentAmount']) && newData.child('name').isString() && newData.child('name').val().length <= 100 && newData.child('budgetAmount').isNumber() && newData.child('budgetAmount').val() >= 0 && newData.child('currentAmount').isNumber() && newData.child('currentAmount').val() >= 0"
+          }
+        },
+        "profile": {
+          ".validate": "newData.hasChildren(['displayName', 'email']) && newData.child('displayName').isString() && newData.child('displayName').val().length <= 100 && newData.child('email').isString()"
+        }
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}

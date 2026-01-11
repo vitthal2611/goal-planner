@@ -8,6 +8,7 @@ import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import { sanitizeInput, sanitizeCSVData, validatePaymentMethod } from '../utils/sanitize';
 import QuickExpenseForm from './QuickExpenseForm';
 import TransactionsList from './TransactionsList';
+import SchedulePlanner from './SchedulePlanner';
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';
 
@@ -1136,6 +1137,12 @@ const EnvelopeBudget = () => {
                 >
                     📊 Budget
                 </button>
+                <button
+                    className={`tab-btn touch-feedback ${activeView === 'schedule' ? 'active' : ''}`}
+                    onClick={() => setActiveView('schedule')}
+                >
+                    📅 Schedule
+                </button>
             </div>
 
             {notification.message && (
@@ -1559,6 +1566,8 @@ const EnvelopeBudget = () => {
                         </div>
                     </div>
                 </>
+            ) : activeView === 'schedule' ? (
+                <SchedulePlanner />
             ) : (
                 <>
                     {/* Budget Controls */}
