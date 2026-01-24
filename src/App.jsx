@@ -25,13 +25,14 @@ const userEmailStyles = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-  maxWidth: '200px'
+  maxWidth: '200px',
+  flex: '1 1 auto'
 };
 
 const logoutButtonStyles = {
   minHeight: '44px',
   minWidth: '44px',
-  padding: '8px 16px', 
+  padding: '10px 16px', 
   backgroundColor: '#dc3545', 
   color: 'white', 
   border: 'none', 
@@ -40,7 +41,8 @@ const logoutButtonStyles = {
   fontSize: '14px',
   fontWeight: '600',
   touchAction: 'manipulation',
-  transition: 'all 0.2s ease'
+  transition: 'all 0.2s ease',
+  flex: '0 0 auto'
 };
 
 function App() {

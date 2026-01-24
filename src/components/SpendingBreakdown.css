@@ -1,0 +1,252 @@
+/* Alternative Spending Breakdown Design */
+.spending-breakdown-alt {
+    padding: 8px 0;
+}
+
+.spending-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .spending-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .spending-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+.spending-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.spending-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.spending-card.needs-card {
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.spending-card.needs-card::before {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.spending-card.wants-card {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.spending-card.wants-card::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.spending-card.savings-card {
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.spending-card.savings-card::before {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.spending-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.spending-card:active {
+    transform: translateY(-2px);
+}
+
+.category-transactions {
+    padding: 8px 0;
+}
+
+.category-transactions h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .category-transactions {
+        padding: 4px 0;
+    }
+    
+    .category-transactions h4 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .category-transactions .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .category-transactions .envelope-table {
+        font-size: 12px;
+        min-width: 100%;
+    }
+    
+    .category-transactions .envelope-table th,
+    .category-transactions .envelope-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-transactions h4 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .category-transactions .envelope-table {
+        font-size: 11px;
+    }
+    
+    .category-transactions .envelope-table th,
+    .category-transactions .envelope-table td {
+        padding: 6px 4px;
+        font-size: 11px;
+    }
+}
+
+.spending-card-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+.spending-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.spending-card-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.spending-card-amount {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--gray-900);
+    letter-spacing: -1px;
+}
+
+.spending-card-percent {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.spending-card-bar {
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.spending-card-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.6s ease;
+}
+
+.needs-fill {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.wants-fill {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.savings-fill {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+@media (max-width: 768px) {
+    .spending-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .spending-card {
+        padding: 16px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .spending-card:active {
+        transform: scale(0.98);
+    }
+    
+    .spending-card-icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    
+    .spending-card-amount {
+        font-size: 22px;
+    }
+    
+    .spending-card-percent {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .spending-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .spending-card {
+        padding: 14px;
+    }
+    
+    .spending-card-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+    
+    .spending-card-amount {
+        font-size: 20px;
+    }
+    
+    .spending-card-percent {
+        font-size: 14px;
+    }
+    
+    .spending-card-label {
+        font-size: 11px;
+    }
+}

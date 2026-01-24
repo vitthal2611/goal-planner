@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { sanitizeInput, validatePaymentMethod } from '../utils/sanitize';
+import './QuickExpenseForm.css';
 
 const QuickExpenseForm = ({ 
   envelopes, 
@@ -7,29 +8,73 @@ const QuickExpenseForm = ({
   dateRange, 
   onAddTransaction, 
   onAddCustomPaymentMethod,
-  onShowNotification 
+  onShowNotification,
+  onTransfer,
+  preSelectedEnvelope = null,
+  hideSubmitButton = false
 }) => {
   const [transaction, setTransaction] = useState({
-    envelope: '',
+    envelope: preSelectedEnvelope || '',
     amount: '',
     description: '',
-    paymentMethod: '',
+    paymentMethod: 'HDFC',
     date: new Date().toISOString().split('T')[0]
   });
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
+  const [errors, setErrors] = useState({});
+
+  // Update envelope when preSelectedEnvelope changes
+  React.useEffect(() => {
+    if (preSelectedEnvelope) {
+      setTransaction(prev => ({ ...prev, envelope: preSelectedEnvelope }));
+      validateField('envelope', preSelectedEnvelope);
+    }
+  }, [preSelectedEnvelope]);
+
+  const getEnvelopeBalance = (envelopeKey) => {
+    if (!envelopeKey) return null;
+    const [category, name] = envelopeKey.split('.');
+    const env = envelopes[category]?.[name];
+    return env ? env.budgeted + env.rollover - env.spent : null;
+  };
+
+  const validateField = (field, value) => {
+    const newErrors = { ...errors };
+    
+    if (field === 'amount') {
+      if (!value || parseFloat(value) <= 0) {
+        newErrors.amount = 'Enter valid amount';
+      } else {
+        delete newErrors.amount;
+      }
+    }
+    
+    if (field === 'envelope') {
+      if (!value) {
+        newErrors.envelope = 'Select envelope';
+      } else {
+        delete newErrors.envelope;
+        const balance = getEnvelopeBalance(value);
+        const amount = parseFloat(transaction.amount);
+        if (balance !== null && amount > balance) {
+          newErrors.balance = `Low balance: ₹${balance.toLocaleString()} available`;
+        } else {
+          delete newErrors.balance;
+        }
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = () => {
     const { envelope, amount, description } = transaction;
 
-    if (!amount || parseFloat(amount) <= 0) {
-      onShowNotification('error', 'Enter valid amount');
-      return;
-    }
-
-    if (!envelope) {
-      onShowNotification('error', 'Select envelope');
-      return;
-    }
+    const isAmountValid = validateField('amount', amount);
+    const isEnvelopeValid = validateField('envelope', envelope);
+    
+    if (!isAmountValid || !isEnvelopeValid) return;
 
     // Haptic feedback for mobile
     if (navigator.vibrate) {
@@ -61,7 +106,6 @@ const QuickExpenseForm = ({
 
     onAddTransaction(sanitizedTransaction);
 
-    // Reset form but keep envelope and payment method for convenience
     setTransaction({
       envelope: transaction.envelope,
       amount: '',
@@ -70,55 +114,78 @@ const QuickExpenseForm = ({
       date: new Date().toISOString().split('T')[0]
     });
     setCustomPaymentMethod('');
+    setErrors({});
   };
 
   return (
-    <div className="card mobile-optimized">
+    <div className="card mobile-optimized quick-expense-card">
       <div className="card-header">
         <h3>⚡ Quick Expense</h3>
+        <button 
+          className="btn btn-primary btn-sm touch-feedback"
+          onClick={onTransfer}
+        >
+          🔄 Transfer
+        </button>
       </div>
       <div className="card-content">
         <div className="quick-expense-form">
           <div className="quick-form-row">
-            <select
-              value={transaction.envelope}
-              onChange={(e) => setTransaction({...transaction, envelope: e.target.value})}
-              className="quick-envelope"
-              aria-label="Select envelope"
-            >
-              <option value="">Select Envelope</option>
-              {Object.keys(envelopes)
-                .flatMap(category =>
-                  Object.keys(envelopes[category]).map(name => ({
-                    category,
-                    name,
-                    env: envelopes[category][name]
-                  }))
-                )
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(({ category, name, env }) => {
-                  const balance = env.budgeted + env.rollover - env.spent;
-                  return (
-                    <option key={`${category}.${name}`} value={`${category}.${name}`}>
-                      {name.toUpperCase()} - ₹{balance.toLocaleString()}
-                    </option>
-                  );
-                })
-              }
-            </select>
-            
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="₹ Amount"
-              value={transaction.amount}
-              onChange={(e) => setTransaction({...transaction, amount: e.target.value})}
-              className="quick-amount"
-              inputMode="decimal"
-              autoComplete="off"
-              aria-label="Transaction amount"
-            />
+            <div className="form-field">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="₹ Amount"
+                value={transaction.amount}
+                onChange={(e) => {
+                  setTransaction({...transaction, amount: e.target.value});
+                  validateField('amount', e.target.value);
+                  if (transaction.envelope) validateField('envelope', transaction.envelope);
+                }}
+                className={`quick-amount ${errors.amount ? 'input-error' : ''}`}
+                inputMode="decimal"
+                autoComplete="off"
+                aria-label="Transaction amount"
+              />
+              {errors.amount && <span className="error-text">{errors.amount}</span>}
+            </div>
+          </div>
+          
+          <div className="quick-form-row">
+            <div className="form-field">
+              <select
+                value={transaction.envelope}
+                onChange={(e) => {
+                  setTransaction({...transaction, envelope: e.target.value});
+                  validateField('envelope', e.target.value);
+                }}
+                className={`quick-envelope ${errors.envelope ? 'input-error' : ''} ${errors.balance ? 'input-warning' : ''}`}
+                aria-label="Select envelope"
+              >
+                <option value="">Select Envelope</option>
+                {Object.keys(envelopes)
+                  .flatMap(category =>
+                    Object.keys(envelopes[category]).map(name => ({
+                      category,
+                      name,
+                      env: envelopes[category][name]
+                    }))
+                  )
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(({ category, name, env }) => {
+                    const balance = env.budgeted + env.rollover - env.spent;
+                    return (
+                      <option key={`${category}.${name}`} value={`${category}.${name}`}>
+                        {name.toUpperCase()} - ₹{balance.toLocaleString()}
+                      </option>
+                    );
+                  })
+                }
+              </select>
+              {errors.envelope && <span className="error-text">{errors.envelope}</span>}
+              {errors.balance && <span className="warning-text">⚠️ {errors.balance}</span>}
+            </div>
             
             <input
               type="date"
@@ -151,7 +218,6 @@ const QuickExpenseForm = ({
               className="quick-payment"
               aria-label="Select payment method"
             >
-              <option value="">Select Payment Method</option>
               {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
                 <option key={method} value={method}>{method}</option>
               ))}
@@ -177,6 +243,7 @@ const QuickExpenseForm = ({
               className="btn btn-success quick-add-btn touch-feedback" 
               onClick={handleSubmit}
               disabled={!transaction.envelope || !transaction.amount}
+              style={{ display: hideSubmitButton ? 'none' : 'flex' }}
             >
               ➕ Add Expense
             </button>

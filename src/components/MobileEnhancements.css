@@ -371,3 +371,33 @@
     opacity: 1;
   }
 }
+
+/* Quick Expense Form Field Wrapper */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Inline Error Messages */
+.error-text {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  padding-left: 4px;
+}
+
+/* Inline Warning Messages */
+.warning-text {
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 600;
+  padding-left: 4px;
+}
+
+/* Warning Input Border */
+.input-warning {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+}

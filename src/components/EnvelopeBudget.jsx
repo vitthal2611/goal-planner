@@ -8,9 +8,13 @@ import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import { sanitizeInput, sanitizeCSVData, validatePaymentMethod } from '../utils/sanitize';
 import QuickExpenseForm from './QuickExpenseForm';
 import TransactionsList from './TransactionsList';
-import SchedulePlanner from './SchedulePlanner';
+import EnvelopeStatusEnhanced from './EnvelopeStatusEnhanced';
+import QuickAdd from './QuickAdd';
+
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';
+import './SpendingBreakdown.css';
+import './EnvelopeStatusEnhanced.css';
 
 const EnvelopeBudget = () => {
     // Generate budget period (1st to last day of month)
@@ -55,10 +59,13 @@ const EnvelopeBudget = () => {
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
     const [editingPayment, setEditingPayment] = useState({ id: null, method: '' });
     const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
-    const [activeView, setActiveView] = useState('daily'); // 'daily', 'spending', 'budget'
+    const [activeView, setActiveView] = useState('quickadd'); // 'daily', 'spending', 'budget'
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
     const [swipeIndicator, setSwipeIndicator] = useState({ show: false, direction: '' });
     const [quickActionSheet, setQuickActionSheet] = useState(false);
+    const [selectedSpendingCategory, setSelectedSpendingCategory] = useState(null);
+    const [preSelectedEnvelope, setPreSelectedEnvelope] = useState(null);
+    const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
     const [filters, setFilters] = useState({
         type: '',
         envelope: '',
@@ -117,36 +124,51 @@ const EnvelopeBudget = () => {
     const [dataLoaded, setDataLoaded] = useState(false);
     const [rolloverConfirm, setRolloverConfirm] = useState(false);
 
-    // Get current period's data with automatic rollover calculation
+    // Get current period's data with simple calculation
     const getCurrentPeriodData = async () => {
         const defaultEnvelopes = await getDefaultEnvelopes();
         const periodData = monthlyData[currentPeriod];
         
         if (!periodData) {
-            // Check if we need to calculate rollover from previous period
+            // Check previous period for available balance
             const previousPeriod = getPreviousPeriod(currentPeriod);
             const previousData = monthlyData[previousPeriod];
             
-            if (previousData && previousData.envelopes) {
-                // Calculate rollover from previous period
-                const rolledOverEnvelopes = {};
+            if (previousData?.envelopes) {
+                // Available Balance = Previous Available + Current Budget - Current Spent
+                const newEnvelopes = {};
                 Object.keys(defaultEnvelopes).forEach(category => {
-                    rolledOverEnvelopes[category] = {};
+                    newEnvelopes[category] = {};
                     Object.keys(defaultEnvelopes[category]).forEach(name => {
-                        const prevEnv = previousData.envelopes?.[category]?.[name];
-                        const rolloverAmount = prevEnv ? Math.max(0, prevEnv.budgeted + prevEnv.rollover - prevEnv.spent) : 0;
+                        const prevEnv = previousData.envelopes[category]?.[name];
+                        if (prevEnv) {
+                            const prevBudgeted = prevEnv.budgeted || 0;
+                            const prevRollover = prevEnv.rollover || 0;
+                            const prevSpent = prevEnv.spent || 0;
+                            const prevAvailable = prevBudgeted + prevRollover - prevSpent;
+                            
+                            console.log(`${category}.${name} ROLLOVER CALCULATION:`);
+                            console.log(`  Previous Budgeted: ${prevBudgeted}`);
+                            console.log(`  Previous Rollover: ${prevRollover}`);
+                            console.log(`  Previous Spent: ${prevSpent}`);
+                            console.log(`  Previous Available: ${prevBudgeted} + ${prevRollover} - ${prevSpent} = ${prevAvailable}`);
+                            console.log(`  New Rollover: ${Math.max(0, prevAvailable)}`);
+                            console.log('---');
+                        } else {
+                            console.log(`${category}.${name} - No previous data, rollover = 0`);
+                        }
                         
-                        rolledOverEnvelopes[category][name] = {
-                            budgeted: 0,
-                            spent: 0,
-                            rollover: rolloverAmount
+                        const prevAvailable = prevEnv ? (prevEnv.budgeted + (prevEnv.rollover || 0) - prevEnv.spent) : 0;
+                        
+                        newEnvelopes[category][name] = {
+                            budgeted: 0
                         };
                     });
                 });
                 
                 return {
                     income: 0,
-                    envelopes: rolledOverEnvelopes,
+                    envelopes: newEnvelopes,
                     transactions: [],
                     blockedTransactions: []
                 };
@@ -160,22 +182,9 @@ const EnvelopeBudget = () => {
             };
         }
         
-        // Merge default envelope structure with saved allocations
-        const mergedEnvelopes = {};
-        Object.keys(defaultEnvelopes).forEach(category => {
-            mergedEnvelopes[category] = {};
-            Object.keys(defaultEnvelopes[category]).forEach(name => {
-                mergedEnvelopes[category][name] = {
-                    budgeted: periodData.envelopes?.[category]?.[name]?.budgeted || 0,
-                    spent: periodData.envelopes?.[category]?.[name]?.spent || 0,
-                    rollover: periodData.envelopes?.[category]?.[name]?.rollover || 0
-                };
-            });
-        });
-        
         return {
             income: periodData.income || 0,
-            envelopes: mergedEnvelopes,
+            envelopes: periodData.envelopes || defaultEnvelopes,
             transactions: periodData.transactions || [],
             blockedTransactions: periodData.blockedTransactions || []
         };
@@ -451,11 +460,46 @@ const EnvelopeBudget = () => {
         setTimeout(() => setNotification({ type: '', message: '' }), 3000);
     };
 
-    const getStatus = (envelope) => {
-        const available = envelope.budgeted + envelope.rollover - envelope.spent;
-        if (available <= 0) return 'blocked';
-        if (available < envelope.budgeted * 0.2) return 'warning';
-        return 'healthy';
+    const getStatus = (envelope, category, name) => {
+        // Available Balance = Budgeted + Rollover(calculated) - Spent(calculated)
+        const rollover = getRolloverAmount(category, name);
+        const spent = getSpentAmount(category, name);
+        const available = envelope.budgeted + rollover - spent;
+        const percentage = envelope.budgeted > 0 ? (spent / envelope.budgeted) * 100 : 0;
+        
+        // Console log calculation for debugging
+        console.log(`${category}.${name} - Budgeted: ${envelope.budgeted}, Rollover: ${rollover}, Spent: ${spent}, Available: ${available}`);
+        
+        if (available <= 0) return { status: 'blocked', icon: '🚫', color: 'var(--danger)' };
+        if (percentage >= 90) return { status: 'critical', icon: '⚠️', color: '#dc2626' };
+        if (percentage >= 75) return { status: 'warning', icon: '⚡', color: 'var(--warning)' };
+        if (percentage >= 50) return { status: 'moderate', icon: '📊', color: '#3b82f6' };
+        return { status: 'healthy', icon: '✅', color: 'var(--success)' };
+    };
+
+    const getRolloverAmount = (category, name, forPeriod = currentPeriod) => {
+        const targetPeriod = forPeriod || currentPeriod;
+        const previousPeriod = getPreviousPeriod(targetPeriod);
+        const previousData = monthlyData[previousPeriod];
+        
+        if (!previousData?.envelopes?.[category]?.[name]) return 0;
+        
+        const prevEnv = previousData.envelopes[category][name];
+        // Calculate previous month's rollover recursively
+        const prevRollover = getRolloverAmount(category, name, previousPeriod);
+        const prevSpent = getSpentAmount(category, name, previousPeriod);
+        const lastMonthBalance = prevEnv.budgeted + prevRollover - prevSpent;
+        
+        return Math.max(0, lastMonthBalance);
+    };
+
+    const getSpentAmount = (category, name, forPeriod = currentPeriod) => {
+        const periodData = monthlyData[forPeriod];
+        if (!periodData?.transactions) return 0;
+        
+        return periodData.transactions
+            .filter(t => t.envelope === `${category}.${name}` && !t.type)
+            .reduce((sum, t) => sum + t.amount, 0);
     };
 
     const addTransaction = async (transactionData) => {
@@ -479,24 +523,13 @@ const EnvelopeBudget = () => {
             return;
         }
 
-        const available = env.budgeted + env.rollover - env.spent;
+        const available = env.budgeted + getRolloverAmount(category, name) - getSpentAmount(category, name);
         const expenseAmount = parseFloat(amount);
 
         if (available < expenseAmount) {
             showNotification('error', 'Insufficient funds!');
             return;
         }
-
-        const updatedEnvelopes = {
-            ...envelopes,
-            [category]: {
-                ...envelopes[category],
-                [name]: {
-                    ...envelopes[category][name],
-                    spent: envelopes[category][name].spent + expenseAmount
-                }
-            }
-        };
 
         const transactionRecord = {
             id: Date.now() + Math.random(),
@@ -509,7 +542,6 @@ const EnvelopeBudget = () => {
 
         try {
             await updatePeriodData({
-                envelopes: updatedEnvelopes,
                 transactions: [...transactions, transactionRecord]
             });
 
@@ -607,30 +639,10 @@ const EnvelopeBudget = () => {
                 transactions: transactions.filter(t => t.id !== id)
             });
         } else {
-            // Regular expense transaction - add back to envelope
-            const [category, name] = transaction.envelope.split('.');
-            if (envelopes[category]?.[name]) {
-                const updatedEnvelopes = {
-                    ...envelopes,
-                    [category]: {
-                        ...envelopes[category],
-                        [name]: {
-                            ...envelopes[category][name],
-                            spent: envelopes[category][name].spent - transaction.amount
-                        }
-                    }
-                };
-                
-                await updatePeriodData({
-                    envelopes: updatedEnvelopes,
-                    transactions: transactions.filter(t => t.id !== id)
-                });
-            } else {
-                // Just remove transaction if envelope doesn't exist
-                await updatePeriodData({
-                    transactions: transactions.filter(t => t.id !== id)
-                });
-            }
+            // Regular expense transaction - remove transaction only
+            await updatePeriodData({
+                transactions: transactions.filter(t => t.id !== id)
+            });
         }
         
         showNotification('success', 'Transaction deleted');
@@ -675,8 +687,6 @@ const EnvelopeBudget = () => {
     };
     const rolloverToNextPeriod = () => {
         const nextPeriod = getNextBudgetPeriod(currentPeriod);
-        const today = new Date();
-        const currentDay = today.getDate();
         
         // Check if there are unused funds to rollover
         const hasUnusedFunds = Object.values(envelopes).some(category =>
@@ -691,64 +701,68 @@ const EnvelopeBudget = () => {
             return;
         }
         
-        // Smart rollover logic - check if near end of month
-        const [currentYear, currentMonth] = currentPeriod.split('-').map(Number);
-        const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
-        const todayDate = new Date();
-        const dayOfMonth = todayDate.getDate();
-        
-        if (dayOfMonth >= lastDayOfMonth - 5) { // Last 5 days of month
-            const nextPeriodLabel = nextPeriod.replace(/-/g, '-');
-            if (confirm(`Smart Rollover: Roll unused balances to next period (${nextPeriodLabel})?`)) {
-                confirmRollover(nextPeriod);
-            }
-        } else {
-            // Not near end - show period selection
-            setRolloverConfirm(true);
+        if (confirm(`Rollover unused funds to ${nextPeriod}?`)) {
+            confirmRollover(nextPeriod);
         }
+    };
+    
+    const resetCurrentMonth = async () => {
+        if (!confirm(`Reset budget allocations for ${currentPeriod}? This will set all envelope budgets to zero but keep transactions.`)) {
+            return;
+        }
+        
+        const resetEnvelopes = {};
+        Object.keys(envelopes).forEach(category => {
+            resetEnvelopes[category] = {};
+            Object.keys(envelopes[category]).forEach(name => {
+                resetEnvelopes[category][name] = {
+                    budgeted: 0
+                };
+            });
+        });
+        
+        await updatePeriodData({
+            envelopes: resetEnvelopes
+        });
+        
+        showNotification('success', `${currentPeriod} budget allocations reset to zero`);
     };
     
     const confirmRollover = async (targetPeriod) => {
         try {
-            // Calculate rollover amounts
-            const defaultEnvelopes = await getDefaultEnvelopes();
             const rolledOverEnvelopes = {};
             let totalRollover = 0;
             
-            Object.keys(defaultEnvelopes).forEach(category => {
+            // Calculate rollover for all envelopes
+            Object.keys(envelopes).forEach(category => {
                 rolledOverEnvelopes[category] = {};
-                Object.keys(defaultEnvelopes[category]).forEach(name => {
-                    const env = envelopes[category]?.[name] || { budgeted: 0, spent: 0, rollover: 0 };
+                Object.keys(envelopes[category]).forEach(name => {
+                    const env = envelopes[category][name];
                     const unused = env.budgeted + env.rollover - env.spent;
                     const rolloverAmount = Math.max(0, unused);
                     
                     rolledOverEnvelopes[category][name] = {
-                        budgeted: 0,
-                        spent: 0,
-                        rollover: rolloverAmount
+                        budgeted: 0
                     };
                     
                     totalRollover += rolloverAmount;
                 });
             });
 
-            // Check if target period already exists
+            // Get existing target period data
             const existingData = monthlyData[targetPeriod];
-            if (existingData) {
-                // Merge with existing rollover amounts
+            if (existingData?.envelopes) {
                 Object.keys(rolledOverEnvelopes).forEach(category => {
                     Object.keys(rolledOverEnvelopes[category]).forEach(name => {
-                        const existing = existingData.envelopes?.[category]?.[name];
+                        const existing = existingData.envelopes[category]?.[name];
                         if (existing) {
-                            rolledOverEnvelopes[category][name].rollover += existing.rollover;
                             rolledOverEnvelopes[category][name].budgeted = existing.budgeted;
-                            rolledOverEnvelopes[category][name].spent = existing.spent;
                         }
                     });
                 });
             }
 
-            // Set data for target period
+            // Update target period
             setMonthlyData(prev => ({
                 ...prev,
                 [targetPeriod]: {
@@ -759,13 +773,11 @@ const EnvelopeBudget = () => {
                 }
             }));
 
-            // Switch to target period
             setCurrentPeriod(targetPeriod);
-            setRolloverConfirm(false);
-            showNotification('success', `Rollover completed! ₹${totalRollover.toLocaleString()} rolled over to ${targetPeriod}`);
+            showNotification('success', `₹${totalRollover.toLocaleString()} rolled over to ${targetPeriod}`);
         } catch (error) {
             console.error('Rollover failed:', error);
-            showNotification('error', 'Rollover failed. Please try again.');
+            showNotification('error', 'Rollover failed');
         }
     };
 
@@ -908,9 +920,9 @@ const EnvelopeBudget = () => {
         Object.keys(envelopes).forEach(category => {
             Object.keys(envelopes[category]).forEach(name => {
                 const env = envelopes[category][name];
-                const status = getStatus(env);
-                if (status === 'healthy') healthy.push(name);
-                else if (status === 'blocked') blocked.push(name);
+                const status = getStatus(env, category, name);
+                if (status.status === 'healthy') healthy.push(name);
+                else if (status.status === 'blocked') blocked.push(name);
                 else warnings.push(name);
             });
         });
@@ -926,14 +938,20 @@ const EnvelopeBudget = () => {
         [envelopes]
     );
     const totalSpent = useMemo(() => 
-        Object.values(envelopes).reduce((sum, category) =>
-            sum + Object.values(category).reduce((catSum, env) => catSum + env.spent, 0), 0), 
-        [envelopes]
+        transactions
+            .filter(t => !t.type || t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0), 
+        [transactions]
     );
 
     const getPaymentMethodBalances = useMemo(() => {
         const balances = {};
-        transactions.forEach(transaction => {
+        
+        // Get ALL transactions from ALL periods (not restricted to current period)
+        const allTransactions = Object.keys(monthlyData)
+            .flatMap(period => monthlyData[period]?.transactions || []);
+        
+        allTransactions.forEach(transaction => {
             const method = sanitizeInput(transaction.paymentMethod || 'Unknown');
             if (!balances[method]) balances[method] = 0;
             
@@ -946,7 +964,7 @@ const EnvelopeBudget = () => {
             }
         });
         return balances;
-    }, [transactions]);
+    }, [monthlyData]);
 
     const paymentBalances = getPaymentMethodBalances;
 
@@ -1091,33 +1109,35 @@ const EnvelopeBudget = () => {
             <div className="header">
                 <h1>💰 Envelope Budget Tracker</h1>
                 <div className="header-controls">
-                    <div className="control-group">
-                        <label>Budget Period (Monthly)</label>
-                        <div className="period-navigation">
-                            <select
-                                value={currentPeriod}
-                                onChange={(e) => setCurrentPeriod(e.target.value)}
-                                className="period-selector"
-                                aria-label="Select budget period"
-                            >
-                                {generatePeriodOptions().map(period => (
-                                    <option key={period.key} value={period.key}>
-                                        {period.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                    <label>Budget Period</label>
+                    <select
+                        value={currentPeriod}
+                        onChange={(e) => setCurrentPeriod(e.target.value)}
+                        className="period-selector"
+                        aria-label="Select budget period"
+                    >
+                        {generatePeriodOptions().map(period => (
+                            <option key={period.key} value={period.key}>
+                                {period.label}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
             {/* Tab Navigation */}
             <div className="tab-navigation">
                 <button
+                    className={`tab-btn touch-feedback ${activeView === 'quickadd' ? 'active' : ''}`}
+                    onClick={() => setActiveView('quickadd')}
+                >
+                    ⚡ QuickAdd
+                </button>
+                <button
                     className={`tab-btn touch-feedback ${activeView === 'daily' ? 'active' : ''}`}
                     onClick={() => setActiveView('daily')}
                 >
-                    ⚡ Daily
+                    📋 Daily
                 </button>
                 <button
                     className={`tab-btn touch-feedback ${activeView === 'spending' ? 'active' : ''}`}
@@ -1137,12 +1157,7 @@ const EnvelopeBudget = () => {
                 >
                     📊 Budget
                 </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'schedule' ? 'active' : ''}`}
-                    onClick={() => setActiveView('schedule')}
-                >
-                    📅 Schedule
-                </button>
+
             </div>
 
             {notification.message && (
@@ -1151,6 +1166,7 @@ const EnvelopeBudget = () => {
                 </div>
             )}
 
+            {activeView !== 'quickadd' && (
             <div className="summary-grid">
                 <div className="summary-card">
                     <div className="summary-value">₹{income.toLocaleString()}</div>
@@ -1169,25 +1185,24 @@ const EnvelopeBudget = () => {
                     <div className="summary-label">Remaining</div>
                 </div>
             </div>
+            )}
 
-            {/* Payment Method Overview */}
+            {/* Payment Method Overview - Shows actual balances across ALL periods */}
             {Object.keys(paymentBalances).length > 0 && (
-                <div className="card">
+                <div className="card payment-overview-compact">
                     <div className="card-header">
-                        <h3>💳 Payment Method Overview</h3>
-                        <button 
-                            className="btn btn-primary touch-feedback"
-                            onClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
-                        >
-                            🔄 Transfer
-                        </button>
+                        <h3>💳 Payment Methods (All Time Balance)</h3>
+                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>Actual balances across all periods</small>
                     </div>
                     <div className="card-content">
-                        <div className="summary-grid">
+                        <div className="payment-methods-grid">
                             {Object.entries(paymentBalances).map(([method, amount]) => (
-                                <div key={method} className="summary-card">
-                                    <div className="summary-value">₹{amount.toLocaleString()}</div>
-                                    <div className="summary-label">{method}</div>
+                                <div key={method} className="payment-method-item">
+                                    <span className="payment-method-name">{method}</span>
+                                    <span className="payment-method-balance" style={{
+                                        color: amount >= 0 ? 'var(--success)' : 'var(--danger)',
+                                        fontWeight: '600'
+                                    }}>₹{amount.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
@@ -1195,8 +1210,138 @@ const EnvelopeBudget = () => {
                 </div>
             )}
 
+            {/* Spending Insights */}
+            {activeView !== 'quickadd' && (
+            <div className="card spending-insights-card">
+                <div className="card-header">
+                    <h3>📈 Spending Breakdown</h3>
+                    {selectedSpendingCategory && (
+                        <button 
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setSelectedSpendingCategory(null)}
+                        >
+                            ← Back
+                        </button>
+                    )}
+                </div>
+                <div className="card-content">
+                    {!selectedSpendingCategory ? (
+                        (() => {
+                            const needsSpent = Object.keys(envelopes.needs || {}).reduce((sum, name) => sum + (envelopes.needs[name]?.spent || 0), 0);
+                            const wantsSpent = Object.keys(envelopes.wants || {}).reduce((sum, name) => sum + (envelopes.wants[name]?.spent || 0), 0);
+                            const savingsSpent = Object.keys(envelopes.savings || {}).reduce((sum, name) => sum + (envelopes.savings[name]?.spent || 0), 0);
+                            const total = needsSpent + wantsSpent + savingsSpent;
+                            
+                            const needsPercent = total > 0 ? ((needsSpent / total) * 100).toFixed(1) : 0;
+                            const wantsPercent = total > 0 ? ((wantsSpent / total) * 100).toFixed(1) : 0;
+                            const savingsPercent = total > 0 ? ((savingsSpent / total) * 100).toFixed(1) : 0;
+                            
+                            return (
+                                <div className="spending-breakdown-alt">
+                                    <div className="spending-cards">
+                                        <div className="spending-card needs-card" onClick={() => setSelectedSpendingCategory('needs')}>
+                                            <div className="spending-card-icon">🏠</div>
+                                            <div className="spending-card-content">
+                                                <div className="spending-card-label">Needs</div>
+                                                <div className="spending-card-amount">₹{needsSpent.toLocaleString()}</div>
+                                                <div className="spending-card-percent">{needsPercent}%</div>
+                                            </div>
+                                            <div className="spending-card-bar">
+                                                <div className="spending-card-fill needs-fill" style={{width: `${needsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="spending-card wants-card" onClick={() => setSelectedSpendingCategory('wants')}>
+                                            <div className="spending-card-icon">🎯</div>
+                                            <div className="spending-card-content">
+                                                <div className="spending-card-label">Wants</div>
+                                                <div className="spending-card-amount">₹{wantsSpent.toLocaleString()}</div>
+                                                <div className="spending-card-percent">{wantsPercent}%</div>
+                                            </div>
+                                            <div className="spending-card-bar">
+                                                <div className="spending-card-fill wants-fill" style={{width: `${wantsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="spending-card savings-card" onClick={() => setSelectedSpendingCategory('savings')}>
+                                            <div className="spending-card-icon">💰</div>
+                                            <div className="spending-card-content">
+                                                <div className="spending-card-label">Savings</div>
+                                                <div className="spending-card-amount">₹{savingsSpent.toLocaleString()}</div>
+                                                <div className="spending-card-percent">{savingsPercent}%</div>
+                                            </div>
+                                            <div className="spending-card-bar">
+                                                <div className="spending-card-fill savings-fill" style={{width: `${savingsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()
+                    ) : (
+                        <div className="category-transactions">
+                            <h4>
+                                {selectedSpendingCategory === 'needs' ? '🏠 Needs' : 
+                                 selectedSpendingCategory === 'wants' ? '🎯 Wants' : '💰 Savings'} Transactions
+                            </h4>
+                            <div className="table-container">
+                                <table className="envelope-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Envelope</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Payment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {transactions
+                                            .filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`))
+                                            .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                            .map(transaction => (
+                                                <tr key={transaction.id}>
+                                                    <td>{transaction.date}</td>
+                                                    <td style={{textTransform: 'uppercase'}}>
+                                                        {transaction.envelope.split('.')[1]}
+                                                    </td>
+                                                    <td>{transaction.description}</td>
+                                                    <td style={{color: 'var(--danger)', fontWeight: '600'}}>
+                                                        -₹{transaction.amount.toLocaleString()}
+                                                    </td>
+                                                    <td>{transaction.paymentMethod}</td>
+                                                </tr>
+                                            ))
+                                        }
+                                        {transactions.filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`)).length === 0 && (
+                                            <tr>
+                                                <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>
+                                                    No transactions yet
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+            )}
+
             {/* Conditional Views */}
-            {activeView === 'daily' ? (
+            {activeView === 'quickadd' ? (
+                <QuickAdd
+                    envelopes={envelopes}
+                    customPaymentMethods={customPaymentMethods}
+                    dateRange={dateRange}
+                    onAddTransaction={addTransaction}
+                    onShowNotification={showNotification}
+                    transactions={transactions}
+                    monthlyData={monthlyData}
+                    currentPeriod={currentPeriod}
+                />
+            ) : activeView === 'daily' ? (
                 <>
                     {/* Quick Expense Interface */}
                     <QuickExpenseForm
@@ -1206,24 +1351,85 @@ const EnvelopeBudget = () => {
                         onAddTransaction={addTransaction}
                         onAddCustomPaymentMethod={addCustomPaymentMethod}
                         onShowNotification={showNotification}
+                        onTransfer={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
+                        preSelectedEnvelope={preSelectedEnvelope}
                     />
 
-                    {/* Today's Transactions */}
+                    {/* Last 10 Transactions */}
                     <TransactionsList
                         transactions={transactions}
                         onDeleteTransaction={deleteTransaction}
                         onUpdatePaymentMethod={updateTransactionPayment}
                         customPaymentMethods={customPaymentMethods}
-                        title="📅 Today's Expenses"
-                        filterDate={new Date().toISOString().split('T')[0]}
+                        title="📋 Last 10 Transactions"
+                        limit={10}
                     />
                 </>
             ) : activeView === 'spending' ? (
                 <>
+                    {/* Envelope Status Summary */}
+                    <div className="card envelope-status-summary">
+                        <div className="card-header">
+                            <h3>📊 Status Overview</h3>
+                        </div>
+                        <div className="card-content">
+                            <div className="status-summary-grid">
+                                <div className="status-summary-item healthy">
+                                    <div className="status-icon">✅</div>
+                                    <div className="status-info">
+                                        <div className="status-count">{insights.healthy.length}</div>
+                                        <div className="status-label">Healthy</div>
+                                    </div>
+                                </div>
+                                <div className="status-summary-item warning">
+                                    <div className="status-icon">⚠️</div>
+                                    <div className="status-info">
+                                        <div className="status-count">{insights.warnings.length}</div>
+                                        <div className="status-label">Warning</div>
+                                    </div>
+                                </div>
+                                <div className="status-summary-item blocked">
+                                    <div className="status-icon">🚫</div>
+                                    <div className="status-info">
+                                        <div className="status-count">{insights.blocked.length}</div>
+                                        <div className="status-label">Blocked</div>
+                                    </div>
+                                </div>
+                                <div className="status-summary-item total">
+                                    <div className="status-icon">💰</div>
+                                    <div className="status-info">
+                                        <div className="status-count">
+                                            {Object.values(envelopes).reduce((sum, cat) => sum + Object.keys(cat).length, 0)}
+                                        </div>
+                                        <div className="status-label">Total</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Envelope Status */}
                     <div className="card">
                         <div className="card-header">
                             <h3>📊 Envelope Status</h3>
+                        </div>
+                        <div className="card-content">
+                            <EnvelopeStatusEnhanced 
+                                envelopes={envelopes}
+                                getRolloverAmount={getRolloverAmount}
+                                onAddExpense={(category, name) => {
+                                    setPreSelectedEnvelope(`${category}.${name}`);
+                                    setShowQuickExpenseModal(true);
+                                }}
+                                onAllocateBudget={(category, name) => setActiveView('budget')}
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* Original Table View - Hidden by default, can be toggled if needed */}
+                    <div className="card" style={{ display: 'none' }}>
+                        <div className="card-header">
+                            <h3>📊 Envelope Status (Table View)</h3>
                         </div>
                         <div className="table-container">
                             <table className="envelope-table">
@@ -1243,19 +1449,40 @@ const EnvelopeBudget = () => {
                                         Object.keys(envelopes[category]).map(name => {
                                             const env = envelopes[category][name];
                                             const remaining = env.budgeted + env.rollover - env.spent;
-                                            const status = getStatus(env);
+                                            const statusInfo = getStatus(env, category, name);
+                                            const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
                                             return (
-                                                <tr key={`${category}.${name}`}>
-                                                    <td style={{textTransform: 'uppercase'}}>{name}</td>
+                                                <tr key={`${category}.${name}`} className="envelope-status-row">
+                                                    <td style={{textTransform: 'uppercase'}}>
+                                                        <div className="envelope-name-cell">
+                                                            <span className="status-icon-inline">{statusInfo.icon}</span>
+                                                            <span>{name}</span>
+                                                        </div>
+                                                    </td>
                                                     <td style={{textTransform: 'uppercase'}}>{category}</td>
                                                     <td>₹{env.budgeted.toLocaleString()}</td>
-                                                    <td>₹{env.spent.toLocaleString()}</td>
-                                                    <td>₹{remaining.toLocaleString()}</td>
+                                                    <td>
+                                                        <div className="spent-cell">
+                                                            <span>₹{env.spent.toLocaleString()}</span>
+                                                            <div className="mini-progress">
+                                                                <div 
+                                                                    className="mini-progress-fill" 
+                                                                    style={{ 
+                                                                        width: `${Math.min(percentage, 100)}%`,
+                                                                        backgroundColor: statusInfo.color
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ color: remaining <= 0 ? 'var(--danger)' : 'inherit', fontWeight: remaining <= 0 ? '700' : '600' }}>
+                                                        ₹{remaining.toLocaleString()}
+                                                    </td>
                                                     <td>₹{env.rollover.toLocaleString()}</td>
                                                     <td>
-                            <span className={`status ${status}`}>
-                              {status}
-                            </span>
+                                                        <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
+                                                            {statusInfo.icon} {statusInfo.status}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             );
@@ -1263,17 +1490,32 @@ const EnvelopeBudget = () => {
                                 )}
                                 </tbody>
                             </table>
-                            <div className="mobile-card-view">
+                            <div className="mobile-card-view" style={{ display: 'none' }}>
                                 {Object.keys(envelopes).map(category =>
                                     Object.keys(envelopes[category]).map(name => {
                                         const env = envelopes[category][name];
                                         const remaining = env.budgeted + env.rollover - env.spent;
-                                        const status = getStatus(env);
+                                        const statusInfo = getStatus(env, category, name);
+                                        const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
                                         return (
-                                            <div key={`${category}.${name}`} className="mobile-envelope-card">
+                                            <div key={`${category}.${name}`} className="mobile-envelope-card enhanced">
                                                 <div className="mobile-card-header">
-                                                    <span style={{textTransform: 'uppercase'}}>{name}</span>
-                                                    <span className={`status ${status}`}>{status}</span>
+                                                    <div className="envelope-title">
+                                                        <span className="status-icon-large">{statusInfo.icon}</span>
+                                                        <span style={{textTransform: 'uppercase', fontWeight: '700'}}>{name}</span>
+                                                    </div>
+                                                    <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
+                                                        {statusInfo.status}
+                                                    </span>
+                                                </div>
+                                                <div className="mobile-progress-bar">
+                                                    <div 
+                                                        className="mobile-progress-fill" 
+                                                        style={{ 
+                                                            width: `${Math.min(percentage, 100)}%`,
+                                                            backgroundColor: statusInfo.color
+                                                        }}
+                                                    />
                                                 </div>
                                                 <div className="mobile-card-content">
                                                     <div className="mobile-card-field">
@@ -1286,12 +1528,21 @@ const EnvelopeBudget = () => {
                                                     </div>
                                                     <div className="mobile-card-field">
                                                         <span className="mobile-card-label">Spent</span>
-                                                        <span className="mobile-card-value">₹{env.spent.toLocaleString()}</span>
+                                                        <span className="mobile-card-value" style={{ color: statusInfo.color }}>₹{env.spent.toLocaleString()}</span>
                                                     </div>
                                                     <div className="mobile-card-field">
                                                         <span className="mobile-card-label">Remaining</span>
-                                                        <span className="mobile-card-value">₹{remaining.toLocaleString()}</span>
+                                                        <span className="mobile-card-value" style={{ 
+                                                            color: remaining <= 0 ? 'var(--danger)' : 'var(--success)',
+                                                            fontWeight: '700'
+                                                        }}>₹{remaining.toLocaleString()}</span>
                                                     </div>
+                                                    {env.rollover > 0 && (
+                                                        <div className="mobile-card-field">
+                                                            <span className="mobile-card-label">Rollover</span>
+                                                            <span className="mobile-card-value">₹{env.rollover.toLocaleString()}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -1566,8 +1817,6 @@ const EnvelopeBudget = () => {
                         </div>
                     </div>
                 </>
-            ) : activeView === 'schedule' ? (
-                <SchedulePlanner />
             ) : (
                 <>
                     {/* Budget Controls */}
@@ -1645,6 +1894,9 @@ const EnvelopeBudget = () => {
                                 </button>
                                 <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
                                     🔄 Rollover Unused Funds
+                                </button>
+                                <button className="btn btn-danger" onClick={resetCurrentMonth}>
+                                    🗑️ Reset Current Month
                                 </button>
                             </div>
                         </div>
@@ -1858,16 +2110,6 @@ const EnvelopeBudget = () => {
                 </>
             )}
 
-            {/* Floating Action Button for Mobile */}
-            <button 
-                className="fab"
-                onClick={() => setActiveView('daily')}
-                title="Quick Add Expense"
-                aria-label="Quick Add Expense"
-            >
-                +
-            </button>
-
             {transferModal.show && (
                 <div className="modal-overlay" onClick={() => setTransferModal({ show: false, from: '', to: '', amount: '' })}>
                     <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
@@ -1969,6 +2211,75 @@ const EnvelopeBudget = () => {
                         <div className="modal-actions">
                             <button className="btn btn-secondary" onClick={() => setRolloverConfirm(false)}>
                                 Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showQuickExpenseModal && (
+                <div className="modal-overlay" onClick={() => {
+                    setShowQuickExpenseModal(false);
+                    setPreSelectedEnvelope(null);
+                }}>
+                    <div className="modal mobile-optimized quick-expense-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header-enhanced">
+                            <div className="modal-icon">💸</div>
+                            <div className="modal-title-section">
+                                <h2>Add Expense</h2>
+                                {preSelectedEnvelope && (
+                                    <div className="envelope-name-display">
+                                        {preSelectedEnvelope.split('.')[1].toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                            <button 
+                                className="modal-close-enhanced"
+                                onClick={() => {
+                                    setShowQuickExpenseModal(false);
+                                    setPreSelectedEnvelope(null);
+                                }}
+                                aria-label="Close"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <QuickExpenseForm
+                            envelopes={envelopes}
+                            customPaymentMethods={customPaymentMethods}
+                            dateRange={dateRange}
+                            onAddTransaction={(transactionData) => {
+                                addTransaction(transactionData);
+                                setShowQuickExpenseModal(false);
+                                setPreSelectedEnvelope(null);
+                            }}
+                            onAddCustomPaymentMethod={addCustomPaymentMethod}
+                            onShowNotification={showNotification}
+                            onTransfer={() => {
+                                setShowQuickExpenseModal(false);
+                                setTransferModal({ show: true, from: '', to: '', amount: '' });
+                            }}
+                            preSelectedEnvelope={preSelectedEnvelope}
+                            hideSubmitButton={true}
+                        />
+                        <div className="modal-footer-actions">
+                            <button 
+                                className="btn btn-secondary btn-cancel"
+                                onClick={() => {
+                                    setShowQuickExpenseModal(false);
+                                    setPreSelectedEnvelope(null);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="btn btn-success btn-add"
+                                onClick={() => {
+                                    const form = document.querySelector('.quick-expense-modal .quick-add-btn');
+                                    if (form) form.click();
+                                }}
+                            >
+                                ➕ Add Expense
                             </button>
                         </div>
                     </div>

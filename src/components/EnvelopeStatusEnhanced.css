@@ -1,0 +1,629 @@
+/* Enhanced Envelope Status UI Improvements */
+
+.envelope-status-enhanced {
+    width: 100%;
+}
+
+.envelope-grid-detailed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Visual Envelope Icon with Fill Level */
+.envelope-visual {
+    position: relative;
+    width: 60px;
+    height: 50px;
+    margin: 0 auto 12px;
+}
+
+.envelope-icon {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 3px solid var(--gray-400);
+    border-radius: 8px 8px 4px 4px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.envelope-flap {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    height: 24px;
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    clip-path: polygon(0 0, 50% 100%, 100% 0);
+    border-left: 3px solid var(--gray-400);
+    border-right: 3px solid var(--gray-400);
+    z-index: 2;
+}
+
+.envelope-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.envelope-fill.healthy {
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.6));
+}
+
+.envelope-fill.moderate {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.6));
+}
+
+.envelope-fill.warning {
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.6));
+}
+
+.envelope-fill.critical {
+    background: linear-gradient(180deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.6));
+}
+
+.envelope-fill.blocked {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.4), rgba(239, 68, 68, 0.8));
+    animation: fillPulse 2s ease-in-out infinite;
+}
+
+@keyframes fillPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Enhanced Envelope Card with Visual Icon */
+.envelope-card-enhanced {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.envelope-card-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.envelope-card-enhanced.healthy::before {
+    background: linear-gradient(90deg, var(--success), #059669);
+}
+
+.envelope-card-enhanced.moderate::before {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.envelope-card-enhanced.warning::before {
+    background: linear-gradient(90deg, var(--warning), #d97706);
+}
+
+.envelope-card-enhanced.critical::before {
+    background: linear-gradient(90deg, #dc2626, #991b1b);
+}
+
+.envelope-card-enhanced.blocked::before {
+    background: linear-gradient(90deg, var(--danger), #7f1d1d);
+}
+
+.envelope-card-enhanced:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.envelope-card-enhanced:hover::before {
+    opacity: 1;
+}
+
+.envelope-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.envelope-card-title {
+    flex: 1;
+}
+
+.envelope-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-900);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.envelope-category {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.envelope-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+}
+
+.stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--gray-900);
+}
+
+.stat-value.remaining {
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-value.negative {
+    color: var(--danger);
+}
+
+/* Circular Progress Indicator */
+.circular-progress {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+.circular-progress svg {
+    transform: rotate(-90deg);
+}
+
+.circular-progress-bg {
+    fill: none;
+    stroke: var(--gray-200);
+    stroke-width: 8;
+}
+
+.circular-progress-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+}
+
+.circular-progress-fill.healthy {
+    stroke: url(#gradient-healthy);
+}
+
+.circular-progress-fill.moderate {
+    stroke: url(#gradient-moderate);
+}
+
+.circular-progress-fill.warning {
+    stroke: url(#gradient-warning);
+}
+
+.circular-progress-fill.critical {
+    stroke: url(#gradient-critical);
+}
+
+.circular-progress-fill.blocked {
+    stroke: url(#gradient-blocked);
+}
+
+.circular-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gray-900);
+}
+
+/* Quick Action Buttons */
+.envelope-quick-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.quick-action-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--gray-300);
+    background: white;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.quick-action-btn:hover {
+    background: var(--gray-50);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.quick-action-btn:active {
+    transform: translateY(0);
+}
+
+/* Compact View Toggle */
+.view-toggle {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: var(--gray-100);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.view-toggle-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-toggle-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Compact View */
+.envelope-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.envelope-card-compact {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.envelope-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.envelope-card-compact.healthy::before {
+    background: var(--success);
+}
+
+.envelope-card-compact.moderate::before {
+    background: #3b82f6;
+}
+
+.envelope-card-compact.warning::before {
+    background: var(--warning);
+}
+
+.envelope-card-compact.critical::before {
+    background: #dc2626;
+}
+
+.envelope-card-compact.blocked::before {
+    background: var(--danger);
+}
+
+.envelope-card-compact:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    border-color: var(--primary);
+}
+
+/* Tooltip on Hover */
+.envelope-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+}
+
+.envelope-card-enhanced:hover .envelope-tooltip,
+.envelope-card-compact:hover .envelope-tooltip {
+    opacity: 1;
+}
+
+.envelope-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .envelope-grid-detailed {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .envelope-card-enhanced {
+        padding: 14px;
+        border-radius: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .envelope-card-header {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .envelope-name {
+        font-size: 16px;
+    }
+    
+    .envelope-category {
+        font-size: 11px;
+    }
+    
+    .circular-progress {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .circular-progress-text {
+        font-size: 14px;
+    }
+    
+    .envelope-card-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    
+    .stat-item {
+        padding: 8px 6px;
+    }
+    
+    .stat-label {
+        font-size: 9px;
+    }
+    
+    .stat-value {
+        font-size: 13px;
+    }
+    
+    .envelope-visual {
+        width: 50px;
+        height: 40px;
+        margin-bottom: 10px;
+    }
+    
+    .envelope-quick-actions {
+        gap: 6px;
+        margin-top: 10px;
+    }
+    
+    .quick-action-btn {
+        padding: 10px 12px;
+        font-size: 11px;
+        min-height: 44px;
+    }
+    
+    .envelope-grid-compact {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .view-toggle {
+        margin-bottom: 12px;
+    }
+    
+    .view-toggle-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .envelope-grid-detailed {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .envelope-card-enhanced {
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .envelope-card-header {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .envelope-name {
+        font-size: 14px;
+    }
+    
+    .envelope-category {
+        font-size: 10px;
+    }
+    
+    .circular-progress {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .circular-progress svg {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .circular-progress-bg,
+    .circular-progress-fill {
+        r: 20;
+        cx: 25;
+        cy: 25;
+        stroke-width: 5;
+    }
+    
+    .circular-progress-text {
+        font-size: 11px;
+    }
+    
+    .envelope-card-stats {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        padding: 8px 10px;
+    }
+    
+    .stat-label {
+        margin-bottom: 0;
+        font-size: 10px;
+    }
+    
+    .stat-value {
+        font-size: 13px;
+    }
+    
+    .envelope-visual {
+        width: 40px;
+        height: 35px;
+        margin-bottom: 8px;
+    }
+    
+    .envelope-quick-actions {
+        gap: 6px;
+        margin-top: 8px;
+    }
+    
+    .quick-action-btn {
+        padding: 10px;
+        font-size: 11px;
+        min-height: 44px;
+    }
+    
+    .envelope-grid-compact {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .envelope-card-compact {
+        padding: 12px;
+    }
+    
+    .view-toggle {
+        margin-bottom: 10px;
+        padding: 3px;
+    }
+    
+    .view-toggle-btn {
+        padding: 10px 12px;
+        font-size: 12px;
+        min-height: 44px;
+    }
+    
+    .envelope-tooltip {
+        font-size: 10px;
+        padding: 8px 12px;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .envelope-card-enhanced,
+    .envelope-card-compact,
+    .envelope-fill,
+    .circular-progress-fill,
+    .quick-action-btn {
+        transition: none;
+        animation: none;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .envelope-card-enhanced,
+    .envelope-card-compact {
+        border-width: 3px;
+    }
+    
+    .stat-item {
+        border-width: 2px;
+    }
+}

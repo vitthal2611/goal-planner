@@ -1,0 +1,406 @@
+/* Modern Transaction Table */
+.transactions-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.transactions-card .card-header {
+    padding: 24px 28px;
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.transactions-card .transaction-count {
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+/* Filters Section */
+.transactions-filters {
+    display: flex;
+    gap: 12px;
+    padding: 20px 28px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.search-box {
+    flex: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.category-filter {
+    padding: 10px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.category-filter:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.transactions-card .card-content {
+    padding: 0;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.transactions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transactions-table thead {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.transactions-table thead th {
+    padding: 20px 24px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.transactions-table thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.transactions-table thead th.sortable:hover {
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--primary);
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    opacity: 0.4;
+    font-size: 14px;
+}
+
+.sort-icon.active {
+    opacity: 1;
+    color: var(--primary);
+}
+
+.transactions-table thead th.text-right {
+    text-align: right;
+}
+
+.transactions-table tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+    transition: all 0.2s ease;
+}
+
+.transactions-table tbody tr:hover {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.03), transparent);
+}
+
+.transactions-table tbody tr.today-transaction {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), transparent);
+}
+
+.transactions-table tbody tr.today-transaction:hover {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent);
+}
+
+.transactions-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.transactions-table tbody td {
+    padding: 20px 24px;
+    vertical-align: middle;
+}
+
+.transactions-table tbody td.text-right {
+    text-align: right;
+}
+
+.transaction-number {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.transaction-number.recent {
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    color: white;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.transaction-desc-wrapper {
+    max-width: 300px;
+}
+
+.transaction-desc {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-envelope {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transaction-amount {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--danger);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.transaction-payment {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--gray-50);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.transaction-payment::before {
+    content: '💳';
+    font-size: 14px;
+}
+
+.transaction-date {
+    font-size: 13px;
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+.badge-today {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.btn-delete-mini {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    opacity: 0;
+}
+
+.transactions-table tbody tr:hover .btn-delete-mini {
+    opacity: 1;
+}
+
+.btn-delete-mini:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+    transform: scale(1.1);
+}
+
+.btn-delete-mini:active {
+    transform: scale(0.95);
+}
+
+/* Table Footer */
+.table-footer {
+    padding: 20px 28px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    border-top: 2px solid var(--gray-200);
+}
+
+.total-summary {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.total-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.total-amount {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--danger);
+    font-variant-numeric: tabular-nums;
+}
+
+.empty-state-cell {
+    text-align: center;
+    padding: 60px 20px !important;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-600);
+}
+
+.empty-subtext {
+    font-size: 14px;
+    color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+    .transactions-card .card-header {
+        padding: 20px 16px;
+    }
+    
+    .transactions-filters {
+        flex-direction: column;
+        padding: 16px;
+    }
+    
+    .search-input,
+    .category-filter {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    
+    .transactions-table thead th,
+    .transactions-table tbody td {
+        padding: 14px 12px;
+    }
+    
+    .transaction-number {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+    
+    .transaction-desc-wrapper {
+        max-width: 150px;
+    }
+    
+    .transaction-desc {
+        font-size: 13px;
+    }
+    
+    .badge {
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+    
+    .transaction-amount {
+        font-size: 15px;
+    }
+    
+    .transaction-amount.amount-high {
+        font-size: 16px;
+    }
+    
+    .transaction-amount.amount-critical {
+        font-size: 17px;
+    }
+    
+    .transaction-envelope {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+    
+    .transaction-payment {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .btn-delete-mini {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        opacity: 1;
+    }
+    
+    .table-footer {
+        padding: 16px;
+    }
+    
+    .total-amount {
+        font-size: 20px;
+    }
+}
