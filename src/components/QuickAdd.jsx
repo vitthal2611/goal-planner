@@ -152,7 +152,8 @@ const QuickAdd = ({
               {Object.keys(envelopes[category]).map(name => {
                 const env = envelopes[category][name];
                 const rollover = getRolloverAmount(category, name);
-                const balance = env.budgeted + rollover - env.spent;
+                const spent = getSpentAmount(category, name);
+                const balance = env.budgeted + rollover - spent;
                 const statusColor = getStatusColor(category, name);
 
                 return (
