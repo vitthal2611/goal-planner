@@ -1,112 +1,307 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-// Enhanced mobile detection hook
-export const useMobileDetection = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
-  const [orientation, setOrientation] = useState('portrait');
-  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+// Enhanced haptic feedback with more patterns
+export const useHapticFeedback = () => {
+  const isSupported = 'vibrate' in navigator;
+  
+  const vibrate = useCallback((pattern = [10]) => {
+    if (isSupported && Array.isArray(pattern)) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (error) {
+        console.warn('Haptic feedback failed:', error);
+      }
+    }
+  }, [isSupported]);
 
-  useEffect(() => {
-    const checkDevice = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      setScreenSize({ width, height });
-      setIsMobile(width <= 768);
-      setIsTablet(width > 768 && width <= 1024);
-      setOrientation(width > height ? 'landscape' : 'portrait');
-    };
+  const patterns = {
+    lightTap: [10],
+    mediumTap: [20],
+    heavyTap: [30],
+    doubleTap: [10, 50, 10],
+    success: [10, 50, 10, 50, 10],
+    error: [50, 100, 50, 100, 50],
+    warning: [30, 100, 30],
+    notification: [20, 200, 20],
+    selection: [5],
+    longPress: [50]
+  };
 
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    window.addEventListener('orientationchange', checkDevice);
-
-    return () => {
-      window.removeEventListener('resize', checkDevice);
-      window.removeEventListener('orientationchange', checkDevice);
-    };
-  }, []);
-
-  return { isMobile, isTablet, orientation, screenSize };
-};
-
-// Enhanced touch interaction hook
-export const useEnhancedTouch = () => {
-  const [touchState, setTouchState] = useState({
-    isPressed: false,
-    startTime: 0,
-    startPos: { x: 0, y: 0 }
+  const hapticMethods = {};
+  Object.keys(patterns).forEach(key => {
+    hapticMethods[key] = useCallback(() => vibrate(patterns[key]), [vibrate]);
   });
 
-  const handleTouchStart = useCallback((e) => {
-    const touch = e.touches[0];
-    setTouchState({
-      isPressed: true,
-      startTime: Date.now(),
-      startPos: { x: touch.clientX, y: touch.clientY }
-    });
-
-    // Light haptic feedback on touch start
-    if (navigator.vibrate) {
-      navigator.vibrate(5);
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback((callback) => {
-    const duration = Date.now() - touchState.startTime;
-    
-    if (duration < 200) { // Quick tap
-      if (navigator.vibrate) {
-        navigator.vibrate(10);
-      }
-      callback?.('tap');
-    } else if (duration > 500) { // Long press
-      if (navigator.vibrate) {
-        navigator.vibrate([20, 10, 20]);
-      }
-      callback?.('longpress');
-    }
-
-    setTouchState({
-      isPressed: false,
-      startTime: 0,
-      startPos: { x: 0, y: 0 }
-    });
-  }, [touchState]);
-
   return {
-    touchState,
-    handleTouchStart,
-    handleTouchEnd
+    isSupported,
+    vibrate,
+    ...hapticMethods
   };
 };
 
-// Virtual keyboard detection hook
-export const useVirtualKeyboard = () => {
+// Enhanced pull-to-refresh with better UX
+export const usePullToRefresh = (onRefresh, options = {}) => {
+  const {
+    threshold = 80,
+    maxPull = 120,
+    resistance = 2.5,
+    enabled = true
+  } = options;
+
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+
+  const handleTouchStart = useCallback((e) => {
+    if (!enabled || window.scrollY > 0) return;
+    
+    setStartY(e.touches[0].clientY);
+    setIsPulling(false);
+    setPullDistance(0);
+  }, [enabled]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!enabled || startY === 0 || window.scrollY > 0) return;
+    
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - startY;
+    
+    if (distance > 0) {
+      setIsPulling(true);
+      setCurrentY(currentY);
+      
+      // Apply resistance for smoother feel
+      const resistedDistance = Math.min(distance / resistance, maxPull);
+      setPullDistance(resistedDistance);
+      
+      // Prevent default scrolling when pulling
+      if (distance > 10) {
+        e.preventDefault();
+      }
+    }
+  }, [enabled, startY, resistance, maxPull]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (!enabled || !isPulling) return;
+    
+    if (pullDistance >= threshold && !isRefreshing) {
+      setIsRefreshing(true);
+      try {
+        await onRefresh?.();
+      } catch (error) {
+        console.error('Refresh failed:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    }
+    
+    setIsPulling(false);
+    setPullDistance(0);
+    setStartY(0);
+    setCurrentY(0);
+  }, [enabled, isPulling, pullDistance, threshold, isRefreshing, onRefresh]);
+
+  return {
+    isPulling: isPulling && pullDistance > 0,
+    pullDistance,
+    isRefreshing,
+    canRefresh: pullDistance >= threshold,
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd
+  };
+};
+
+// Enhanced gesture navigation with more gestures
+export const useGestureNavigation = (options = {}) => {
+  const {
+    swipeThreshold = 50,
+    velocityThreshold = 0.3,
+    timeThreshold = 300,
+    enabled = true
+  } = options;
+
+  const [touchStart, setTouchStart] = useState({ x: 0, y: 0, time: 0 });
+  const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0, time: 0 });
+  const [isGesturing, setIsGesturing] = useState(false);
+
+  const handleTouchStart = useCallback((e) => {
+    if (!enabled) return;
+    
+    const touch = e.touches[0];
+    setTouchStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    });
+    setIsGesturing(true);
+  }, [enabled]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!enabled || !isGesturing) return;
+    
+    const touch = e.touches[0];
+    setTouchEnd({
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    });
+  }, [enabled, isGesturing]);
+
+  const handleTouchEnd = useCallback((callbacks = {}) => {
+    if (!enabled || !isGesturing) return;
+    
+    const deltaX = touchStart.x - touchEnd.x;
+    const deltaY = touchStart.y - touchEnd.y;
+    const deltaTime = touchEnd.time - touchStart.time;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const velocity = distance / deltaTime;
+
+    // Determine gesture type
+    const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+    const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
+    const isQuick = deltaTime < timeThreshold;
+    const isFast = velocity > velocityThreshold;
+
+    if (distance > swipeThreshold && (isQuick || isFast)) {
+      if (isHorizontal) {
+        if (deltaX > 0 && callbacks.onSwipeLeft) {
+          callbacks.onSwipeLeft({ distance, velocity, deltaTime });
+        } else if (deltaX < 0 && callbacks.onSwipeRight) {
+          callbacks.onSwipeRight({ distance, velocity, deltaTime });
+        }
+      } else if (isVertical) {
+        if (deltaY > 0 && callbacks.onSwipeUp) {
+          callbacks.onSwipeUp({ distance, velocity, deltaTime });
+        } else if (deltaY < 0 && callbacks.onSwipeDown) {
+          callbacks.onSwipeDown({ distance, velocity, deltaTime });
+        }
+      }
+    }
+
+    // Long press detection
+    if (distance < 10 && deltaTime > 500 && callbacks.onLongPress) {
+      callbacks.onLongPress({ x: touchStart.x, y: touchStart.y, duration: deltaTime });
+    }
+
+    // Tap detection
+    if (distance < 10 && deltaTime < 200 && callbacks.onTap) {
+      callbacks.onTap({ x: touchStart.x, y: touchStart.y });
+    }
+
+    setIsGesturing(false);
+  }, [enabled, isGesturing, touchStart, touchEnd, swipeThreshold, velocityThreshold, timeThreshold]);
+
+  return {
+    isGesturing,
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd
+  };
+};
+
+// Performance monitoring hook
+export const usePerformanceMonitor = () => {
+  const [metrics, setMetrics] = useState({
+    renderTime: 0,
+    memoryUsage: 0,
+    fps: 0
+  });
+  
+  const renderStartTime = useRef(0);
+  const frameCount = useRef(0);
+  const lastTime = useRef(performance.now());
+
+  const startRender = useCallback(() => {
+    renderStartTime.current = performance.now();
+  }, []);
+
+  const endRender = useCallback(() => {
+    const renderTime = performance.now() - renderStartTime.current;
+    setMetrics(prev => ({ ...prev, renderTime }));
+  }, []);
+
+  const measureFPS = useCallback(() => {
+    const now = performance.now();
+    frameCount.current++;
+    
+    if (now - lastTime.current >= 1000) {
+      const fps = Math.round((frameCount.current * 1000) / (now - lastTime.current));
+      setMetrics(prev => ({ ...prev, fps }));
+      frameCount.current = 0;
+      lastTime.current = now;
+    }
+    
+    requestAnimationFrame(measureFPS);
+  }, []);
+
+  useEffect(() => {
+    const measureMemory = () => {
+      if ('memory' in performance) {
+        const memoryUsage = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+        setMetrics(prev => ({ ...prev, memoryUsage }));
+      }
+    };
+
+    measureMemory();
+    const interval = setInterval(measureMemory, 5000);
+    requestAnimationFrame(measureFPS);
+
+    return () => clearInterval(interval);
+  }, [measureFPS]);
+
+  return {
+    metrics,
+    startRender,
+    endRender
+  };
+};
+
+// Enhanced keyboard handling
+export const useKeyboardHandler = () => {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const initialViewportHeight = useRef(window.innerHeight);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
   useEffect(() => {
     const handleResize = () => {
       const currentHeight = window.innerHeight;
-      const heightDifference = initialViewportHeight.current - currentHeight;
+      const heightDifference = viewportHeight - currentHeight;
       
-      if (heightDifference > 150) {
-        setIsKeyboardOpen(true);
-        setKeyboardHeight(heightDifference);
-      } else {
-        setIsKeyboardOpen(false);
-        setKeyboardHeight(0);
-        initialViewportHeight.current = currentHeight;
+      // More accurate keyboard detection
+      const isKeyboard = heightDifference > 150 && 
+                        window.innerWidth === window.screen.width &&
+                        document.activeElement?.tagName?.toLowerCase() === 'input';
+      
+      setIsKeyboardOpen(isKeyboard);
+      setKeyboardHeight(isKeyboard ? heightDifference : 0);
+      
+      if (!isKeyboard) {
+        setViewportHeight(currentHeight);
       }
     };
 
-    const handleFocusIn = (e) => {
-      if (e.target.matches('input, textarea, select')) {
-        setTimeout(handleResize, 300); // Delay to allow keyboard animation
+    const handleVisualViewport = () => {
+      if (window.visualViewport) {
+        const isKeyboard = window.visualViewport.height < window.innerHeight * 0.75;
+        const keyboardHeight = window.innerHeight - window.visualViewport.height;
+        
+        setIsKeyboardOpen(isKeyboard);
+        setKeyboardHeight(isKeyboard ? keyboardHeight : 0);
       }
+    };
+
+    const handleFocusIn = () => {
+      // Delay to allow keyboard to appear
+      setTimeout(() => {
+        if (window.visualViewport) {
+          handleVisualViewport();
+        } else {
+          handleResize();
+        }
+      }, 300);
     };
 
     const handleFocusOut = () => {
@@ -119,177 +314,101 @@ export const useVirtualKeyboard = () => {
     window.addEventListener('resize', handleResize);
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('focusout', handleFocusOut);
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewport);
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
-    };
-  }, []);
-
-  return { isKeyboardOpen, keyboardHeight };
-};
-
-// Enhanced scroll behavior hook
-export const useEnhancedScroll = () => {
-  const [scrollState, setScrollState] = useState({
-    scrollY: 0,
-    isScrolling: false,
-    direction: 'down'
-  });
-
-  useEffect(() => {
-    let timeoutId;
-    let lastScrollY = window.scrollY;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const direction = currentScrollY > lastScrollY ? 'down' : 'up';
-
-      setScrollState({
-        scrollY: currentScrollY,
-        isScrolling: true,
-        direction
-      });
-
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setScrollState(prev => ({ ...prev, isScrolling: false }));
-      }, 150);
-
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timeoutId);
-    };
-  }, []);
-
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const scrollToElement = useCallback((elementId, offset = 0) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      const elementPosition = element.offsetTop - offset;
-      window.scrollTo({ top: elementPosition, behavior: 'smooth' });
-    }
-  }, []);
-
-  return { scrollState, scrollToTop, scrollToElement };
-};
-
-// Mobile-optimized form validation hook
-export const useMobileFormValidation = (initialValues) => {
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-
-  const setValue = useCallback((field, value) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
-    }
-  }, [errors]);
-
-  const setFieldTouched = useCallback((field) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-  }, []);
-
-  const validateField = useCallback((field, value, rules) => {
-    let error = null;
-
-    if (rules.required && (!value || value.toString().trim() === '')) {
-      error = `${field} is required`;
-    } else if (rules.min && parseFloat(value) < rules.min) {
-      error = `${field} must be at least ${rules.min}`;
-    } else if (rules.max && parseFloat(value) > rules.max) {
-      error = `${field} must be at most ${rules.max}`;
-    } else if (rules.pattern && !rules.pattern.test(value)) {
-      error = rules.message || `${field} format is invalid`;
-    }
-
-    setErrors(prev => ({ ...prev, [field]: error }));
-    return !error;
-  }, []);
-
-  const validateForm = useCallback((validationRules) => {
-    const newErrors = {};
-    let isValid = true;
-
-    Object.keys(validationRules).forEach(field => {
-      const value = values[field];
-      const rules = validationRules[field];
       
-      if (!validateField(field, value, rules)) {
-        isValid = false;
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewport);
       }
-    });
-
-    return isValid;
-  }, [values, validateField]);
-
-  const resetForm = useCallback(() => {
-    setValues(initialValues);
-    setErrors({});
-    setTouched({});
-  }, [initialValues]);
+    };
+  }, [viewportHeight]);
 
   return {
-    values,
-    errors,
-    touched,
-    setValue,
-    setFieldTouched,
-    validateField,
-    validateForm,
-    resetForm
+    isKeyboardOpen,
+    keyboardHeight,
+    viewportHeight
   };
 };
 
-// Performance monitoring hook for mobile
-export const useMobilePerformance = () => {
-  const [metrics, setMetrics] = useState({
-    renderTime: 0,
-    memoryUsage: 0,
-    isLowEndDevice: false
+// Network status monitoring
+export const useNetworkStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [connectionType, setConnectionType] = useState('unknown');
+  const [effectiveType, setEffectiveType] = useState('4g');
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    const updateConnectionInfo = () => {
+      if ('connection' in navigator) {
+        const connection = navigator.connection;
+        setConnectionType(connection.type || 'unknown');
+        setEffectiveType(connection.effectiveType || '4g');
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    if ('connection' in navigator) {
+      navigator.connection.addEventListener('change', updateConnectionInfo);
+      updateConnectionInfo();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      
+      if ('connection' in navigator) {
+        navigator.connection.removeEventListener('change', updateConnectionInfo);
+      }
+    };
+  }, []);
+
+  return {
+    isOnline,
+    connectionType,
+    effectiveType,
+    isSlowConnection: effectiveType === 'slow-2g' || effectiveType === '2g'
+  };
+};
+
+// Device orientation handling
+export const useDeviceOrientation = () => {
+  const [orientation, setOrientation] = useState({
+    angle: screen.orientation?.angle || 0,
+    type: screen.orientation?.type || 'portrait-primary'
   });
 
   useEffect(() => {
-    // Detect low-end devices
-    const isLowEnd = navigator.hardwareConcurrency <= 2 || 
-                     navigator.deviceMemory <= 2 ||
-                     /Android.*Chrome\/[0-5]/.test(navigator.userAgent);
-
-    setMetrics(prev => ({ ...prev, isLowEndDevice: isLowEnd }));
-
-    // Monitor performance
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      entries.forEach((entry) => {
-        if (entry.entryType === 'measure') {
-          setMetrics(prev => ({ ...prev, renderTime: entry.duration }));
-        }
+    const handleOrientationChange = () => {
+      setOrientation({
+        angle: screen.orientation?.angle || 0,
+        type: screen.orientation?.type || 'portrait-primary'
       });
-    });
+    };
 
-    observer.observe({ entryTypes: ['measure'] });
-
-    return () => observer.disconnect();
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', handleOrientationChange);
+      return () => screen.orientation.removeEventListener('change', handleOrientationChange);
+    } else {
+      // Fallback for older browsers
+      window.addEventListener('orientationchange', handleOrientationChange);
+      return () => window.removeEventListener('orientationchange', handleOrientationChange);
+    }
   }, []);
 
-  const measureRender = useCallback((name, fn) => {
-    performance.mark(`${name}-start`);
-    const result = fn();
-    performance.mark(`${name}-end`);
-    performance.measure(name, `${name}-start`, `${name}-end`);
-    return result;
-  }, []);
-
-  return { metrics, measureRender };
+  return {
+    ...orientation,
+    isPortrait: orientation.type.includes('portrait'),
+    isLandscape: orientation.type.includes('landscape')
+  };
 };

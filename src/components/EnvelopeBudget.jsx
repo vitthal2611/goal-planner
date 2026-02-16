@@ -6,17 +6,15 @@ import { saveData, getData } from '../services/database';
 import { backupTransactions } from '../services/backup';
 import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import { sanitizeInput, sanitizeCSVData, validatePaymentMethod } from '../utils/sanitize';
-import QuickExpenseForm from './QuickExpenseForm';
 import TransactionsList from './TransactionsList';
-import EnvelopeStatusEnhanced from './EnvelopeStatusEnhanced';
-import QuickAdd from './QuickAdd';
+import QuickAddOptimized from './QuickAddOptimized';
+import { useHapticFeedback } from '../hooks/useEnhancedMobile';
 
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';
-import './SpendingBreakdown.css';
-import './EnvelopeStatusEnhanced.css';
 
-const EnvelopeBudget = () => {
+const EnvelopeBudget = ({ activeView, setActiveView }) => {
+    const { success, error, lightTap } = useHapticFeedback();
     // Generate budget period (1st to last day of month)
     // Generate list of budget periods (current year + next 3 years)
     const generatePeriodOptions = () => {
@@ -59,12 +57,9 @@ const EnvelopeBudget = () => {
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
     const [editingPayment, setEditingPayment] = useState({ id: null, method: '' });
     const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
-    const [activeView, setActiveView] = useState('quickadd'); // 'daily', 'spending', 'budget'
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
     const [swipeIndicator, setSwipeIndicator] = useState({ show: false, direction: '' });
     const [quickActionSheet, setQuickActionSheet] = useState(false);
-    const [selectedSpendingCategory, setSelectedSpendingCategory] = useState(null);
-    const [preSelectedEnvelope, setPreSelectedEnvelope] = useState(null);
     const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
     const [filters, setFilters] = useState({
         type: '',
@@ -453,9 +448,13 @@ const EnvelopeBudget = () => {
 
     const showNotification = (type, message) => {
         setNotification({ type, message });
-        // Haptic feedback simulation
-        if (navigator.vibrate) {
-            navigator.vibrate(type === 'success' ? [50] : [100, 50, 100]);
+        // Enhanced haptic feedback
+        if (type === 'success') {
+            success();
+        } else if (type === 'error') {
+            error();
+        } else {
+            lightTap();
         }
         setTimeout(() => setNotification({ type: '', message: '' }), 3000);
     };
@@ -523,13 +522,7 @@ const EnvelopeBudget = () => {
             return;
         }
 
-        const available = env.budgeted + getRolloverAmount(category, name) - getSpentAmount(category, name);
         const expenseAmount = parseFloat(amount);
-
-        if (available < expenseAmount) {
-            showNotification('error', 'Insufficient funds!');
-            return;
-        }
 
         const transactionRecord = {
             id: Date.now() + Math.random(),
@@ -1092,7 +1085,13 @@ const EnvelopeBudget = () => {
     };
 
     return (
-        <div className="envelope-budget" {...swipeGesture} {...pullToRefresh}>
+        <div 
+            className="envelope-budget" 
+            onTouchStart={swipeGesture.onTouchStart}
+            onTouchMove={swipeGesture.onTouchMove}
+            onTouchEnd={swipeGesture.onTouchEnd}
+            style={pullToRefresh.isPulling ? { transform: `translateY(${pullToRefresh.pullDistance}px)` } : {}}
+        >
             {/* Swipe Indicators */}
             {swipeIndicator.show && (
                 <div className={`swipe-indicator ${swipeIndicator.direction} show`}>
@@ -1138,12 +1137,6 @@ const EnvelopeBudget = () => {
                     onClick={() => setActiveView('daily')}
                 >
                     📋 Daily
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'spending' ? 'active' : ''}`}
-                    onClick={() => setActiveView('spending')}
-                >
-                    💳 Spending
                 </button>
                 <button
                     className={`tab-btn touch-feedback ${activeView === 'transactions' ? 'active' : ''}`}
@@ -1210,128 +1203,193 @@ const EnvelopeBudget = () => {
                 </div>
             )}
 
-            {/* Spending Insights */}
+            {/* Enhanced Spending Breakdown */}
             {activeView !== 'quickadd' && (
-            <div className="card spending-insights-card">
-                <div className="card-header">
-                    <h3>📈 Spending Breakdown</h3>
-                    {selectedSpendingCategory && (
-                        <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setSelectedSpendingCategory(null)}
-                        >
-                            ← Back
-                        </button>
-                    )}
+            <div className="card spending-insights-enhanced">
+                <div className="card-header-enhanced">
+                    <div className="header-content">
+                        <h3>📊 Spending Breakdown</h3>
+                        <div className="period-badge">{currentPeriod}</div>
+                    </div>
+                    <div className="total-spent-summary">
+                        ₹{totalSpent.toLocaleString()} spent this month
+                    </div>
                 </div>
-                <div className="card-content">
-                    {!selectedSpendingCategory ? (
-                        (() => {
-                            const needsSpent = Object.keys(envelopes.needs || {}).reduce((sum, name) => sum + (envelopes.needs[name]?.spent || 0), 0);
-                            const wantsSpent = Object.keys(envelopes.wants || {}).reduce((sum, name) => sum + (envelopes.wants[name]?.spent || 0), 0);
-                            const savingsSpent = Object.keys(envelopes.savings || {}).reduce((sum, name) => sum + (envelopes.savings[name]?.spent || 0), 0);
-                            const total = needsSpent + wantsSpent + savingsSpent;
-                            
-                            const needsPercent = total > 0 ? ((needsSpent / total) * 100).toFixed(1) : 0;
-                            const wantsPercent = total > 0 ? ((wantsSpent / total) * 100).toFixed(1) : 0;
-                            const savingsPercent = total > 0 ? ((savingsSpent / total) * 100).toFixed(1) : 0;
-                            
+                <div className="card-content-enhanced">
+                    {(() => {
+                        const needsSpent = Object.keys(envelopes.needs || {}).reduce((sum, name) => sum + (getSpentAmount('needs', name) || 0), 0);
+                        const wantsSpent = Object.keys(envelopes.wants || {}).reduce((sum, name) => sum + (getSpentAmount('wants', name) || 0), 0);
+                        const savingsSpent = Object.keys(envelopes.savings || {}).reduce((sum, name) => sum + (getSpentAmount('savings', name) || 0), 0);
+                        const total = needsSpent + wantsSpent + savingsSpent;
+                        
+                        const needsPercent = total > 0 ? ((needsSpent / total) * 100) : 0;
+                        const wantsPercent = total > 0 ? ((wantsSpent / total) * 100) : 0;
+                        const savingsPercent = total > 0 ? ((savingsSpent / total) * 100) : 0;
+                        
+                        if (total === 0) {
                             return (
-                                <div className="spending-breakdown-alt">
-                                    <div className="spending-cards">
-                                        <div className="spending-card needs-card" onClick={() => setSelectedSpendingCategory('needs')}>
-                                            <div className="spending-card-icon">🏠</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Needs</div>
-                                                <div className="spending-card-amount">₹{needsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{needsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill needs-fill" style={{width: `${needsPercent}%`}}></div>
+                                <div className="no-spending-state">
+                                    <div className="empty-chart-icon">📈</div>
+                                    <h4>No spending data yet</h4>
+                                    <p>Start adding expenses to see your spending breakdown</p>
+                                </div>
+                            );
+                        }
+                        
+                        return (
+                            <div className="spending-breakdown-enhanced">
+                                <div className="chart-and-legend">
+                                    <div className="enhanced-pie-container">
+                                        <svg width="240" height="240" viewBox="0 0 240 240" className="enhanced-pie-chart">
+                                            <defs>
+                                                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                                    <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)"/>
+                                                </filter>
+                                                <linearGradient id="needsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#10b981"/>
+                                                    <stop offset="100%" stopColor="#059669"/>
+                                                </linearGradient>
+                                                <linearGradient id="wantsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#3b82f6"/>
+                                                    <stop offset="100%" stopColor="#2563eb"/>
+                                                </linearGradient>
+                                                <linearGradient id="savingsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#f59e0b"/>
+                                                    <stop offset="100%" stopColor="#d97706"/>
+                                                </linearGradient>
+                                            </defs>
+                                            
+                                            {/* Background circle */}
+                                            <circle cx="120" cy="120" r="90" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2"/>
+                                            
+                                            {(() => {
+                                                let currentAngle = -90; // Start from top
+                                                const radius = 85;
+                                                const centerX = 120;
+                                                const centerY = 120;
+                                                
+                                                const createEnhancedPath = (startAngle, endAngle, gradient, category) => {
+                                                    const start = (startAngle * Math.PI) / 180;
+                                                    const end = (endAngle * Math.PI) / 180;
+                                                    const x1 = centerX + radius * Math.cos(start);
+                                                    const y1 = centerY + radius * Math.sin(start);
+                                                    const x2 = centerX + radius * Math.cos(end);
+                                                    const y2 = centerY + radius * Math.sin(end);
+                                                    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+                                                    
+                                                    return (
+                                                        <g key={category} className={`pie-segment ${category}-segment`}>
+                                                            <path
+                                                                d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                                                                fill={gradient}
+                                                                stroke="white"
+                                                                strokeWidth="3"
+                                                                filter="url(#shadow)"
+                                                                className="pie-slice"
+                                                            />
+                                                        </g>
+                                                    );
+                                                };
+                                                
+                                                const segments = [];
+                                                if (needsPercent > 0) {
+                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (needsPercent * 3.6), 'url(#needsGradient)', 'needs'));
+                                                    currentAngle += needsPercent * 3.6;
+                                                }
+                                                if (wantsPercent > 0) {
+                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (wantsPercent * 3.6), 'url(#wantsGradient)', 'wants'));
+                                                    currentAngle += wantsPercent * 3.6;
+                                                }
+                                                if (savingsPercent > 0) {
+                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (savingsPercent * 3.6), 'url(#savingsGradient)', 'savings'));
+                                                }
+                                                
+                                                return segments;
+                                            })()
+                                            }
+                                            
+                                            {/* Center circle with total */}
+                                            <circle cx="120" cy="120" r="45" fill="white" stroke="#e2e8f0" strokeWidth="2" filter="url(#shadow)"/>
+                                            <text x="120" y="115" textAnchor="middle" className="chart-center-label">Total</text>
+                                            <text x="120" y="130" textAnchor="middle" className="chart-center-value">₹{total.toLocaleString()}</text>
+                                        </svg>
+                                    </div>
+                                    
+                                    <div className="chart-legend">
+                                        <div className="legend-item needs-legend">
+                                            <div className="legend-color"></div>
+                                            <div className="legend-details">
+                                                <div className="legend-label">🏠 Needs</div>
+                                                <div className="legend-value">₹{needsSpent.toLocaleString()}</div>
+                                                <div className="legend-percent">{needsPercent.toFixed(1)}%</div>
                                             </div>
                                         </div>
                                         
-                                        <div className="spending-card wants-card" onClick={() => setSelectedSpendingCategory('wants')}>
-                                            <div className="spending-card-icon">🎯</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Wants</div>
-                                                <div className="spending-card-amount">₹{wantsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{wantsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill wants-fill" style={{width: `${wantsPercent}%`}}></div>
+                                        <div className="legend-item wants-legend">
+                                            <div className="legend-color"></div>
+                                            <div className="legend-details">
+                                                <div className="legend-label">🎯 Wants</div>
+                                                <div className="legend-value">₹{wantsSpent.toLocaleString()}</div>
+                                                <div className="legend-percent">{wantsPercent.toFixed(1)}%</div>
                                             </div>
                                         </div>
                                         
-                                        <div className="spending-card savings-card" onClick={() => setSelectedSpendingCategory('savings')}>
-                                            <div className="spending-card-icon">💰</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Savings</div>
-                                                <div className="spending-card-amount">₹{savingsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{savingsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill savings-fill" style={{width: `${savingsPercent}%`}}></div>
+                                        <div className="legend-item savings-legend">
+                                            <div className="legend-color"></div>
+                                            <div className="legend-details">
+                                                <div className="legend-label">💰 Savings</div>
+                                                <div className="legend-value">₹{savingsSpent.toLocaleString()}</div>
+                                                <div className="legend-percent">{savingsPercent.toFixed(1)}%</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            );
-                        })()
-                    ) : (
-                        <div className="category-transactions">
-                            <h4>
-                                {selectedSpendingCategory === 'needs' ? '🏠 Needs' : 
-                                 selectedSpendingCategory === 'wants' ? '🎯 Wants' : '💰 Savings'} Transactions
-                            </h4>
-                            <div className="table-container">
-                                <table className="envelope-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Envelope</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Payment</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {transactions
-                                            .filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`))
-                                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                            .map(transaction => (
-                                                <tr key={transaction.id}>
-                                                    <td>{transaction.date}</td>
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        {transaction.envelope.split('.')[1]}
-                                                    </td>
-                                                    <td>{transaction.description}</td>
-                                                    <td style={{color: 'var(--danger)', fontWeight: '600'}}>
-                                                        -₹{transaction.amount.toLocaleString()}
-                                                    </td>
-                                                    <td>{transaction.paymentMethod}</td>
-                                                </tr>
-                                            ))
-                                        }
-                                        {transactions.filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`)).length === 0 && (
-                                            <tr>
-                                                <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>
-                                                    No transactions yet
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                
+                                <div className="spending-insights-grid">
+                                    <div className="insight-card needs-insight">
+                                        <div className="insight-icon">🏠</div>
+                                        <div className="insight-content">
+                                            <div className="insight-title">Essential Needs</div>
+                                            <div className="insight-amount">₹{needsSpent.toLocaleString()}</div>
+                                            <div className="insight-bar">
+                                                <div className="insight-fill needs-fill" style={{width: `${needsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="insight-card wants-insight">
+                                        <div className="insight-icon">🎯</div>
+                                        <div className="insight-content">
+                                            <div className="insight-title">Lifestyle Wants</div>
+                                            <div className="insight-amount">₹{wantsSpent.toLocaleString()}</div>
+                                            <div className="insight-bar">
+                                                <div className="insight-fill wants-fill" style={{width: `${wantsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="insight-card savings-insight">
+                                        <div className="insight-icon">💰</div>
+                                        <div className="insight-content">
+                                            <div className="insight-title">Future Savings</div>
+                                            <div className="insight-amount">₹{savingsSpent.toLocaleString()}</div>
+                                            <div className="insight-bar">
+                                                <div className="insight-fill savings-fill" style={{width: `${savingsPercent}%`}}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()
+                    }
                 </div>
             </div>
             )}
 
             {/* Conditional Views */}
             {activeView === 'quickadd' ? (
-                <QuickAdd
+                <QuickAddOptimized
                     envelopes={envelopes}
                     customPaymentMethods={customPaymentMethods}
                     dateRange={dateRange}
@@ -1343,18 +1401,6 @@ const EnvelopeBudget = () => {
                 />
             ) : activeView === 'daily' ? (
                 <>
-                    {/* Quick Expense Interface */}
-                    <QuickExpenseForm
-                        envelopes={envelopes}
-                        customPaymentMethods={customPaymentMethods}
-                        dateRange={dateRange}
-                        onAddTransaction={addTransaction}
-                        onAddCustomPaymentMethod={addCustomPaymentMethod}
-                        onShowNotification={showNotification}
-                        onTransfer={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
-                        preSelectedEnvelope={preSelectedEnvelope}
-                    />
-
                     {/* Last 10 Transactions */}
                     <TransactionsList
                         transactions={transactions}
@@ -1364,193 +1410,6 @@ const EnvelopeBudget = () => {
                         title="📋 Last 10 Transactions"
                         limit={10}
                     />
-                </>
-            ) : activeView === 'spending' ? (
-                <>
-                    {/* Envelope Status Summary */}
-                    <div className="card envelope-status-summary">
-                        <div className="card-header">
-                            <h3>📊 Status Overview</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="status-summary-grid">
-                                <div className="status-summary-item healthy">
-                                    <div className="status-icon">✅</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.healthy.length}</div>
-                                        <div className="status-label">Healthy</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item warning">
-                                    <div className="status-icon">⚠️</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.warnings.length}</div>
-                                        <div className="status-label">Warning</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item blocked">
-                                    <div className="status-icon">🚫</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.blocked.length}</div>
-                                        <div className="status-label">Blocked</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item total">
-                                    <div className="status-icon">💰</div>
-                                    <div className="status-info">
-                                        <div className="status-count">
-                                            {Object.values(envelopes).reduce((sum, cat) => sum + Object.keys(cat).length, 0)}
-                                        </div>
-                                        <div className="status-label">Total</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Envelope Status */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>📊 Envelope Status</h3>
-                        </div>
-                        <div className="card-content">
-                            <EnvelopeStatusEnhanced 
-                                envelopes={envelopes}
-                                getRolloverAmount={getRolloverAmount}
-                                onAddExpense={(category, name) => {
-                                    setPreSelectedEnvelope(`${category}.${name}`);
-                                    setShowQuickExpenseModal(true);
-                                }}
-                                onAllocateBudget={(category, name) => setActiveView('budget')}
-                            />
-                        </div>
-                    </div>
-                    
-                    {/* Original Table View - Hidden by default, can be toggled if needed */}
-                    <div className="card" style={{ display: 'none' }}>
-                        <div className="card-header">
-                            <h3>📊 Envelope Status (Table View)</h3>
-                        </div>
-                        <div className="table-container">
-                            <table className="envelope-table">
-                                <thead>
-                                <tr>
-                                    <th>Envelope</th>
-                                    <th>Category</th>
-                                    <th>Budgeted</th>
-                                    <th>Spent</th>
-                                    <th>Remaining</th>
-                                    <th>Rollover</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {Object.keys(envelopes).map(category =>
-                                        Object.keys(envelopes[category]).map(name => {
-                                            const env = envelopes[category][name];
-                                            const remaining = env.budgeted + env.rollover - env.spent;
-                                            const statusInfo = getStatus(env, category, name);
-                                            const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
-                                            return (
-                                                <tr key={`${category}.${name}`} className="envelope-status-row">
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        <div className="envelope-name-cell">
-                                                            <span className="status-icon-inline">{statusInfo.icon}</span>
-                                                            <span>{name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{textTransform: 'uppercase'}}>{category}</td>
-                                                    <td>₹{env.budgeted.toLocaleString()}</td>
-                                                    <td>
-                                                        <div className="spent-cell">
-                                                            <span>₹{env.spent.toLocaleString()}</span>
-                                                            <div className="mini-progress">
-                                                                <div 
-                                                                    className="mini-progress-fill" 
-                                                                    style={{ 
-                                                                        width: `${Math.min(percentage, 100)}%`,
-                                                                        backgroundColor: statusInfo.color
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ color: remaining <= 0 ? 'var(--danger)' : 'inherit', fontWeight: remaining <= 0 ? '700' : '600' }}>
-                                                        ₹{remaining.toLocaleString()}
-                                                    </td>
-                                                    <td>₹{env.rollover.toLocaleString()}</td>
-                                                    <td>
-                                                        <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
-                                                            {statusInfo.icon} {statusInfo.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                )}
-                                </tbody>
-                            </table>
-                            <div className="mobile-card-view" style={{ display: 'none' }}>
-                                {Object.keys(envelopes).map(category =>
-                                    Object.keys(envelopes[category]).map(name => {
-                                        const env = envelopes[category][name];
-                                        const remaining = env.budgeted + env.rollover - env.spent;
-                                        const statusInfo = getStatus(env, category, name);
-                                        const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
-                                        return (
-                                            <div key={`${category}.${name}`} className="mobile-envelope-card enhanced">
-                                                <div className="mobile-card-header">
-                                                    <div className="envelope-title">
-                                                        <span className="status-icon-large">{statusInfo.icon}</span>
-                                                        <span style={{textTransform: 'uppercase', fontWeight: '700'}}>{name}</span>
-                                                    </div>
-                                                    <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
-                                                        {statusInfo.status}
-                                                    </span>
-                                                </div>
-                                                <div className="mobile-progress-bar">
-                                                    <div 
-                                                        className="mobile-progress-fill" 
-                                                        style={{ 
-                                                            width: `${Math.min(percentage, 100)}%`,
-                                                            backgroundColor: statusInfo.color
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="mobile-card-content">
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Category</span>
-                                                        <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>{category}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Budgeted</span>
-                                                        <span className="mobile-card-value">₹{env.budgeted.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Spent</span>
-                                                        <span className="mobile-card-value" style={{ color: statusInfo.color }}>₹{env.spent.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Remaining</span>
-                                                        <span className="mobile-card-value" style={{ 
-                                                            color: remaining <= 0 ? 'var(--danger)' : 'var(--success)',
-                                                            fontWeight: '700'
-                                                        }}>₹{remaining.toLocaleString()}</span>
-                                                    </div>
-                                                    {env.rollover > 0 && (
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Rollover</span>
-                                                            <span className="mobile-card-value">₹{env.rollover.toLocaleString()}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </div>
-                    </div>
                 </>
             ) : activeView === 'transactions' ? (
                 <>
@@ -2097,7 +1956,7 @@ const EnvelopeBudget = () => {
                                 <button 
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        setActiveView('spending');
+                                        setActiveView('budget');
                                         setQuickActionSheet(false);
                                     }}
                                     style={{ width: '100%', padding: '16px' }}
@@ -2220,66 +2079,31 @@ const EnvelopeBudget = () => {
             {showQuickExpenseModal && (
                 <div className="modal-overlay" onClick={() => {
                     setShowQuickExpenseModal(false);
-                    setPreSelectedEnvelope(null);
                 }}>
                     <div className="modal mobile-optimized quick-expense-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header-enhanced">
                             <div className="modal-icon">💸</div>
                             <div className="modal-title-section">
                                 <h2>Add Expense</h2>
-                                {preSelectedEnvelope && (
-                                    <div className="envelope-name-display">
-                                        {preSelectedEnvelope.split('.')[1].toUpperCase()}
-                                    </div>
-                                )}
                             </div>
                             <button 
                                 className="modal-close-enhanced"
                                 onClick={() => {
                                     setShowQuickExpenseModal(false);
-                                    setPreSelectedEnvelope(null);
                                 }}
                                 aria-label="Close"
                             >
                                 ✕
                             </button>
                         </div>
-                        <QuickExpenseForm
-                            envelopes={envelopes}
-                            customPaymentMethods={customPaymentMethods}
-                            dateRange={dateRange}
-                            onAddTransaction={(transactionData) => {
-                                addTransaction(transactionData);
-                                setShowQuickExpenseModal(false);
-                                setPreSelectedEnvelope(null);
-                            }}
-                            onAddCustomPaymentMethod={addCustomPaymentMethod}
-                            onShowNotification={showNotification}
-                            onTransfer={() => {
-                                setShowQuickExpenseModal(false);
-                                setTransferModal({ show: true, from: '', to: '', amount: '' });
-                            }}
-                            preSelectedEnvelope={preSelectedEnvelope}
-                            hideSubmitButton={true}
-                        />
                         <div className="modal-footer-actions">
                             <button 
                                 className="btn btn-secondary btn-cancel"
                                 onClick={() => {
                                     setShowQuickExpenseModal(false);
-                                    setPreSelectedEnvelope(null);
                                 }}
                             >
                                 Cancel
-                            </button>
-                            <button 
-                                className="btn btn-success btn-add"
-                                onClick={() => {
-                                    const form = document.querySelector('.quick-expense-modal .quick-add-btn');
-                                    if (form) form.click();
-                                }}
-                            >
-                                ➕ Add Expense
                             </button>
                         </div>
                     </div>

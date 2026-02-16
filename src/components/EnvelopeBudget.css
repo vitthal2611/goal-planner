@@ -3050,3 +3050,57 @@ input[type="number"] {
         border-width: 3px;
     }
 }
+/* Pie Chart Styles */
+.pie-chart-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.pie-chart-container svg {
+  max-width: 200px;
+  height: auto;
+}
+
+.spending-breakdown-alt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spending-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.spending-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.spending-card-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.spending-card-label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.spending-card-amount {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.spending-card-percent {
+  font-size: 14px;
+  color: #666;
+}

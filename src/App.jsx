@@ -3,6 +3,10 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
 import EnvelopeBudget from './components/EnvelopeBudget';
 import Auth from './components/Auth';
+import MobileUIOptimized from './components/MobileUIOptimized';
+import { MobileTestingTrigger } from './components/MobileTestingPanel';
+import { useHapticFeedback, useNetworkStatus } from './hooks/useEnhancedMobile';
+import './styles/mobile-optimized.css';
 
 // Memoized styles to prevent recreation on each render
 const headerStyles = {
@@ -48,6 +52,10 @@ const logoutButtonStyles = {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('quickadd');
+  
+  const { success, error } = useHapticFeedback();
+  const { isOnline, isSlowConnection } = useNetworkStatus();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -66,12 +74,19 @@ function App() {
 
   const handleLogout = async () => {
     try {
+      success();
       await signOut(auth);
       showNotification('success', 'Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
+      error();
       showNotification('error', 'Failed to logout. Please try again.');
     }
+  };
+
+  const handleRefresh = async () => {
+    // Refresh app data
+    window.location.reload();
   };
 
   // Memoize user email display to prevent unnecessary re-renders
@@ -81,9 +96,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="loading">
+      <div className="loading-overlay">
         <div className="loading-spinner"></div>
         <div className="loading-text">Loading your budget...</div>
+        {!isOnline && (
+          <div className="offline-indicator">
+            📡 You're offline - some features may be limited
+          </div>
+        )}
       </div>
     );
   }
@@ -101,6 +121,19 @@ function App() {
         </div>
       )}
       
+      {/* Network status indicator */}
+      {!isOnline && (
+        <div className="offline-banner">
+          📡 You're offline - changes will sync when reconnected
+        </div>
+      )}
+      
+      {isSlowConnection && (
+        <div className="slow-connection-banner">
+          🐌 Slow connection detected - optimizing for performance
+        </div>
+      )}
+      
       <div style={headerStyles}>
         <span style={userEmailStyles}>
           Welcome, {userEmailDisplay}
@@ -108,14 +141,58 @@ function App() {
         <button 
           onClick={handleLogout} 
           style={logoutButtonStyles}
+          className="btn btn-danger"
           aria-label="Logout"
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}
         >
           Logout
         </button>
       </div>
-      <EnvelopeBudget />
+      
+      <MobileUIOptimized 
+        activeView={activeView} 
+        setActiveView={setActiveView}
+        onRefresh={handleRefresh}
+      >
+        <EnvelopeBudget activeView={activeView} setActiveView={setActiveView} />
+      </MobileUIOptimized>
+      
+      {/* Mobile Testing Panel (only in development) */}
+      <MobileTestingTrigger />
+      
+      <style jsx>{`
+        .offline-banner,
+        .slow-connection-banner {
+          background: #f59e0b;
+          color: white;
+          padding: 8px 16px;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 600;
+          position: sticky;
+          top: 0;
+          z-index: 101;
+        }
+        
+        .offline-banner {
+          background: #ef4444;
+        }
+        
+        .loading-text {
+          margin-top: 16px;
+          font-size: 16px;
+          color: var(--gray-600);
+        }
+        
+        .offline-indicator {
+          margin-top: 12px;
+          padding: 8px 16px;
+          background: #fef3c7;
+          color: #92400e;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+      `}</style>
     </div>
   );
 }
