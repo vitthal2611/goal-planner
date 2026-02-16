@@ -10,13 +10,14 @@ const QuickAddOptimized = ({
   onShowNotification,
   transactions = [],
   monthlyData,
-  currentPeriod
+  currentPeriod,
+  onTransferClick
 }) => {
   const [selectedEnvelope, setSelectedEnvelope] = useState(null);
   const [expenseForm, setExpenseForm] = useState({
     amount: '',
     description: '',
-    paymentMethod: customPaymentMethods[0] || 'HDFC',
+    paymentMethod: customPaymentMethods?.[0] || 'HDFC',
     date: new Date().toISOString().split('T')[0]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,19 +58,23 @@ const QuickAddOptimized = ({
 
   const getPaymentMethodBalance = useCallback((paymentMethod) => {
     let balance = 0;
-    transactions.forEach(transaction => {
-      if (transaction.paymentMethod === paymentMethod) {
-        if (transaction.type === 'income' || transaction.type === 'transfer-in') {
-          balance += transaction.amount;
-        } else if (transaction.type === 'transfer-out') {
-          balance -= transaction.amount;
-        } else {
-          balance -= transaction.amount;
+    // Get ALL transactions from ALL periods
+    Object.keys(monthlyData).forEach(period => {
+      const periodTransactions = monthlyData[period]?.transactions || [];
+      periodTransactions.forEach(transaction => {
+        if (transaction.paymentMethod === paymentMethod) {
+          if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
+            balance += transaction.amount;
+          } else if (transaction.type === 'transfer-out') {
+            balance -= transaction.amount;
+          } else {
+            balance -= transaction.amount;
+          }
         }
-      }
+      });
     });
     return balance;
-  }, [transactions]);
+  }, [monthlyData]);
 
   const envelopeBalances = useMemo(() => {
     const balances = {};
@@ -116,7 +121,7 @@ const QuickAddOptimized = ({
     setExpenseForm({
       amount: '',
       description: '',
-      paymentMethod: customPaymentMethods[0] || 'HDFC',
+      paymentMethod: customPaymentMethods?.[0] || 'HDFC',
       date: new Date().toISOString().split('T')[0]
     });
   }, [lightTap, customPaymentMethods]);
@@ -163,7 +168,7 @@ const QuickAddOptimized = ({
       setExpenseForm({
         amount: '',
         description: '',
-        paymentMethod: customPaymentMethods[0] || 'HDFC',
+        paymentMethod: customPaymentMethods?.[0] || 'HDFC',
         date: new Date().toISOString().split('T')[0]
       });
     } catch (err) {
@@ -176,6 +181,18 @@ const QuickAddOptimized = ({
 
   return (
     <div className="quick-add-optimized">
+      {/* Transfer Button */}
+      <div className="quick-actions-bar">
+        <button 
+          className="transfer-button-quick"
+          onClick={onTransferClick}
+          aria-label="Transfer between payment methods"
+        >
+          <span className="transfer-icon">🔄</span>
+          <span className="transfer-text">Transfer Money</span>
+        </button>
+      </div>
+
       <div className="envelope-grid-optimized">
         {Object.keys(envelopes).map(category => {
           const categoryIcon = category === 'needs' ? '🏠' : category === 'savings' ? '💰' : '🎯';
@@ -274,7 +291,7 @@ const QuickAddOptimized = ({
               <div className="payment-method-section">
                 <label className="section-label">Payment Method</label>
                 <div className="payment-grid-optimized">
-                  {customPaymentMethods.map(method => {
+                  {(customPaymentMethods || []).map(method => {
                     const balance = paymentBalances[method] || 0;
                     const isSelected = expenseForm.paymentMethod === method;
                     
@@ -339,6 +356,43 @@ const QuickAddOptimized = ({
           padding: 16px;
           min-height: calc(100vh - 200px);
           background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .quick-actions-bar {
+          margin-bottom: 20px;
+        }
+
+        .transfer-button-quick {
+          width: 100%;
+          padding: 16px 20px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .transfer-button-quick:active {
+          transform: scale(0.97);
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .transfer-icon {
+          font-size: 20px;
+        }
+
+        .transfer-text {
+          font-size: 15px;
+          letter-spacing: 0.3px;
         }
 
         .envelope-grid-optimized {

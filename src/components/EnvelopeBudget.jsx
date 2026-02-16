@@ -15,25 +15,29 @@ import './MobileEnhancements.css';
 
 const EnvelopeBudget = ({ activeView, setActiveView }) => {
     const { success, error, lightTap } = useHapticFeedback();
-    // Generate budget period (1st to last day of month)
-    // Generate list of budget periods (current year + next 3 years)
+    // Generate budget period options (years + months)
     const generatePeriodOptions = () => {
         const periods = [];
-        const startYear = new Date().getFullYear(); // Use current year instead of hardcoded 2026
-        const startMonth = 0; // January (0-indexed)
+        const startYear = new Date().getFullYear();
+        const startMonth = 0;
 
-        for (let i = 0; i <= 36; i++) { // 36 months = 3 years
+        // Add year options
+        for (let y = 0; y <= 3; y++) {
+            const year = startYear + y;
+            periods.push({ key: `${year}`, label: `${year}`, isYear: true });
+        }
+
+        // Add month options
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        for (let i = 0; i <= 36; i++) {
             const date = new Date(startYear, startMonth + i, 1);
             const year = date.getFullYear();
             const month = date.getMonth();
-            
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            
             const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
             const periodLabel = `${monthNames[month]} ${year}`;
-
-            periods.push({ key: periodKey, label: periodLabel });
+            periods.push({ key: periodKey, label: periodLabel, isYear: false });
         }
 
         return periods;
@@ -49,7 +53,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     const [currentPeriod, setCurrentPeriod] = useState(getCurrentBudgetPeriod());
     const [monthlyData, setMonthlyData] = useState({});
     const [customPaymentMethod, setCustomPaymentMethod] = useState('');
-    const [incomeTransaction, setIncomeTransaction] = useState({ amount: '', description: '', paymentMethod: '', date: new Date().toISOString().split('T')[0] });
+    const [incomeTransaction, setIncomeTransaction] = useState({ amount: '', description: '', paymentMethod: '', date: new Date().toISOString().split('T')[0], type: 'income' });
     const [customIncomePayment, setCustomIncomePayment] = useState('');
     const [customPaymentMethods, setCustomPaymentMethods] = useState([]);
     const [newEnvelope, setNewEnvelope] = useState({ category: '', name: '' });
@@ -360,7 +364,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     };
 
     const addIncome = async () => {
-        const { amount, description } = incomeTransaction;
+        const { amount, description, type } = incomeTransaction;
 
         if (!amount || parseFloat(amount) <= 0) {
             showNotification('error', 'Enter valid income amount');
@@ -383,22 +387,25 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         const transactionRecord = {
             id: Date.now() + Math.random(),
             date: incomeTransaction.date,
-            envelope: 'INCOME',
+            envelope: type === 'loan' ? 'LOAN' : 'INCOME',
             amount: incomeAmount,
-            description: sanitizeInput(description || 'Monthly Income'),
+            description: sanitizeInput(description || (type === 'loan' ? 'Borrowed money' : 'Monthly Income')),
             paymentMethod: sanitizeInput(paymentMethod),
-            type: 'income'
+            type: type === 'loan' ? 'loan' : 'income'
         };
 
         try {
+            // Only add to income if it's actual income, not a loan
+            const newIncome = type === 'loan' ? income : income + incomeAmount;
+            
             await updatePeriodData({
-                income: income + incomeAmount,
+                income: newIncome,
                 transactions: [...transactions, transactionRecord]
             });
 
-            setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0] });
+            setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0], type: 'income' });
             setCustomIncomePayment('');
-            showNotification('success', '✓ Income Added!');
+            showNotification('success', type === 'loan' ? '✓ Loan Added!' : '✓ Income Added!');
         } catch (error) {
             console.error('Failed to add income:', error);
             showNotification('error', 'Failed to add income');
@@ -940,15 +947,23 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     const getPaymentMethodBalances = useMemo(() => {
         const balances = {};
         
-        // Get ALL transactions from ALL periods (not restricted to current period)
-        const allTransactions = Object.keys(monthlyData)
-            .flatMap(period => monthlyData[period]?.transactions || []);
+        // Get transactions based on current period selection
+        let relevantTransactions = [];
+        if (currentPeriod.match(/^\d{4}$/)) {
+            // Year selected - get all transactions for that year
+            relevantTransactions = Object.keys(monthlyData)
+                .filter(period => period.startsWith(currentPeriod))
+                .flatMap(period => monthlyData[period]?.transactions || []);
+        } else {
+            // Month selected - get only that month's transactions
+            relevantTransactions = monthlyData[currentPeriod]?.transactions || [];
+        }
         
-        allTransactions.forEach(transaction => {
+        relevantTransactions.forEach(transaction => {
             const method = sanitizeInput(transaction.paymentMethod || 'Unknown');
             if (!balances[method]) balances[method] = 0;
             
-            if (transaction.type === 'income' || transaction.type === 'transfer-in') {
+            if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
                 balances[method] += transaction.amount;
             } else if (transaction.type === 'transfer-out') {
                 balances[method] -= transaction.amount;
@@ -957,7 +972,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
             }
         });
         return balances;
-    }, [monthlyData]);
+    }, [monthlyData, currentPeriod]);
 
     const paymentBalances = getPaymentMethodBalances;
 
@@ -983,6 +998,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         if (filters.envelope) {
             filteredTransactions = filteredTransactions.filter(t => {
                 const envelopeName = t.envelope === 'INCOME' ? 'INCOME' : 
+                                   t.envelope === 'LOAN' ? 'LOAN' :
                                    t.envelope === 'TRANSFER' ? 'TRANSFER' : 
                                    t.envelope.replace('.', ' - ').toLowerCase();
                 return envelopeName.includes(filters.envelope.toLowerCase());
@@ -1070,6 +1086,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         const envelopes = new Set();
         transactions.forEach(t => {
             if (t.envelope === 'INCOME') envelopes.add('INCOME');
+            else if (t.envelope === 'LOAN') envelopes.add('LOAN');
             else if (t.envelope === 'TRANSFER') envelopes.add('TRANSFER');
             else envelopes.add(t.envelope.replace('.', ' - '));
         });
@@ -1107,20 +1124,36 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
             
             <div className="header">
                 <h1>💰 Envelope Budget Tracker</h1>
-                <div className="header-controls">
-                    <label>Budget Period</label>
-                    <select
-                        value={currentPeriod}
-                        onChange={(e) => setCurrentPeriod(e.target.value)}
-                        className="period-selector"
-                        aria-label="Select budget period"
-                    >
-                        {generatePeriodOptions().map(period => (
-                            <option key={period.key} value={period.key}>
-                                {period.label}
-                            </option>
-                        ))}
-                    </select>
+                <div className="header-controls" style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                        <label style={{fontSize: '12px', fontWeight: '600'}}>Year</label>
+                        <select
+                            value={currentPeriod.match(/^\d{4}$/) ? currentPeriod : currentPeriod.split('-')[0]}
+                            onChange={(e) => setCurrentPeriod(e.target.value)}
+                            className="period-selector"
+                        >
+                            {generatePeriodOptions().filter(p => p.isYear).map(period => (
+                                <option key={period.key} value={period.key}>
+                                    {period.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                        <label style={{fontSize: '12px', fontWeight: '600'}}>Month</label>
+                        <select
+                            value={currentPeriod.match(/^\d{4}$/) ? '' : currentPeriod}
+                            onChange={(e) => setCurrentPeriod(e.target.value || currentPeriod.split('-')[0])}
+                            className="period-selector"
+                        >
+                            <option value="">All Months</option>
+                            {generatePeriodOptions().filter(p => !p.isYear && p.key.startsWith(currentPeriod.match(/^\d{4}$/) ? currentPeriod : currentPeriod.split('-')[0])).map(period => (
+                                <option key={period.key} value={period.key}>
+                                    {period.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -1150,7 +1183,12 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 >
                     📊 Budget
                 </button>
-
+                <button
+                    className={`tab-btn touch-feedback ${activeView === 'yearly' ? 'active' : ''}`}
+                    onClick={() => setActiveView('yearly')}
+                >
+                    📅 Yearly
+                </button>
             </div>
 
             {notification.message && (
@@ -1159,7 +1197,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 </div>
             )}
 
-            {activeView !== 'quickadd' && (
+            {activeView !== 'quickadd' && !currentPeriod.match(/^\d{4}$/) && (
             <div className="summary-grid">
                 <div className="summary-card">
                     <div className="summary-value">₹{income.toLocaleString()}</div>
@@ -1174,23 +1212,76 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     <div className="summary-label">Total Spent</div>
                 </div>
                 <div className="summary-card">
-                    <div className="summary-value">₹{(income - totalSpent).toLocaleString()}</div>
-                    <div className="summary-label">Remaining</div>
+                    <div className="summary-value">₹{(income - totalBudgeted).toLocaleString()}</div>
+                    <div className="summary-label">Unallocated Budget</div>
                 </div>
             </div>
             )}
 
-            {/* Payment Method Overview - Shows actual balances across ALL periods */}
+            {/* Year Summary - Show when year is selected */}
+            {currentPeriod.match(/^\d{4}$/) && activeView !== 'quickadd' && (() => {
+                const year = currentPeriod;
+                const yearData = { totalIncome: 0, totalBudgeted: 0, totalSpent: 0, months: {} };
+                
+                for (let m = 1; m <= 12; m++) {
+                    const monthKey = `${year}-${String(m).padStart(2, '0')}`;
+                    const data = monthlyData[monthKey];
+                    if (data) {
+                        yearData.totalIncome += data.income || 0;
+                        if (data.envelopes) {
+                            Object.values(data.envelopes).forEach(category => {
+                                Object.values(category).forEach(env => {
+                                    yearData.totalBudgeted += env.budgeted || 0;
+                                });
+                            });
+                        }
+                        if (data.transactions) {
+                            data.transactions.forEach(t => {
+                                if (!t.type || t.type === 'expense') {
+                                    yearData.totalSpent += t.amount;
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                return (
+                    <div className="summary-grid">
+                        <div className="summary-card">
+                            <div className="summary-value">₹{yearData.totalIncome.toLocaleString()}</div>
+                            <div className="summary-label">Yearly Income</div>
+                        </div>
+                        <div className="summary-card">
+                            <div className="summary-value">₹{yearData.totalBudgeted.toLocaleString()}</div>
+                            <div className="summary-label">Total Budgeted</div>
+                        </div>
+                        <div className="summary-card">
+                            <div className="summary-value">₹{yearData.totalSpent.toLocaleString()}</div>
+                            <div className="summary-label">Total Spent</div>
+                        </div>
+                        <div className="summary-card">
+                            <div className="summary-value" style={{color: yearData.totalIncome - yearData.totalSpent >= 0 ? 'var(--success)' : 'var(--danger)'}}>₹{(yearData.totalIncome - yearData.totalSpent).toLocaleString()}</div>
+                            <div className="summary-label">Net Savings</div>
+                        </div>
+                    </div>
+                );
+            })()}
+            }
+
+            {/* Payment Method Overview - Shows balances based on selected period */}
             {Object.keys(paymentBalances).length > 0 && (
                 <div className="card payment-overview-compact">
                     <div className="card-header">
-                        <h3>💳 Payment Methods (All Time Balance)</h3>
-                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>Actual balances across all periods</small>
+                        <h3>💳 Payment Methods Balance</h3>
+                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>Balance for {currentPeriod.match(/^\d{4}$/) ? `${currentPeriod} (Full Year)` : currentPeriod}</small>
                     </div>
                     <div className="card-content">
                         <div className="payment-methods-grid">
                             {Object.entries(paymentBalances).map(([method, amount]) => (
-                                <div key={method} className="payment-method-item">
+                                <div 
+                                    key={method} 
+                                    className="payment-method-item"
+                                >
                                     <span className="payment-method-name">{method}</span>
                                     <span className="payment-method-balance" style={{
                                         color: amount >= 0 ? 'var(--success)' : 'var(--danger)',
@@ -1387,6 +1478,85 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
             </div>
             )}
 
+            {/* Year View - Show monthly breakdown when year is selected */}
+            {currentPeriod.match(/^\d{4}$/) && activeView !== 'quickadd' && (
+                <div className="card">
+                    <div className="card-header">
+                        <h3>📅 {currentPeriod} - Monthly Breakdown</h3>
+                    </div>
+                    <div className="card-content">
+                        {(() => {
+                            const year = currentPeriod;
+                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            
+                            return (
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+                                                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Month</th>
+                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Income</th>
+                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Budgeted</th>
+                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Spent</th>
+                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Savings</th>
+                                                <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600' }}>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {monthNames.map((monthName, idx) => {
+                                                const monthNum = String(idx + 1).padStart(2, '0');
+                                                const monthKey = `${year}-${monthNum}`;
+                                                const monthData = monthlyData[monthKey];
+                                                const hasData = !!monthData;
+                                                
+                                                let income = 0, budgeted = 0, spent = 0;
+                                                if (monthData) {
+                                                    income = monthData.income || 0;
+                                                    if (monthData.envelopes) {
+                                                        Object.values(monthData.envelopes).forEach(category => {
+                                                            Object.values(category).forEach(env => {
+                                                                budgeted += env.budgeted || 0;
+                                                            });
+                                                        });
+                                                    }
+                                                    if (monthData.transactions) {
+                                                        monthData.transactions.forEach(t => {
+                                                            if (!t.type || t.type === 'expense') {
+                                                                spent += t.amount;
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                                const savings = income - spent;
+                                                
+                                                return (
+                                                    <tr key={monthNum} style={{ borderBottom: '1px solid #f1f5f9', background: hasData ? 'white' : '#fafafa' }}>
+                                                        <td style={{ padding: '12px', fontWeight: hasData ? '600' : '400', color: hasData ? '#1f2937' : '#9ca3af' }}>{monthName}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#3b82f6' : '#d1d5db' }}>₹{income.toLocaleString()}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#f59e0b' : '#d1d5db' }}>₹{budgeted.toLocaleString()}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#ef4444' : '#d1d5db' }}>₹{spent.toLocaleString()}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: hasData ? (savings >= 0 ? '#10b981' : '#ef4444') : '#d1d5db' }}>₹{savings.toLocaleString()}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                                                            <button
+                                                                className="btn btn-primary"
+                                                                onClick={() => setCurrentPeriod(monthKey)}
+                                                                style={{ padding: '4px 12px', fontSize: '12px' }}
+                                                            >
+                                                                View
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
             {/* Conditional Views */}
             {activeView === 'quickadd' ? (
                 <QuickAddOptimized
@@ -1398,7 +1568,130 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     transactions={transactions}
                     monthlyData={monthlyData}
                     currentPeriod={currentPeriod}
+                    onTransferClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
                 />
+            ) : activeView === 'yearly' ? (
+                <div className="card">
+                    <div className="card-header">
+                        <h3>📅 Yearly Summary</h3>
+                    </div>
+                    <div className="card-content">
+                        {(() => {
+                            const yearlyData = {};
+                            Object.keys(monthlyData).forEach(period => {
+                                const [year, month] = period.split('-');
+                                if (!yearlyData[year]) {
+                                    yearlyData[year] = { 
+                                        totalIncome: 0, 
+                                        totalBudgeted: 0, 
+                                        totalSpent: 0, 
+                                        months: {} 
+                                    };
+                                }
+                                
+                                const data = monthlyData[period];
+                                const monthIncome = data.income || 0;
+                                let monthBudgeted = 0;
+                                let monthSpent = 0;
+                                
+                                if (data.envelopes) {
+                                    Object.values(data.envelopes).forEach(category => {
+                                        Object.values(category).forEach(env => {
+                                            monthBudgeted += env.budgeted || 0;
+                                        });
+                                    });
+                                }
+                                
+                                if (data.transactions) {
+                                    data.transactions.forEach(t => {
+                                        if (!t.type || t.type === 'expense') {
+                                            monthSpent += t.amount;
+                                        }
+                                    });
+                                }
+                                
+                                yearlyData[year].totalIncome += monthIncome;
+                                yearlyData[year].totalBudgeted += monthBudgeted;
+                                yearlyData[year].totalSpent += monthSpent;
+                                yearlyData[year].months[month] = {
+                                    income: monthIncome,
+                                    budgeted: monthBudgeted,
+                                    spent: monthSpent
+                                };
+                            });
+                            
+                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                    {Object.keys(yearlyData).sort().reverse().map(year => {
+                                        const data = yearlyData[year];
+                                        return (
+                                            <div key={year} style={{ border: '2px solid #e5e7eb', borderRadius: '12px', padding: '20px', background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)' }}>
+                                                <h2 style={{ margin: '0 0 20px 0', color: '#1f2937', fontSize: '24px' }}>📆 {year}</h2>
+                                                
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                                                    <div style={{ background: '#dbeafe', padding: '16px', borderRadius: '8px', border: '2px solid #3b82f6' }}>
+                                                        <div style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600', marginBottom: '4px' }}>Total Income</div>
+                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af' }}>₹{data.totalIncome.toLocaleString()}</div>
+                                                    </div>
+                                                    <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', border: '2px solid #f59e0b' }}>
+                                                        <div style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', marginBottom: '4px' }}>Total Budgeted</div>
+                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#92400e' }}>₹{data.totalBudgeted.toLocaleString()}</div>
+                                                    </div>
+                                                    <div style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', border: '2px solid #ef4444' }}>
+                                                        <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '600', marginBottom: '4px' }}>Total Spent</div>
+                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#991b1b' }}>₹{data.totalSpent.toLocaleString()}</div>
+                                                    </div>
+                                                    <div style={{ background: data.totalIncome - data.totalSpent >= 0 ? '#d1fae5' : '#fee2e2', padding: '16px', borderRadius: '8px', border: `2px solid ${data.totalIncome - data.totalSpent >= 0 ? '#10b981' : '#ef4444'}` }}>
+                                                        <div style={{ fontSize: '12px', color: data.totalIncome - data.totalSpent >= 0 ? '#065f46' : '#991b1b', fontWeight: '600', marginBottom: '4px' }}>Net Savings</div>
+                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: data.totalIncome - data.totalSpent >= 0 ? '#065f46' : '#991b1b' }}>₹{(data.totalIncome - data.totalSpent).toLocaleString()}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <h4 style={{ margin: '0 0 12px 0', color: '#374151' }}>Monthly Breakdown</h4>
+                                                <div style={{ overflowX: 'auto' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                                        <thead>
+                                                            <tr style={{ background: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+                                                                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Month</th>
+                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Income</th>
+                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Budgeted</th>
+                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Spent</th>
+                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Savings</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {monthNames.map((monthName, idx) => {
+                                                                const monthNum = String(idx + 1).padStart(2, '0');
+                                                                const monthData = data.months[monthNum];
+                                                                const hasData = !!monthData;
+                                                                const income = monthData?.income || 0;
+                                                                const budgeted = monthData?.budgeted || 0;
+                                                                const spent = monthData?.spent || 0;
+                                                                const savings = income - spent;
+                                                                
+                                                                return (
+                                                                    <tr key={monthNum} style={{ borderBottom: '1px solid #f1f5f9', background: hasData ? 'white' : '#fafafa' }}>
+                                                                        <td style={{ padding: '12px', fontWeight: hasData ? '600' : '400', color: hasData ? '#1f2937' : '#9ca3af' }}>{monthName}</td>
+                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#3b82f6' : '#d1d5db' }}>₹{income.toLocaleString()}</td>
+                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#f59e0b' : '#d1d5db' }}>₹{budgeted.toLocaleString()}</td>
+                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#ef4444' : '#d1d5db' }}>₹{spent.toLocaleString()}</td>
+                                                                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: hasData ? (savings >= 0 ? '#10b981' : '#ef4444') : '#d1d5db' }}>₹{savings.toLocaleString()}</td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
             ) : activeView === 'daily' ? (
                 <>
                     {/* Last 10 Transactions */}
@@ -1455,6 +1748,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                         >
                                             <option value="">All Types</option>
                                             <option value="income">Income</option>
+                                            <option value="loan">Loan</option>
                                             <option value="expense">Expense</option>
                                             <option value="transfer-in">Transfer In</option>
                                             <option value="transfer-out">Transfer Out</option>
@@ -1544,9 +1838,11 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                         <tbody>
                                         {getSortedTransactions().map(transaction => {
                                             const transactionType = transaction.type === 'income' ? '💰' : 
+                                                                  transaction.type === 'loan' ? '🤝' :
                                                                   transaction.type === 'transfer-in' ? '⬅️' :
                                                                   transaction.type === 'transfer-out' ? '➡️' : '💸';
                                             const typeLabel = transaction.type === 'income' ? 'Income' : 
+                                                            transaction.type === 'loan' ? 'Loan' :
                                                             transaction.type === 'transfer-in' ? 'Transfer In' :
                                                             transaction.type === 'transfer-out' ? 'Transfer Out' : 'Expense';
                                             return (
@@ -1556,14 +1852,15 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                                     <td>{transaction.description}</td>
                                                     <td style={{textTransform: 'uppercase'}}>
                                                         {transaction.envelope === 'INCOME' ? 'INCOME' :
+                                                         transaction.envelope === 'LOAN' ? 'LOAN' :
                                                          transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
                                                          transaction.envelope.replace('.', ' - ')}
                                                     </td>
                                                     <td style={{
-                                                        color: transaction.type === 'income' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
+                                                        color: transaction.type === 'income' || transaction.type === 'loan' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
                                                         fontWeight: '600'
                                                     }}>
-                                                        {transaction.type === 'income' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                                                        {transaction.type === 'income' || transaction.type === 'loan' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
                                                     </td>
                                                     <td 
                                                         onDoubleClick={() => setEditingPayment({ id: transaction.id, method: transaction.paymentMethod || '' })}
@@ -1612,9 +1909,11 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                     <div className="mobile-card-view">
                                         {getSortedTransactions().map(transaction => {
                                             const transactionType = transaction.type === 'income' ? '💰' : 
+                                                                  transaction.type === 'loan' ? '🤝' :
                                                                   transaction.type === 'transfer-in' ? '⬅️' :
                                                                   transaction.type === 'transfer-out' ? '➡️' : '💸';
                                             const typeLabel = transaction.type === 'income' ? 'Income' : 
+                                                            transaction.type === 'loan' ? 'Loan' :
                                                             transaction.type === 'transfer-in' ? 'Transfer In' :
                                                             transaction.type === 'transfer-out' ? 'Transfer Out' : 'Expense';
                                             return (
@@ -1645,16 +1944,17 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                                         <div className="mobile-card-field">
                                                             <span className="mobile-card-label">Amount</span>
                                                             <span className="mobile-card-value" style={{
-                                                                color: transaction.type === 'income' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
+                                                                color: transaction.type === 'income' || transaction.type === 'loan' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                {transaction.type === 'income' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                                                                {transaction.type === 'income' || transaction.type === 'loan' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
                                                             </span>
                                                         </div>
                                                         <div className="mobile-card-field">
                                                             <span className="mobile-card-label">Envelope</span>
                                                             <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>
                                                                 {transaction.envelope === 'INCOME' ? 'INCOME' :
+                                                                 transaction.envelope === 'LOAN' ? 'LOAN' :
                                                                  transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
                                                                  transaction.envelope.replace('.', ' - ')}
                                                             </span>
@@ -1685,13 +1985,21 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                         </div>
                         <div className="card-content">
                             <div className="control-group">
-                                <label>Add Monthly Income</label>
+                                <label>Add Monthly Income / Loan</label>
                                 <div className="income-form">
+                                    <select
+                                        value={incomeTransaction.type}
+                                        onChange={(e) => setIncomeTransaction({...incomeTransaction, type: e.target.value})}
+                                        className="income-input"
+                                    >
+                                        <option value="income">💵 Income</option>
+                                        <option value="loan">🤝 Loan/Borrow</option>
+                                    </select>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
-                                        placeholder="₹ Income Amount"
+                                        placeholder="₹ Amount"
                                         value={incomeTransaction.amount}
                                         onChange={(e) => setIncomeTransaction({...incomeTransaction, amount: e.target.value})}
                                         className="income-input"
@@ -1709,7 +2017,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                     />
                                     <input
                                         type="text"
-                                        placeholder="Description (e.g., Salary, Bonus)"
+                                        placeholder={incomeTransaction.type === 'loan' ? 'Description (e.g., Borrowed from Abhay)' : 'Description (e.g., Salary, Bonus)'}
                                         value={incomeTransaction.description}
                                         onChange={(e) => setIncomeTransaction({...incomeTransaction, description: e.target.value})}
                                         className="income-input"
@@ -1740,11 +2048,14 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                         />
                                     )}
                                     <button className="btn btn-success" onClick={addIncome}>
-                                        ➕ Add Income
+                                        {incomeTransaction.type === 'loan' ? '➕ Add Loan' : '➕ Add Income'}
                                     </button>
                                 </div>
                             </div>
                             <div className="budget-actions">
+                                <button className="btn btn-info" onClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}>
+                                    🔄 Transfer
+                                </button>
                                 <button className="btn btn-secondary" onClick={exportData}>
                                     📤 Export
                                 </button>

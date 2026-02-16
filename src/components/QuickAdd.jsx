@@ -15,7 +15,7 @@ const QuickAdd = ({
   const [expenseForm, setExpenseForm] = useState({
     amount: '',
     description: '',
-    paymentMethod: customPaymentMethods[0] || 'HDFC',
+    paymentMethod: customPaymentMethods?.[0] || 'HDFC',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -86,7 +86,7 @@ const QuickAdd = ({
     setExpenseForm({
       amount: '',
       description: '',
-      paymentMethod: customPaymentMethods[0] || 'HDFC',
+      paymentMethod: customPaymentMethods?.[0] || 'HDFC',
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -119,7 +119,7 @@ const QuickAdd = ({
     setExpenseForm({
       amount: '',
       description: '',
-      paymentMethod: customPaymentMethods[0] || 'HDFC',
+      paymentMethod: customPaymentMethods?.[0] || 'HDFC',
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -222,7 +222,7 @@ const QuickAdd = ({
               <div className="form-group">
                 <label>Payment Method</label>
                 <div className="payment-grid">
-                  {customPaymentMethods.map(method => (
+                  {(customPaymentMethods || []).map(method => (
                     <div 
                       key={method} 
                       className={`payment-card ${expenseForm.paymentMethod === method ? 'selected' : ''}`}
