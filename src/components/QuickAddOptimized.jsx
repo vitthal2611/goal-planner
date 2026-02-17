@@ -11,9 +11,20 @@ const QuickAddOptimized = ({
   transactions = [],
   monthlyData,
   currentPeriod,
-  onTransferClick
+  onTransferClick,
+  onDeleteTransaction,
+  onUpdatePaymentMethod,
+  onUpdateEnvelope,
+  onSwitchToTransactions
 }) => {
   const [selectedEnvelope, setSelectedEnvelope] = useState(null);
+  const [showTransactions, setShowTransactions] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState({ type: '', value: '' });
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showBorrowModal, setShowBorrowModal] = useState(false);
+  const [showRepayModal, setShowRepayModal] = useState(false);
+  const [loanForm, setLoanForm] = useState({ amount: '', description: '', paymentMethod: '' });
   const [expenseForm, setExpenseForm] = useState({
     amount: '',
     description: '',
@@ -24,6 +35,25 @@ const QuickAddOptimized = ({
 
   const { lightTap, success, error } = useHapticFeedback();
 
+  const getAllTransactions = useMemo(() => {
+    const allTrans = [];
+    Object.keys(monthlyData || {}).forEach(period => {
+      const periodTrans = monthlyData[period]?.transactions || [];
+      allTrans.push(...periodTrans);
+    });
+    return allTrans.length > 0 ? allTrans : transactions;
+  }, [monthlyData, transactions]);
+
+  const loanBalance = useMemo(() => {
+    let borrowed = 0;
+    let repaid = 0;
+    getAllTransactions.forEach(t => {
+      if (t.type === 'loan') borrowed += t.amount;
+      if (t.type === 'repay') repaid += t.amount;
+    });
+    return { borrowed, repaid, net: borrowed - repaid };
+  }, [getAllTransactions]);
+
   const getPreviousPeriod = useCallback((currentPeriodStr) => {
     if (!currentPeriodStr) return null;
     const [year, month] = currentPeriodStr.split('-').map(Number);
@@ -33,6 +63,22 @@ const QuickAddOptimized = ({
   }, []);
 
   const getSpentAmount = useCallback((category, name, forPeriod = currentPeriod) => {
+    // If year view (no month), aggregate all months in that year
+    if (currentPeriod.match(/^\d{4}$/)) {
+      let totalSpent = 0;
+      Object.keys(monthlyData).forEach(period => {
+        if (period.startsWith(currentPeriod)) {
+          const periodData = monthlyData[period];
+          if (periodData?.transactions) {
+            totalSpent += periodData.transactions
+              .filter(t => t.envelope === `${category}.${name}` && !t.type)
+              .reduce((sum, t) => sum + t.amount, 0);
+          }
+        }
+      });
+      return totalSpent;
+    }
+    
     const periodData = monthlyData[forPeriod] || { transactions: transactions };
     if (!periodData?.transactions) return 0;
     
@@ -58,39 +104,85 @@ const QuickAddOptimized = ({
 
   const getPaymentMethodBalance = useCallback((paymentMethod) => {
     let balance = 0;
-    // Get ALL transactions from ALL periods
-    Object.keys(monthlyData).forEach(period => {
-      const periodTransactions = monthlyData[period]?.transactions || [];
+    
+    // If year view, get transactions from all months in that year
+    if (currentPeriod.match(/^\d{4}$/)) {
+      Object.keys(monthlyData).forEach(period => {
+        if (period.startsWith(currentPeriod)) {
+          const periodTransactions = monthlyData[period]?.transactions || [];
+          periodTransactions.forEach(transaction => {
+            if (transaction.paymentMethod === paymentMethod) {
+              if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
+                balance += transaction.amount;
+              } else if (transaction.type === 'transfer-out' || transaction.type === 'repay') {
+                balance -= transaction.amount;
+              } else {
+                balance -= transaction.amount;
+              }
+            }
+          });
+        }
+      });
+    } else {
+      // Month view - get transactions only from current period
+      const periodTransactions = monthlyData[currentPeriod]?.transactions || [];
       periodTransactions.forEach(transaction => {
         if (transaction.paymentMethod === paymentMethod) {
           if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
             balance += transaction.amount;
-          } else if (transaction.type === 'transfer-out') {
+          } else if (transaction.type === 'transfer-out' || transaction.type === 'repay') {
             balance -= transaction.amount;
           } else {
             balance -= transaction.amount;
           }
         }
       });
-    });
+    }
+    
     return balance;
-  }, [monthlyData]);
+  }, [monthlyData, currentPeriod]);
 
   const envelopeBalances = useMemo(() => {
     const balances = {};
     
-    Object.keys(envelopes).forEach(category => {
-      balances[category] = {};
-      Object.keys(envelopes[category]).forEach(name => {
-        const env = envelopes[category][name];
-        const rollover = getRolloverAmount(category, name);
-        const spent = getSpentAmount(category, name);
-        balances[category][name] = env.budgeted + rollover - spent;
+    // If year view, aggregate budgeted and spent from all months
+    if (currentPeriod.match(/^\d{4}$/)) {
+      Object.keys(envelopes).forEach(category => {
+        balances[category] = {};
+        Object.keys(envelopes[category]).forEach(name => {
+          let totalBudgeted = 0;
+          let totalSpent = 0;
+          
+          Object.keys(monthlyData).forEach(period => {
+            if (period.startsWith(currentPeriod)) {
+              const periodData = monthlyData[period];
+              if (periodData?.envelopes?.[category]?.[name]) {
+                totalBudgeted += periodData.envelopes[category][name].budgeted || 0;
+              }
+              if (periodData?.transactions) {
+                totalSpent += periodData.transactions
+                  .filter(t => t.envelope === `${category}.${name}` && !t.type)
+                  .reduce((sum, t) => sum + t.amount, 0);
+              }
+            }
+          });
+          
+          balances[category][name] = totalBudgeted - totalSpent;
+        });
       });
-    });
+    } else {
+      Object.keys(envelopes).forEach(category => {
+        balances[category] = {};
+        Object.keys(envelopes[category]).forEach(name => {
+          const env = envelopes[category][name];
+          const spent = getSpentAmount(category, name);
+          balances[category][name] = env.budgeted - spent;
+        });
+      });
+    }
     
     return balances;
-  }, [envelopes, getRolloverAmount, getSpentAmount]);
+  }, [envelopes, getSpentAmount, currentPeriod, monthlyData]);
 
   const paymentBalances = useMemo(() => {
     const balances = {};
@@ -150,6 +242,16 @@ const QuickAddOptimized = ({
       if (!amount || amount <= 0) {
         error();
         onShowNotification('error', 'Enter valid amount');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check payment method balance
+      const paymentBalance = paymentBalances[expenseForm.paymentMethod] || 0;
+      if (paymentBalance <= 0 || paymentBalance < amount) {
+        error();
+        onShowNotification('error', `Insufficient balance in ${expenseForm.paymentMethod}`);
+        setIsSubmitting(false);
         return;
       }
 
@@ -177,19 +279,67 @@ const QuickAddOptimized = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedEnvelope, expenseForm, onAddTransaction, success, error, onShowNotification, customPaymentMethods]);
+  }, [selectedEnvelope, expenseForm, onAddTransaction, success, error, onShowNotification, customPaymentMethods, paymentBalances]);
 
   return (
     <div className="quick-add-optimized">
-      {/* Transfer Button */}
+      {/* Summary Cards */}
+      <div className="summary-cards">
+        <div className="summary-card">
+          <div className="summary-icon">💰</div>
+          <div className="summary-content">
+            <div className="summary-label">Total Available</div>
+            <div className="summary-value">₹{Object.values(envelopeBalances).reduce((sum, cat) => sum + Object.values(cat).reduce((s, bal) => s + bal, 0), 0).toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="summary-card">
+          <div className="summary-icon">📊</div>
+          <div className="summary-content">
+            <div className="summary-label">Today's Spent</div>
+            <div className="summary-value">₹{transactions.filter(t => t.date === new Date().toISOString().split('T')[0] && !t.type).reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="summary-card warning">
+          <div className="summary-icon">⚠️</div>
+          <div className="summary-content">
+            <div className="summary-label">Low Balance</div>
+            <div className="summary-value">{Object.values(envelopeBalances).reduce((count, cat) => count + Object.values(cat).filter(bal => bal <= 0).length, 0)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Methods Quick View */}
+      <div className="payment-quick-view">
+        <h4 className="section-title">💳 Payment Methods</h4>
+        <div className="payment-scroll">
+          {Object.entries(paymentBalances).map(([method, balance]) => (
+            <div 
+              key={method} 
+              className="payment-quick-card"
+              onDoubleClick={() => {
+                lightTap();
+                setTransactionFilter({ type: 'payment', value: method });
+                setShowTransactions(true);
+              }}
+            >
+              <div className="payment-method-name">{method}</div>
+              <div className="payment-method-balance" style={{ color: balance >= 0 ? '#10b981' : '#ef4444' }}>
+                ₹{balance.toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Compact Action Bar */}
       <div className="quick-actions-bar">
-        <button 
-          className="transfer-button-quick"
-          onClick={onTransferClick}
-          aria-label="Transfer between payment methods"
-        >
-          <span className="transfer-icon">🔄</span>
-          <span className="transfer-text">Transfer Money</span>
+        <button className="action-button transfer" onClick={onTransferClick}>
+          <span>🔄</span>
+          <span>Transfer</span>
+        </button>
+        <button className="action-button review" onClick={onSwitchToTransactions}>
+          <span>📋</span>
+          <span>Review All</span>
         </button>
       </div>
 
@@ -209,12 +359,21 @@ const QuickAddOptimized = ({
                 {Object.keys(envelopes[category]).map(name => {
                   const balance = envelopeBalances[category]?.[name] || 0;
                   const statusInfo = getStatusInfo(category, name);
+                  const env = envelopes[category][name];
+                  const spent = getSpentAmount(category, name);
+                  const percentage = env.budgeted > 0 ? (spent / env.budgeted) * 100 : 0;
                   
                   return (
                     <div
                       key={name}
                       className="envelope-card-optimized"
                       onClick={() => handleEnvelopeClick(category, name)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        lightTap();
+                        setTransactionFilter({ type: 'envelope', value: `${category}.${name}` });
+                        setShowTransactions(true);
+                      }}
                       role="button"
                       tabIndex={0}
                       aria-label={`${name} envelope, balance ₹${balance.toLocaleString()}`}
@@ -226,7 +385,10 @@ const QuickAddOptimized = ({
                       <div className="envelope-balance" style={{ color: statusInfo.color }}>
                         ₹{balance.toLocaleString()}
                       </div>
-                      <div className="envelope-tap-hint">Tap to spend</div>
+                      <div className="envelope-progress">
+                        <div className="progress-bar" style={{ width: `${Math.min(percentage, 100)}%`, backgroundColor: statusInfo.color }}></div>
+                      </div>
+                      <div className="envelope-budget-info">₹{spent.toLocaleString()} / ₹{env.budgeted.toLocaleString()}</div>
                     </div>
                   );
                 })}
@@ -236,7 +398,148 @@ const QuickAddOptimized = ({
         })}
       </div>
 
-      {selectedEnvelope && (
+      {showTransactions && (
+        <div className="modal-overlay-optimized" onClick={() => setShowTransactions(false)}>
+          <div className="expense-modal-optimized" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-optimized">
+              <div className="modal-title-section">
+                <div className="modal-icon">📋</div>
+                <div>
+                  <h3 className="modal-title">
+                    {transactionFilter.type === 'payment' ? transactionFilter.value : transactionFilter.value.split('.')[1]?.toUpperCase()}
+                  </h3>
+                  <p className="modal-subtitle">Transaction History</p>
+                </div>
+              </div>
+              <button className="modal-close-optimized" onClick={() => setShowTransactions(false)}>✕</button>
+            </div>
+            <div className="transaction-list-container">
+              <table className="transaction-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>{transactionFilter.type === 'payment' ? 'Envelope' : 'Payment'}</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getAllTransactions
+                    .filter(t => 
+                      transactionFilter.type === 'payment' 
+                        ? t.paymentMethod === transactionFilter.value
+                        : t.envelope === transactionFilter.value
+                    )
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .map(t => (
+                      <tr key={t.id}>
+                        <td>{t.date}</td>
+                        <td>
+                          {editingTransaction?.id === t.id ? (
+                            <input
+                              type="text"
+                              value={editingTransaction.description}
+                              onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
+                              className="edit-input"
+                            />
+                          ) : (
+                            t.description
+                          )}
+                        </td>
+                        <td>
+                          {transactionFilter.type === 'payment' ? (
+                            editingTransaction?.id === t.id ? (
+                              <select
+                                value={editingTransaction.envelope}
+                                onChange={(e) => setEditingTransaction({...editingTransaction, envelope: e.target.value})}
+                                className="edit-select"
+                              >
+                                {Object.keys(envelopes).flatMap(cat => 
+                                  Object.keys(envelopes[cat]).map(name => (
+                                    <option key={`${cat}.${name}`} value={`${cat}.${name}`}>
+                                      {name.toUpperCase()}
+                                    </option>
+                                  ))
+                                )}
+                              </select>
+                            ) : (
+                              t.envelope === 'INCOME' || t.envelope === 'LOAN' || t.envelope === 'TRANSFER' ? t.envelope : t.envelope.replace('.', ' - ')
+                            )
+                          ) : (
+                            editingTransaction?.id === t.id ? (
+                              <select
+                                value={editingTransaction.paymentMethod}
+                                onChange={(e) => setEditingTransaction({...editingTransaction, paymentMethod: e.target.value})}
+                                className="edit-select"
+                              >
+                                {customPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            ) : (
+                              t.paymentMethod
+                            )
+                          )}
+                        </td>
+                        <td style={{ color: t.type === 'income' ? '#10b981' : '#ef4444', fontWeight: '700' }}>
+                          {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                        </td>
+                        <td>
+                          {editingTransaction?.id === t.id ? (
+                            <div className="action-buttons">
+                              <button className="btn-save" onClick={() => {
+                                if (transactionFilter.type === 'payment' && editingTransaction.envelope !== t.envelope) {
+                                  onUpdateEnvelope(t.id, editingTransaction.envelope);
+                                } else if (editingTransaction.paymentMethod !== t.paymentMethod) {
+                                  onUpdatePaymentMethod(t.id, editingTransaction.paymentMethod);
+                                }
+                                setEditingTransaction(null);
+                              }}>✓</button>
+                              <button className="btn-cancel" onClick={() => setEditingTransaction(null)}>✕</button>
+                            </div>
+                          ) : (
+                            <div className="action-buttons">
+                              <button className="btn-edit" onClick={() => setEditingTransaction(t)}>✏️</button>
+                              <button className="btn-delete" onClick={() => setDeleteConfirm(t.id)}>🗑️</button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+              {getAllTransactions.filter(t => 
+                transactionFilter.type === 'payment' 
+                  ? t.paymentMethod === transactionFilter.value
+                  : t.envelope === transactionFilter.value
+              ).length === 0 && (
+                <div className="empty-transactions">
+                  <div>📄</div>
+                  <p>No transactions found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="modal-overlay-optimized" onClick={() => setDeleteConfirm(null)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Transaction?</h3>
+            <p>This action cannot be undone.</p>
+            <div className="confirm-actions">
+              <button className="btn-cancel" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="btn-delete" onClick={() => {
+                onDeleteTransaction(deleteConfirm);
+                setDeleteConfirm(null);
+              }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedEnvelope && !showTransactions && (
         <div className="modal-overlay-optimized" onClick={() => setSelectedEnvelope(null)}>
           <div className="expense-modal-optimized" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-optimized">
@@ -351,6 +654,144 @@ const QuickAddOptimized = ({
         </div>
       )}
 
+      {showBorrowModal && (
+        <div className="modal-overlay-optimized" onClick={() => setShowBorrowModal(false)}>
+          <div className="expense-modal-optimized" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-optimized">
+              <div className="modal-title-section">
+                <div className="modal-icon">🤝</div>
+                <div>
+                  <h3 className="modal-title">Borrow Money</h3>
+                  <p className="modal-subtitle">Record borrowed amount</p>
+                </div>
+              </div>
+              <button className="modal-close-optimized" onClick={() => setShowBorrowModal(false)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <MobileInput
+                label="Amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="₹ 0.00"
+                value={loanForm.amount}
+                onChange={(e) => setLoanForm({ ...loanForm, amount: e.target.value })}
+                required
+                autoFocus
+              />
+              <MobileInput
+                label="Borrowed From"
+                type="text"
+                placeholder="e.g., Friend name"
+                value={loanForm.description}
+                onChange={(e) => setLoanForm({ ...loanForm, description: e.target.value })}
+              />
+              <div style={{ marginTop: '16px' }}>
+                <label className="section-label">Payment Method</label>
+                <select
+                  value={loanForm.paymentMethod}
+                  onChange={(e) => setLoanForm({ ...loanForm, paymentMethod: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '2px solid #e5e7eb', fontSize: '14px' }}
+                >
+                  {customPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="modal-actions-optimized">
+              <MobileButton variant="secondary" onClick={() => setShowBorrowModal(false)}>Cancel</MobileButton>
+              <MobileButton 
+                variant="primary"
+                onClick={() => {
+                  if (loanForm.amount && parseFloat(loanForm.amount) > 0) {
+                    onAddTransaction({
+                      envelope: 'LOAN',
+                      amount: parseFloat(loanForm.amount),
+                      description: loanForm.description || 'Borrowed money',
+                      paymentMethod: loanForm.paymentMethod,
+                      date: new Date().toISOString().split('T')[0],
+                      type: 'loan'
+                    });
+                    setShowBorrowModal(false);
+                  }
+                }}
+                fullWidth
+              >
+                Add Borrow
+              </MobileButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRepayModal && (
+        <div className="modal-overlay-optimized" onClick={() => setShowRepayModal(false)}>
+          <div className="expense-modal-optimized" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-optimized">
+              <div className="modal-title-section">
+                <div className="modal-icon">💸</div>
+                <div>
+                  <h3 className="modal-title">Repay Loan</h3>
+                  <p className="modal-subtitle">Record repayment</p>
+                </div>
+              </div>
+              <button className="modal-close-optimized" onClick={() => setShowRepayModal(false)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <MobileInput
+                label="Amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="₹ 0.00"
+                value={loanForm.amount}
+                onChange={(e) => setLoanForm({ ...loanForm, amount: e.target.value })}
+                required
+                autoFocus
+              />
+              <MobileInput
+                label="Repaying To"
+                type="text"
+                placeholder="e.g., Friend name"
+                value={loanForm.description}
+                onChange={(e) => setLoanForm({ ...loanForm, description: e.target.value })}
+              />
+              <div style={{ marginTop: '16px' }}>
+                <label className="section-label">Payment Method</label>
+                <select
+                  value={loanForm.paymentMethod}
+                  onChange={(e) => setLoanForm({ ...loanForm, paymentMethod: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '2px solid #e5e7eb', fontSize: '14px' }}
+                >
+                  {customPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="modal-actions-optimized">
+              <MobileButton variant="secondary" onClick={() => setShowRepayModal(false)}>Cancel</MobileButton>
+              <MobileButton 
+                variant="primary"
+                onClick={() => {
+                  if (loanForm.amount && parseFloat(loanForm.amount) > 0) {
+                    onAddTransaction({
+                      envelope: 'LOAN',
+                      amount: parseFloat(loanForm.amount),
+                      description: loanForm.description || 'Repaid loan',
+                      paymentMethod: loanForm.paymentMethod,
+                      date: new Date().toISOString().split('T')[0],
+                      type: 'repay'
+                    });
+                    setShowRepayModal(false);
+                  }
+                }}
+                fullWidth
+              >
+                Add Repayment
+              </MobileButton>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .quick-add-optimized {
           padding: 16px;
@@ -358,41 +799,153 @@ const QuickAddOptimized = ({
           background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
 
-        .quick-actions-bar {
+        .summary-cards {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
           margin-bottom: 20px;
         }
 
-        .transfer-button-quick {
-          width: 100%;
-          padding: 16px 20px;
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: white;
+        .summary-card {
+          background: white;
+          border-radius: 12px;
+          padding: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .summary-card.warning {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .summary-icon {
+          font-size: 24px;
+        }
+
+        .summary-content {
+          text-align: center;
+        }
+
+        .summary-label {
+          font-size: 10px;
+          color: #6b7280;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+
+        .summary-value {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .payment-quick-view {
+          background: white;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 20px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0 0 12px 0;
+        }
+
+        .payment-scroll {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .payment-scroll::-webkit-scrollbar {
+          display: none;
+        }
+
+        .payment-quick-card {
+          min-width: 120px;
+          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+          border: 2px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 12px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .payment-quick-card:active {
+          transform: scale(0.95);
+          background: #e5e7eb;
+        }
+
+        .payment-method-name {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 6px;
+        }
+
+        .payment-method-balance {
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .quick-actions-bar {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .action-button {
+          flex: 1;
+          padding: 14px;
           border: none;
           border-radius: 12px;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          gap: 8px;
+          transition: all 0.2s;
           -webkit-tap-highlight-color: transparent;
         }
 
-        .transfer-button-quick:active {
+        .action-button.transfer {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .action-button.review {
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .action-button.borrow {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .action-button.repay {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .action-button:active {
           transform: scale(0.97);
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-        }
-
-        .transfer-icon {
-          font-size: 20px;
-        }
-
-        .transfer-text {
-          font-size: 15px;
-          letter-spacing: 0.3px;
         }
 
         .envelope-grid-optimized {
@@ -438,15 +991,15 @@ const QuickAddOptimized = ({
           background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
           border: 2px solid #e2e8f0;
           border-radius: 12px;
-          padding: 16px;
+          padding: 14px;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           text-align: center;
-          min-height: 100px;
+          min-height: 120px;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 8px;
+          gap: 6px;
           position: relative;
           overflow: hidden;
           -webkit-tap-highlight-color: transparent;
@@ -458,15 +1011,19 @@ const QuickAddOptimized = ({
         }
 
         .envelope-card-optimized.disabled {
-          opacity: 0.4;
+          opacity: 0.5;
           cursor: not-allowed;
           background: #f8fafc;
           border-color: #cbd5e1;
         }
 
+        .envelope-card-optimized.disabled:active {
+          transform: none;
+        }
+
         .envelope-status {
           font-size: 20px;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
 
         .envelope-name {
@@ -481,14 +1038,158 @@ const QuickAddOptimized = ({
         .envelope-balance {
           font-size: 16px;
           font-weight: 700;
+          margin-bottom: 6px;
+        }
+
+        .envelope-progress {
+          width: 100%;
+          height: 4px;
+          background: #e5e7eb;
+          border-radius: 2px;
+          overflow: hidden;
           margin-bottom: 4px;
         }
 
-        .envelope-tap-hint {
+        .progress-bar {
+          height: 100%;
+          transition: width 0.3s ease;
+        }
+
+        .envelope-budget-info {
           font-size: 9px;
           color: #6b7280;
           font-weight: 500;
-          opacity: 0.8;
+        }
+
+        .transaction-list-container {
+          padding: 20px;
+          max-height: 60vh;
+          overflow-y: auto;
+        }
+
+        .transaction-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+
+        .transaction-table th {
+          background: #f3f4f6;
+          padding: 10px 8px;
+          text-align: left;
+          font-weight: 600;
+          color: #374151;
+          border-bottom: 2px solid #e5e7eb;
+          position: sticky;
+          top: 0;
+        }
+
+        .transaction-table td {
+          padding: 10px 8px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .transaction-table tr:hover {
+          background: #f9fafb;
+        }
+
+        .edit-input, .edit-select {
+          width: 100%;
+          padding: 4px 8px;
+          border: 1px solid #3b82f6;
+          border-radius: 4px;
+          font-size: 13px;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 6px;
+        }
+
+        .btn-edit, .btn-delete, .btn-save, .btn-cancel {
+          padding: 4px 8px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+
+        .btn-edit {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+
+        .btn-delete {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .btn-save {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        .btn-cancel {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .btn-edit:active, .btn-delete:active, .btn-save:active, .btn-cancel:active {
+          transform: scale(0.95);
+        }
+
+        .confirm-modal {
+          background: white;
+          border-radius: 12px;
+          padding: 24px;
+          max-width: 320px;
+          margin: auto;
+        }
+
+        .confirm-modal h3 {
+          margin: 0 0 12px 0;
+          color: #1f2937;
+        }
+
+        .confirm-modal p {
+          margin: 0 0 20px 0;
+          color: #6b7280;
+        }
+
+        .confirm-actions {
+          display: flex;
+          gap: 12px;
+        }
+
+        .confirm-actions button {
+          flex: 1;
+          padding: 10px;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .confirm-actions .btn-cancel {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .confirm-actions .btn-delete {
+          background: #ef4444;
+          color: white;
+        }
+
+        .empty-transactions {
+          text-align: center;
+          padding: 40px 20px;
+          color: #9ca3af;
+        }
+
+        .empty-transactions div {
+          font-size: 48px;
+          margin-bottom: 12px;
         }
 
         .modal-overlay-optimized {

@@ -1457,12 +1457,15 @@ body {
     }
 
     .btn {
-        width: 100%;
         justify-content: center;
         padding: 16px 20px;
         font-size: 16px;
         min-height: 48px;
         font-weight: 600;
+    }
+
+    .budget-actions .btn {
+        width: auto;
     }
 
     .summary-grid {
@@ -2106,7 +2109,13 @@ input[type="number"] {
 
 @media (max-width: 768px) {
     .budget-actions {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .budget-actions .btn {
+        width: auto;
     }
 
     .tab-navigation {

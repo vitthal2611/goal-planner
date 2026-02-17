@@ -8,6 +8,7 @@ import { useSwipeGesture, usePullToRefresh } from '../hooks/useSwipeGesture';
 import { sanitizeInput, sanitizeCSVData, validatePaymentMethod } from '../utils/sanitize';
 import TransactionsList from './TransactionsList';
 import QuickAddOptimized from './QuickAddOptimized';
+import QuickExpenseForm from './QuickExpenseForm';
 import { useHapticFeedback } from '../hooks/useEnhancedMobile';
 
 import './EnvelopeBudget.css';
@@ -60,6 +61,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ type: '', id: '', name: '' });
     const [editingPayment, setEditingPayment] = useState({ id: null, method: '' });
+    const [editingEnvelope, setEditingEnvelope] = useState({ id: null, envelope: '' });
     const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
     const [swipeIndicator, setSwipeIndicator] = useState({ show: false, direction: '' });
@@ -344,6 +346,34 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         showNotification('success', 'Payment method updated');
     };
 
+    const updateTransactionEnvelope = async (transactionId, newEnvelope) => {
+        // Find which period the transaction belongs to
+        let targetPeriod = null;
+        Object.keys(monthlyData).forEach(period => {
+            const periodTransactions = monthlyData[period]?.transactions || [];
+            if (periodTransactions.some(t => t.id === transactionId)) {
+                targetPeriod = period;
+            }
+        });
+        
+        if (!targetPeriod) return;
+        
+        const periodTransactions = monthlyData[targetPeriod]?.transactions || [];
+        const updatedTransactions = periodTransactions.map(t => 
+            t.id === transactionId ? { ...t, envelope: newEnvelope } : t
+        );
+        
+        setMonthlyData(prev => ({
+            ...prev,
+            [targetPeriod]: {
+                ...prev[targetPeriod],
+                transactions: updatedTransactions
+            }
+        }));
+        
+        showNotification('success', 'Envelope updated');
+    };
+
     const addCustomPaymentMethod = async (method) => {
         if (method && !customPaymentMethods.includes(method) && validatePaymentMethod(method)) {
             const sanitizedMethod = sanitizeInput(method);
@@ -509,24 +539,27 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     };
 
     const addTransaction = async (transactionData) => {
-        const { envelope, amount, description, paymentMethod } = transactionData;
+        const { envelope, amount, description, paymentMethod, type } = transactionData;
 
         if (!amount || parseFloat(amount) <= 0) {
             showNotification('error', 'Enter valid amount');
             return;
         }
 
-        if (!envelope) {
-            showNotification('error', 'Select envelope');
-            return;
-        }
+        // Skip envelope validation for loan and repay transactions
+        if (type !== 'loan' && type !== 'repay') {
+            if (!envelope) {
+                showNotification('error', 'Select envelope');
+                return;
+            }
 
-        const [category, name] = envelope.split('.');
-        const env = envelopes[category]?.[name];
+            const [category, name] = envelope.split('.');
+            const env = envelopes[category]?.[name];
 
-        if (!env) {
-            showNotification('error', 'Invalid envelope');
-            return;
+            if (!env) {
+                showNotification('error', 'Invalid envelope');
+                return;
+            }
         }
 
         const expenseAmount = parseFloat(amount);
@@ -534,10 +567,11 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         const transactionRecord = {
             id: Date.now() + Math.random(),
             date: transactionData.date,
-            envelope,
+            envelope: envelope || 'LOAN',
             amount: expenseAmount,
             description: sanitizeInput(description || 'Quick expense'),
-            paymentMethod: sanitizeInput(paymentMethod)
+            paymentMethod: sanitizeInput(paymentMethod),
+            type: type
         };
 
         try {
@@ -985,7 +1019,14 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     };
 
     const getSortedTransactions = () => {
-        let filteredTransactions = [...transactions];
+        // Get all transactions from all periods
+        let allTransactions = [];
+        Object.keys(monthlyData).forEach(period => {
+            const periodTransactions = monthlyData[period]?.transactions || [];
+            allTransactions.push(...periodTransactions);
+        });
+        
+        let filteredTransactions = [...allTransactions];
         
         // Apply filters
         if (filters.type) {
@@ -1163,13 +1204,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     className={`tab-btn touch-feedback ${activeView === 'quickadd' ? 'active' : ''}`}
                     onClick={() => setActiveView('quickadd')}
                 >
-                    ⚡ QuickAdd
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'daily' ? 'active' : ''}`}
-                    onClick={() => setActiveView('daily')}
-                >
-                    📋 Daily
+                    📊 Dashboard
                 </button>
                 <button
                     className={`tab-btn touch-feedback ${activeView === 'transactions' ? 'active' : ''}`}
@@ -1182,12 +1217,6 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     onClick={() => setActiveView('budget')}
                 >
                     📊 Budget
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'yearly' ? 'active' : ''}`}
-                    onClick={() => setActiveView('yearly')}
-                >
-                    📅 Yearly
                 </button>
             </div>
 
@@ -1266,7 +1295,6 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     </div>
                 );
             })()}
-            }
 
             {/* Payment Method Overview - Shows balances based on selected period */}
             {Object.keys(paymentBalances).length > 0 && (
@@ -1295,7 +1323,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
             )}
 
             {/* Enhanced Spending Breakdown */}
-            {activeView !== 'quickadd' && (
+            {activeView !== 'quickadd' && activeView !== 'transactions' && (
             <div className="card spending-insights-enhanced">
                 <div className="card-header-enhanced">
                     <div className="header-content">
@@ -1569,147 +1597,51 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     monthlyData={monthlyData}
                     currentPeriod={currentPeriod}
                     onTransferClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
+                    onDeleteTransaction={deleteTransaction}
+                    onUpdatePaymentMethod={updateTransactionPayment}
+                    onUpdateEnvelope={updateTransactionEnvelope}
+                    onSwitchToTransactions={() => setActiveView('transactions')}
                 />
-            ) : activeView === 'yearly' ? (
-                <div className="card">
-                    <div className="card-header">
-                        <h3>📅 Yearly Summary</h3>
-                    </div>
-                    <div className="card-content">
-                        {(() => {
-                            const yearlyData = {};
-                            Object.keys(monthlyData).forEach(period => {
-                                const [year, month] = period.split('-');
-                                if (!yearlyData[year]) {
-                                    yearlyData[year] = { 
-                                        totalIncome: 0, 
-                                        totalBudgeted: 0, 
-                                        totalSpent: 0, 
-                                        months: {} 
-                                    };
-                                }
-                                
-                                const data = monthlyData[period];
-                                const monthIncome = data.income || 0;
-                                let monthBudgeted = 0;
-                                let monthSpent = 0;
-                                
-                                if (data.envelopes) {
-                                    Object.values(data.envelopes).forEach(category => {
-                                        Object.values(category).forEach(env => {
-                                            monthBudgeted += env.budgeted || 0;
-                                        });
-                                    });
-                                }
-                                
-                                if (data.transactions) {
-                                    data.transactions.forEach(t => {
-                                        if (!t.type || t.type === 'expense') {
-                                            monthSpent += t.amount;
-                                        }
-                                    });
-                                }
-                                
-                                yearlyData[year].totalIncome += monthIncome;
-                                yearlyData[year].totalBudgeted += monthBudgeted;
-                                yearlyData[year].totalSpent += monthSpent;
-                                yearlyData[year].months[month] = {
-                                    income: monthIncome,
-                                    budgeted: monthBudgeted,
-                                    spent: monthSpent
-                                };
-                            });
-                            
-                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                            
-                            return (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                    {Object.keys(yearlyData).sort().reverse().map(year => {
-                                        const data = yearlyData[year];
-                                        return (
-                                            <div key={year} style={{ border: '2px solid #e5e7eb', borderRadius: '12px', padding: '20px', background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)' }}>
-                                                <h2 style={{ margin: '0 0 20px 0', color: '#1f2937', fontSize: '24px' }}>📆 {year}</h2>
-                                                
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                                                    <div style={{ background: '#dbeafe', padding: '16px', borderRadius: '8px', border: '2px solid #3b82f6' }}>
-                                                        <div style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600', marginBottom: '4px' }}>Total Income</div>
-                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af' }}>₹{data.totalIncome.toLocaleString()}</div>
-                                                    </div>
-                                                    <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', border: '2px solid #f59e0b' }}>
-                                                        <div style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', marginBottom: '4px' }}>Total Budgeted</div>
-                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#92400e' }}>₹{data.totalBudgeted.toLocaleString()}</div>
-                                                    </div>
-                                                    <div style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', border: '2px solid #ef4444' }}>
-                                                        <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '600', marginBottom: '4px' }}>Total Spent</div>
-                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#991b1b' }}>₹{data.totalSpent.toLocaleString()}</div>
-                                                    </div>
-                                                    <div style={{ background: data.totalIncome - data.totalSpent >= 0 ? '#d1fae5' : '#fee2e2', padding: '16px', borderRadius: '8px', border: `2px solid ${data.totalIncome - data.totalSpent >= 0 ? '#10b981' : '#ef4444'}` }}>
-                                                        <div style={{ fontSize: '12px', color: data.totalIncome - data.totalSpent >= 0 ? '#065f46' : '#991b1b', fontWeight: '600', marginBottom: '4px' }}>Net Savings</div>
-                                                        <div style={{ fontSize: '24px', fontWeight: '700', color: data.totalIncome - data.totalSpent >= 0 ? '#065f46' : '#991b1b' }}>₹{(data.totalIncome - data.totalSpent).toLocaleString()}</div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <h4 style={{ margin: '0 0 12px 0', color: '#374151' }}>Monthly Breakdown</h4>
-                                                <div style={{ overflowX: 'auto' }}>
-                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                                                        <thead>
-                                                            <tr style={{ background: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
-                                                                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Month</th>
-                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Income</th>
-                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Budgeted</th>
-                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Spent</th>
-                                                                <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>Savings</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {monthNames.map((monthName, idx) => {
-                                                                const monthNum = String(idx + 1).padStart(2, '0');
-                                                                const monthData = data.months[monthNum];
-                                                                const hasData = !!monthData;
-                                                                const income = monthData?.income || 0;
-                                                                const budgeted = monthData?.budgeted || 0;
-                                                                const spent = monthData?.spent || 0;
-                                                                const savings = income - spent;
-                                                                
-                                                                return (
-                                                                    <tr key={monthNum} style={{ borderBottom: '1px solid #f1f5f9', background: hasData ? 'white' : '#fafafa' }}>
-                                                                        <td style={{ padding: '12px', fontWeight: hasData ? '600' : '400', color: hasData ? '#1f2937' : '#9ca3af' }}>{monthName}</td>
-                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#3b82f6' : '#d1d5db' }}>₹{income.toLocaleString()}</td>
-                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#f59e0b' : '#d1d5db' }}>₹{budgeted.toLocaleString()}</td>
-                                                                        <td style={{ padding: '12px', textAlign: 'right', color: hasData ? '#ef4444' : '#d1d5db' }}>₹{spent.toLocaleString()}</td>
-                                                                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: hasData ? (savings >= 0 ? '#10b981' : '#ef4444') : '#d1d5db' }}>₹{savings.toLocaleString()}</td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-            ) : activeView === 'daily' ? (
-                <>
-                    {/* Last 10 Transactions */}
-                    <TransactionsList
-                        transactions={transactions}
-                        onDeleteTransaction={deleteTransaction}
-                        onUpdatePaymentMethod={updateTransactionPayment}
-                        customPaymentMethods={customPaymentMethods}
-                        title="📋 Last 10 Transactions"
-                        limit={10}
-                    />
-                </>
             ) : activeView === 'transactions' ? (
                 <>
                     {/* Transactions */}
                     <div className="card">
                         <div className="card-header">
                             <h3>📝 Transactions</h3>
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    const allTransactions = [];
+                                    Object.keys(monthlyData).forEach(period => {
+                                        const periodTransactions = monthlyData[period]?.transactions || [];
+                                        allTransactions.push(...periodTransactions);
+                                    });
+                                    
+                                    const csv = [
+                                        ['Date', 'Type', 'Description', 'Envelope', 'Amount', 'Payment Method'].join(','),
+                                        ...allTransactions.map(t => [
+                                            t.date,
+                                            t.type === 'income' ? 'Income' : t.type === 'loan' ? 'Loan' : t.type === 'transfer-in' ? 'Transfer In' : t.type === 'transfer-out' ? 'Transfer Out' : 'Expense',
+                                            `"${t.description}"`,
+                                            t.envelope === 'INCOME' ? 'INCOME' : t.envelope === 'LOAN' ? 'LOAN' : t.envelope === 'TRANSFER' ? 'TRANSFER' : t.envelope.replace('.', ' - '),
+                                            t.amount,
+                                            t.paymentMethod
+                                        ].join(','))
+                                    ].join('\n');
+                                    
+                                    const blob = new Blob([csv], { type: 'text/csv' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    showNotification('success', 'Transactions exported');
+                                }}
+                                style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
+                                📥 Download CSV
+                            </button>
                         </div>
                         <div className="card-content">
                             {/* Recent Transactions Summary */}
@@ -1850,11 +1782,45 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                                     <td>{transaction.date}</td>
                                                     <td>{transactionType} {typeLabel}</td>
                                                     <td>{transaction.description}</td>
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        {transaction.envelope === 'INCOME' ? 'INCOME' :
-                                                         transaction.envelope === 'LOAN' ? 'LOAN' :
-                                                         transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
-                                                         transaction.envelope.replace('.', ' - ')}
+                                                    <td 
+                                                        onDoubleClick={() => {
+                                                            if (transaction.envelope !== 'INCOME' && transaction.envelope !== 'LOAN' && transaction.envelope !== 'TRANSFER') {
+                                                                setEditingEnvelope({ id: transaction.id, envelope: transaction.envelope });
+                                                            }
+                                                        }}
+                                                        style={{ cursor: 'pointer', textTransform: 'uppercase' }}
+                                                    >
+                                                        {editingEnvelope.id === transaction.id ? (
+                                                            <select
+                                                                value={editingEnvelope.envelope}
+                                                                onChange={(e) => setEditingEnvelope({ ...editingEnvelope, envelope: e.target.value })}
+                                                                onBlur={() => {
+                                                                    updateTransactionEnvelope(transaction.id, editingEnvelope.envelope);
+                                                                    setEditingEnvelope({ id: null, envelope: '' });
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        updateTransactionEnvelope(transaction.id, editingEnvelope.envelope);
+                                                                        setEditingEnvelope({ id: null, envelope: '' });
+                                                                    }
+                                                                }}
+                                                                autoFocus
+                                                                style={{ width: '100%' }}
+                                                            >
+                                                                {Object.keys(envelopes).flatMap(cat => 
+                                                                    Object.keys(envelopes[cat]).map(name => (
+                                                                        <option key={`${cat}.${name}`} value={`${cat}.${name}`}>
+                                                                            {name.toUpperCase()}
+                                                                        </option>
+                                                                    ))
+                                                                )}
+                                                            </select>
+                                                        ) : (
+                                                            transaction.envelope === 'INCOME' ? 'INCOME' :
+                                                            transaction.envelope === 'LOAN' ? 'LOAN' :
+                                                            transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
+                                                            transaction.envelope.replace('.', ' - ')
+                                                        )}
                                                     </td>
                                                     <td style={{
                                                         color: transaction.type === 'income' || transaction.type === 'loan' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
