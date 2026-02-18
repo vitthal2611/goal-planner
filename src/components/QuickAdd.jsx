@@ -100,6 +100,11 @@ const QuickAdd = ({
       return;
     }
 
+    if (!expenseForm.paymentMethod) {
+      onShowNotification('error', 'Please select a payment method');
+      return;
+    }
+
     const balance = getEnvelopeBalance(selectedEnvelope.category, selectedEnvelope.name);
     if (amount > balance) {
       onShowNotification('error', `Insufficient balance! Available: ₹${balance.toLocaleString()}`);
@@ -220,7 +225,7 @@ const QuickAdd = ({
               </div>
 
               <div className="form-group">
-                <label>Payment Method</label>
+                <label>Payment Method <span style={{color: '#ef4444'}}>*</span></label>
                 <div className="payment-grid">
                   {(customPaymentMethods || []).map(method => (
                     <div 
@@ -255,7 +260,7 @@ const QuickAdd = ({
               <button 
                 className="btn btn-add" 
                 onClick={handleAddExpense}
-                disabled={!expenseForm.amount || parseFloat(expenseForm.amount) <= 0}
+                disabled={!expenseForm.amount || parseFloat(expenseForm.amount) <= 0 || !expenseForm.paymentMethod}
               >
                 Add Expense ₹{expenseForm.amount || '0'}
               </button>

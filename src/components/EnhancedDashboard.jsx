@@ -22,31 +22,26 @@ const EnhancedDashboard = memo(({
   const [selectedEnvelope, setSelectedEnvelope] = useState(null);
   const [showQuickForm, setShowQuickForm] = useState(false);
 
-  // Handle adding expense from envelope card
   const handleAddExpense = useCallback((transaction) => {
     onAddTransaction(transaction);
     onShowNotification('success', `Added ₹${transaction.amount} to ${transaction.envelope.split('.')[1]}`);
   }, [onAddTransaction, onShowNotification]);
 
-  // Handle viewing envelope details
   const handleViewDetails = useCallback((category, name) => {
     setSelectedEnvelope({ category, name });
     setActiveView('transactions');
   }, [setActiveView]);
 
-  // Get today's transactions
-  const todaysTransactions = transactions.filter(t => 
-    t.date === new Date().toISOString().split('T')[0]
-  );
-
-  // Get selected envelope transactions
+  const today = new Date().toISOString().split('T')[0];
+  const todaysTransactions = transactions.filter(t => t.date === today);
+  const todaysSpent = todaysTransactions.reduce((sum, t) => sum + t.amount, 0);
+  
   const selectedEnvelopeTransactions = selectedEnvelope 
     ? transactions.filter(t => t.envelope === `${selectedEnvelope.category}.${selectedEnvelope.name}`)
     : [];
 
   return (
     <div className="enhanced-dashboard">
-      {/* Mobile Header */}
       <div className="mobile-header">
         <div className="header-content">
           <h1 className="dashboard-title">
@@ -72,7 +67,6 @@ const EnhancedDashboard = memo(({
         </div>
       </div>
 
-      {/* Quick Expense Form (Collapsible) */}
       {showQuickForm && (
         <div className="quick-form-overlay">
           <div className="quick-form-container">
@@ -101,11 +95,9 @@ const EnhancedDashboard = memo(({
         </div>
       )}
 
-      {/* Main Content */}
       <div className="dashboard-content">
         {activeView === 'daily' && (
           <div className="daily-view">
-            {/* Today's Summary */}
             <div className="today-summary">
               <div className="summary-header">
                 <h2>Today's Activity</h2>
@@ -121,7 +113,7 @@ const EnhancedDashboard = memo(({
               <div className="summary-stats">
                 <div className="summary-stat">
                   <span className="stat-value">
-                    ₹{todaysTransactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                    ₹{todaysSpent.toLocaleString()}
                   </span>
                   <span className="stat-label">Spent Today</span>
                 </div>
@@ -132,7 +124,6 @@ const EnhancedDashboard = memo(({
               </div>
             </div>
 
-            {/* Envelope Grid */}
             <EnvelopeGrid
               envelopes={envelopes}
               onAddExpense={handleAddExpense}
@@ -144,7 +135,6 @@ const EnhancedDashboard = memo(({
               onSortChange={setSortBy}
             />
 
-            {/* Today's Transactions */}
             {todaysTransactions.length > 0 && (
               <TransactionsList
                 transactions={todaysTransactions}
@@ -214,7 +204,6 @@ const EnhancedDashboard = memo(({
         )}
       </div>
 
-      {/* Floating Action Button */}
       <button 
         className="fab main-fab"
         onClick={() => setShowQuickForm(!showQuickForm)}

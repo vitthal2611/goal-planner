@@ -1,7 +1,7 @@
 /* Enhanced App-level styles */
 .app-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ffffff 100%);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -12,16 +12,19 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  gap: 16px;
+  gap: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ffffff 100%);
 }
 
 .loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--gray-200);
-  border-top-color: var(--primary);
+  width: 56px;
+  height: 56px;
+  border: 5px solid #e0f2fe;
+  border-top-color: #3b82f6;
+  border-right-color: #10b981;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 @keyframes spin {
@@ -29,9 +32,16 @@
 }
 
 .loading-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gray-600);
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e40af;
+  letter-spacing: 0.5px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 /* Improved notification positioning */
@@ -40,15 +50,19 @@
   top: max(20px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
   z-index: 1000;
   max-width: 90vw;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  animation: slideDown 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 @keyframes slideDown {
@@ -63,18 +77,39 @@
 }
 
 .notification.success {
-  background: var(--success);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.notification.success::before {
+  content: '✓';
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .notification.error {
-  background: var(--danger);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.notification.error::before {
+  content: '⚠';
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .notification.info {
-  background: var(--primary);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.notification.info::before {
+  content: 'ℹ';
+  font-size: 20px;
+  font-weight: bold;
 }
 
 /* Mobile notification positioning */

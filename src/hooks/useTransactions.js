@@ -82,6 +82,27 @@ export const useTransactions = () => {
           transactions: currentData.transactions.filter(t => t.id !== id)
         }
       });
+    } else if (transaction.type === 'transfer-out' || transaction.type === 'transfer-in') {
+      const relatedIds = [id];
+      const relatedTransaction = currentData.transactions.find(t => 
+        t.id !== id &&
+        (t.type === 'transfer-in' || t.type === 'transfer-out') && 
+        t.date === transaction.date && 
+        t.amount === transaction.amount &&
+        t.type !== transaction.type
+      );
+      
+      if (relatedTransaction) {
+        relatedIds.push(relatedTransaction.id);
+        await deleteTransactionMutation.mutateAsync({ id: relatedTransaction.id, period: currentPeriod });
+      }
+      
+      dispatch({
+        type: 'UPDATE_PERIOD_DATA',
+        payload: {
+          transactions: currentData.transactions.filter(t => !relatedIds.includes(t.id))
+        }
+      });
     } else {
       const [category, name] = transaction.envelope.split('.');
       if (currentData.envelopes[category]?.[name]) {

@@ -10,6 +10,8 @@ import TransactionsList from './TransactionsList';
 import QuickAddOptimized from './QuickAddOptimized';
 import QuickExpenseForm from './QuickExpenseForm';
 import { useHapticFeedback } from '../hooks/useEnhancedMobile';
+import BudgetHeader from './BudgetHeader';
+import BudgetWorkflowDashboard from './BudgetWorkflowDashboard';
 
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';
@@ -397,7 +399,7 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         const { amount, description, type } = incomeTransaction;
 
         if (!amount || parseFloat(amount) <= 0) {
-            showNotification('error', 'Enter valid income amount');
+            showNotification('error', 'Enter valid amount');
             return;
         }
 
@@ -425,13 +427,21 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
         };
 
         try {
-            // Only add to income if it's actual income, not a loan
-            const newIncome = type === 'loan' ? income : income + incomeAmount;
+            const transactionDate = new Date(incomeTransaction.date);
+            const targetPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
             
-            await updatePeriodData({
-                income: newIncome,
-                transactions: [...transactions, transactionRecord]
-            });
+            const targetPeriodIncome = monthlyData[targetPeriod]?.income || 0;
+            const targetPeriodTransactions = monthlyData[targetPeriod]?.transactions || [];
+            const newIncome = type === 'loan' ? targetPeriodIncome : targetPeriodIncome + incomeAmount;
+            
+            setMonthlyData(prev => ({
+                ...prev,
+                [targetPeriod]: {
+                    ...prev[targetPeriod],
+                    income: newIncome,
+                    transactions: [...targetPeriodTransactions, transactionRecord]
+                }
+            }));
 
             setIncomeTransaction({ amount: '', description: '', paymentMethod: incomeTransaction.paymentMethod, date: new Date().toISOString().split('T')[0], type: 'income' });
             setCustomIncomePayment('');
@@ -663,20 +673,61 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
     };
 
     const deleteTransaction = async (id) => {
-        const transaction = transactions.find(t => t.id === id);
-        if (!transaction) return;
+        let transaction = null;
+        let targetPeriod = null;
         
-        // If it's an income transaction, subtract from total income
-        if (transaction.type === 'income') {
-            await updatePeriodData({
-                income: income - transaction.amount,
-                transactions: transactions.filter(t => t.id !== id)
-            });
+        Object.keys(monthlyData).forEach(period => {
+            const periodTransactions = monthlyData[period]?.transactions || [];
+            const found = periodTransactions.find(t => t.id === id);
+            if (found) {
+                transaction = found;
+                targetPeriod = period;
+            }
+        });
+        
+        if (!transaction || !targetPeriod) return;
+        
+        const periodTransactions = monthlyData[targetPeriod]?.transactions || [];
+        
+        if (transaction.type === 'income' || transaction.type === 'loan') {
+            const periodIncome = monthlyData[targetPeriod]?.income || 0;
+            setMonthlyData(prev => ({
+                ...prev,
+                [targetPeriod]: {
+                    ...prev[targetPeriod],
+                    income: transaction.type === 'income' ? periodIncome - transaction.amount : periodIncome,
+                    transactions: periodTransactions.filter(t => t.id !== id)
+                }
+            }));
+        } else if (transaction.type === 'transfer-out' || transaction.type === 'transfer-in') {
+            const relatedIds = [id];
+            const relatedTransaction = periodTransactions.find(t => 
+                t.id !== id &&
+                (t.type === 'transfer-in' || t.type === 'transfer-out') && 
+                t.date === transaction.date && 
+                t.amount === transaction.amount &&
+                t.type !== transaction.type
+            );
+            
+            if (relatedTransaction) {
+                relatedIds.push(relatedTransaction.id);
+            }
+            
+            setMonthlyData(prev => ({
+                ...prev,
+                [targetPeriod]: {
+                    ...prev[targetPeriod],
+                    transactions: periodTransactions.filter(t => !relatedIds.includes(t.id))
+                }
+            }));
         } else {
-            // Regular expense transaction - remove transaction only
-            await updatePeriodData({
-                transactions: transactions.filter(t => t.id !== id)
-            });
+            setMonthlyData(prev => ({
+                ...prev,
+                [targetPeriod]: {
+                    ...prev[targetPeriod],
+                    transactions: periodTransactions.filter(t => t.id !== id)
+                }
+            }));
         }
         
         showNotification('success', 'Transaction deleted');
@@ -1163,40 +1214,11 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 </div>
             )}
             
-            <div className="header">
-                <h1>💰 Envelope Budget Tracker</h1>
-                <div className="header-controls" style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <label style={{fontSize: '12px', fontWeight: '600'}}>Year</label>
-                        <select
-                            value={currentPeriod.match(/^\d{4}$/) ? currentPeriod : currentPeriod.split('-')[0]}
-                            onChange={(e) => setCurrentPeriod(e.target.value)}
-                            className="period-selector"
-                        >
-                            {generatePeriodOptions().filter(p => p.isYear).map(period => (
-                                <option key={period.key} value={period.key}>
-                                    {period.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <label style={{fontSize: '12px', fontWeight: '600'}}>Month</label>
-                        <select
-                            value={currentPeriod.match(/^\d{4}$/) ? '' : currentPeriod}
-                            onChange={(e) => setCurrentPeriod(e.target.value || currentPeriod.split('-')[0])}
-                            className="period-selector"
-                        >
-                            <option value="">All Months</option>
-                            {generatePeriodOptions().filter(p => !p.isYear && p.key.startsWith(currentPeriod.match(/^\d{4}$/) ? currentPeriod : currentPeriod.split('-')[0])).map(period => (
-                                <option key={period.key} value={period.key}>
-                                    {period.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <BudgetHeader 
+                currentPeriod={currentPeriod}
+                onPeriodChange={setCurrentPeriod}
+                generatePeriodOptions={generatePeriodOptions}
+            />
 
             {/* Tab Navigation */}
             <div className="tab-navigation">
@@ -1226,10 +1248,12 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 </div>
             )}
 
-            {activeView !== 'quickadd' && !currentPeriod.match(/^\d{4}$/) && (
+            {activeView !== 'quickadd' && !currentPeriod.match(/^\d{4}$/) && (() => {
+                const monthlyIncome = (monthlyData[currentPeriod]?.transactions?.filter(t => t.type === 'income' || t.type === 'loan' || t.type === 'transfer-in').reduce((sum, t) => sum + t.amount, 0) || 0);
+                return (
             <div className="summary-grid">
                 <div className="summary-card">
-                    <div className="summary-value">₹{income.toLocaleString()}</div>
+                    <div className="summary-value">₹{monthlyIncome.toLocaleString()}</div>
                     <div className="summary-label">Monthly Income</div>
                 </div>
                 <div className="summary-card">
@@ -1241,11 +1265,12 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                     <div className="summary-label">Total Spent</div>
                 </div>
                 <div className="summary-card">
-                    <div className="summary-value">₹{(income - totalBudgeted).toLocaleString()}</div>
+                    <div className="summary-value">₹{(monthlyIncome - totalBudgeted).toLocaleString()}</div>
                     <div className="summary-label">Unallocated Budget</div>
                 </div>
             </div>
-            )}
+                );
+            })()}
 
             {/* Year Summary - Show when year is selected */}
             {currentPeriod.match(/^\d{4}$/) && activeView !== 'quickadd' && (() => {
@@ -1587,20 +1612,40 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
 
             {/* Conditional Views */}
             {activeView === 'quickadd' ? (
-                <QuickAddOptimized
+                <BudgetWorkflowDashboard
+                    income={income}
                     envelopes={envelopes}
+                    onAddIncome={async (data) => {
+                        const { amount, description, paymentMethod, date, type } = data;
+                        
+                        const incomeAmount = parseFloat(amount);
+                        const transactionRecord = {
+                            id: Date.now() + Math.random(),
+                            date,
+                            envelope: type === 'loan' ? 'LOAN' : 'INCOME',
+                            amount: incomeAmount,
+                            description: sanitizeInput(description || (type === 'loan' ? 'Borrowed money' : 'Monthly Income')),
+                            paymentMethod: sanitizeInput(paymentMethod),
+                            type: type === 'loan' ? 'loan' : 'income'
+                        };
+                        
+                        const newIncome = income + incomeAmount;
+                        
+                        await updatePeriodData({
+                            income: newIncome,
+                            transactions: [...transactions, transactionRecord]
+                        });
+                        
+                        showNotification('success', type === 'loan' ? '✓ Loan Added!' : '✓ Income Added!');
+                    }}
+                    onAllocateBudget={allocateBudget}
+                    onAddExpense={addTransaction}
                     customPaymentMethods={customPaymentMethods}
                     dateRange={dateRange}
-                    onAddTransaction={addTransaction}
-                    onShowNotification={showNotification}
+                    onAddPaymentMethod={addCustomPaymentMethod}
                     transactions={transactions}
                     monthlyData={monthlyData}
                     currentPeriod={currentPeriod}
-                    onTransferClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
-                    onDeleteTransaction={deleteTransaction}
-                    onUpdatePaymentMethod={updateTransactionPayment}
-                    onUpdateEnvelope={updateTransactionEnvelope}
-                    onSwitchToTransactions={() => setActiveView('transactions')}
                 />
             ) : activeView === 'transactions' ? (
                 <>
@@ -2017,6 +2062,46 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                                         {incomeTransaction.type === 'loan' ? '➕ Add Loan' : '➕ Add Income'}
                                     </button>
                                 </div>
+                                
+                                {transactions.filter(t => t.type === 'income' || t.type === 'loan').length > 0 && (
+                                    <div style={{ marginTop: '20px' }}>
+                                        <h4>Income Transactions</h4>
+                                        <div className="table-container">
+                                            <table className="envelope-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Type</th>
+                                                        <th>Description</th>
+                                                        <th>Amount</th>
+                                                        <th>Payment</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {transactions.filter(t => t.type === 'income' || t.type === 'loan').map(transaction => (
+                                                        <tr key={transaction.id}>
+                                                            <td>{transaction.date}</td>
+                                                            <td>{transaction.type === 'loan' ? '🤝 Loan' : '💰 Income'}</td>
+                                                            <td>{transaction.description}</td>
+                                                            <td style={{ color: 'var(--success)', fontWeight: '600' }}>+₹{transaction.amount.toLocaleString()}</td>
+                                                            <td>{transaction.paymentMethod}</td>
+                                                            <td>
+                                                                <button
+                                                                    className="btn-delete"
+                                                                    onClick={() => setDeleteConfirm({ type: 'transaction', id: transaction.id, name: transaction.description })}
+                                                                    title="Delete transaction"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="budget-actions">
                                 <button className="btn btn-info" onClick={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}>

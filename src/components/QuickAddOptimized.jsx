@@ -25,6 +25,18 @@ const QuickAddOptimized = ({
   const [showBorrowModal, setShowBorrowModal] = useState(false);
   const [showRepayModal, setShowRepayModal] = useState(false);
   const [loanForm, setLoanForm] = useState({ amount: '', description: '', paymentMethod: '' });
+  const [lastTransaction, setLastTransaction] = useState(null);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [quickAddForm, setQuickAddForm] = useState({ amount: '', envelope: '', showAdvanced: false });
+
+  // Auto-dismiss undo notification after 5 seconds
+  React.useEffect(() => {
+    if (lastTransaction) {
+      const timer = setTimeout(() => setLastTransaction(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastTransaction]);
   const [expenseForm, setExpenseForm] = useState({
     amount: '',
     description: '',
@@ -207,16 +219,56 @@ const QuickAddOptimized = ({
     return { color: '#10b981', status: 'healthy', icon: '✅' };
   }, [envelopeBalances, envelopes, getSpentAmount]);
 
+  const handleQuickAdd = useCallback(async () => {
+    if (!quickAddForm.amount || !quickAddForm.envelope) {
+      onShowNotification('error', 'Enter amount and select envelope');
+      return;
+    }
+
+    const amount = parseFloat(quickAddForm.amount);
+    if (amount <= 0) {
+      onShowNotification('error', 'Enter valid amount');
+      return;
+    }
+
+    const sortedMethods = Object.entries(paymentBalances)
+      .sort(([, a], [, b]) => b - a)
+      .filter(([, balance]) => balance > 0);
+    const bestMethod = sortedMethods.length > 0 ? sortedMethods[0][0] : customPaymentMethods?.[0] || 'Cash';
+
+    const [category, name] = quickAddForm.envelope.split('.');
+    const transaction = {
+      envelope: quickAddForm.envelope,
+      amount,
+      description: name,
+      paymentMethod: bestMethod,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    await onAddTransaction(transaction);
+    success();
+    setLastTransaction({ ...transaction, id: Date.now() });
+    setQuickAddForm({ amount: '', envelope: '', showAdvanced: false });
+  }, [quickAddForm, onAddTransaction, success, paymentBalances, customPaymentMethods, onShowNotification]);
+
   const handleEnvelopeClick = useCallback((category, name) => {
     lightTap();
+    
+    // Auto-select payment method with highest balance
+    const sortedMethods = Object.entries(paymentBalances)
+      .sort(([, a], [, b]) => b - a)
+      .filter(([, balance]) => balance > 0);
+    
+    const bestMethod = sortedMethods.length > 0 ? sortedMethods[0][0] : customPaymentMethods?.[0] || 'HDFC';
+    
     setSelectedEnvelope({ category, name });
     setExpenseForm({
       amount: '',
-      description: '',
-      paymentMethod: customPaymentMethods?.[0] || 'HDFC',
+      description: name, // Pre-fill with envelope name
+      paymentMethod: bestMethod,
       date: new Date().toISOString().split('T')[0]
     });
-  }, [lightTap, customPaymentMethods]);
+  }, [lightTap, customPaymentMethods, paymentBalances]);
 
   const validateAmount = useCallback((value) => {
     const amount = parseFloat(value);
@@ -248,11 +300,13 @@ const QuickAddOptimized = ({
 
       // Check payment method balance
       const paymentBalance = paymentBalances[expenseForm.paymentMethod] || 0;
-      if (paymentBalance <= 0 || paymentBalance < amount) {
-        error();
-        onShowNotification('error', `Insufficient balance in ${expenseForm.paymentMethod}`);
-        setIsSubmitting(false);
-        return;
+      if (paymentBalance < amount) {
+        // Allow but warn
+        const proceed = window.confirm(`${expenseForm.paymentMethod} has only ₹${paymentBalance.toLocaleString()}. This will create negative balance. Continue?`);
+        if (!proceed) {
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const transaction = {
@@ -266,6 +320,7 @@ const QuickAddOptimized = ({
       await onAddTransaction(transaction);
       
       success();
+      setLastTransaction({ ...transaction, envelope: `${selectedEnvelope.category}.${selectedEnvelope.name}` });
       setSelectedEnvelope(null);
       setExpenseForm({
         amount: '',
@@ -285,51 +340,62 @@ const QuickAddOptimized = ({
     <div className="quick-add-optimized">
       {/* Summary Cards */}
       <div className="summary-cards">
-        <div className="summary-card">
+        <div className="summary-card" style={{ gridColumn: 'span 3' }}>
           <div className="summary-icon">💰</div>
           <div className="summary-content">
             <div className="summary-label">Total Available</div>
             <div className="summary-value">₹{Object.values(envelopeBalances).reduce((sum, cat) => sum + Object.values(cat).reduce((s, bal) => s + bal, 0), 0).toLocaleString()}</div>
           </div>
         </div>
-        <div className="summary-card">
-          <div className="summary-icon">📊</div>
-          <div className="summary-content">
-            <div className="summary-label">Today's Spent</div>
-            <div className="summary-value">₹{transactions.filter(t => t.date === new Date().toISOString().split('T')[0] && !t.type).reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="summary-card warning">
-          <div className="summary-icon">⚠️</div>
-          <div className="summary-content">
-            <div className="summary-label">Low Balance</div>
-            <div className="summary-value">{Object.values(envelopeBalances).reduce((count, cat) => count + Object.values(cat).filter(bal => bal <= 0).length, 0)}</div>
-          </div>
+      </div>
+
+      {/* Quick Add Inline */}
+      <div className="quick-add-inline">
+        <h4 className="section-title">💸 Quick Add Expense</h4>
+        <div className="quick-add-form">
+          <input
+            type="number"
+            placeholder="₹ Amount"
+            value={quickAddForm.amount}
+            onChange={(e) => setQuickAddForm({ ...quickAddForm, amount: e.target.value })}
+            className="quick-input"
+          />
+          <select
+            value={quickAddForm.envelope}
+            onChange={(e) => setQuickAddForm({ ...quickAddForm, envelope: e.target.value })}
+            className="quick-select"
+          >
+            <option value="">Select Envelope</option>
+            {Object.keys(envelopes).flatMap(cat => 
+              Object.keys(envelopes[cat]).map(name => (
+                <option key={`${cat}.${name}`} value={`${cat}.${name}`}>
+                  {cat.toUpperCase()} - {name.toUpperCase()}
+                </option>
+              ))
+            )}
+          </select>
+          <button className="quick-add-btn" onClick={handleQuickAdd}>
+            Add
+          </button>
         </div>
       </div>
 
-      {/* Payment Methods Quick View */}
-      <div className="payment-quick-view">
-        <h4 className="section-title">💳 Payment Methods</h4>
-        <div className="payment-scroll">
-          {Object.entries(paymentBalances).map(([method, balance]) => (
-            <div 
-              key={method} 
-              className="payment-quick-card"
-              onDoubleClick={() => {
-                lightTap();
-                setTransactionFilter({ type: 'payment', value: method });
-                setShowTransactions(true);
-              }}
-            >
-              <div className="payment-method-name">{method}</div>
-              <div className="payment-method-balance" style={{ color: balance >= 0 ? '#10b981' : '#ef4444' }}>
-                ₹{balance.toLocaleString()}
-              </div>
+      {/* Undo Notification */}
+      {lastTransaction && (
+        <div className="undo-notification">
+          <div className="undo-content">
+            <span>✓ Added ₹{lastTransaction.amount.toLocaleString()} to {lastTransaction.envelope.split('.')[1]?.toUpperCase()}</span>
+            <div className="undo-actions">
+              <button onClick={() => {
+                onDeleteTransaction(lastTransaction.id);
+                setLastTransaction(null);
+                onShowNotification('success', 'Undone');
+              }}>Undo</button>
+              <button onClick={() => setLastTransaction(null)}>✕</button>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Compact Action Bar */}
       <div className="quick-actions-bar">
@@ -343,59 +409,88 @@ const QuickAddOptimized = ({
         </button>
       </div>
 
-      <div className="envelope-grid-optimized">
+      {/* Grouped Envelope View */}
+      <div className="budget-status-card">
+        <h4 className="section-title">📊 Budget Status</h4>
         {Object.keys(envelopes).map(category => {
           const categoryIcon = category === 'needs' ? '🏠' : category === 'savings' ? '💰' : '🎯';
           const categoryColor = category === 'needs' ? '#10b981' : category === 'savings' ? '#f59e0b' : '#3b82f6';
           
+          const categoryBudgeted = Object.values(envelopes[category]).reduce((sum, env) => sum + env.budgeted, 0);
+          const categorySpent = Object.keys(envelopes[category]).reduce((sum, name) => sum + getSpentAmount(category, name), 0);
+          const categoryPercentage = categoryBudgeted > 0 ? (categorySpent / categoryBudgeted) * 100 : 0;
+          
           return (
-            <div key={category} className="category-section-optimized">
-              <div className="category-header" style={{ color: categoryColor }}>
-                <span className="category-icon">{categoryIcon}</span>
-                <h3 className="category-title">{category.toUpperCase()}</h3>
+            <div key={category} className="category-group">
+              <div 
+                className="category-summary"
+                onClick={() => setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+              >
+                <div className="category-info">
+                  <span className="category-icon">{categoryIcon}</span>
+                  <span className="category-name">{category.toUpperCase()}</span>
+                  <span className="expand-icon">{expandedCategories[category] ? '▲' : '▼'}</span>
+                </div>
+                <div className="category-amounts">
+                  <span style={{ color: categoryColor, fontWeight: '700' }}>₹{categorySpent.toLocaleString()}</span>
+                  <span style={{ color: '#9ca3af' }}> / ₹{categoryBudgeted.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="category-progress">
+                <div className="category-progress-bar" style={{ width: `${Math.min(categoryPercentage, 100)}%`, backgroundColor: categoryColor }}></div>
               </div>
               
-              <div className="envelope-cards-grid">
-                {Object.keys(envelopes[category]).map(name => {
-                  const balance = envelopeBalances[category]?.[name] || 0;
-                  const statusInfo = getStatusInfo(category, name);
-                  const env = envelopes[category][name];
-                  const spent = getSpentAmount(category, name);
-                  const percentage = env.budgeted > 0 ? (spent / env.budgeted) * 100 : 0;
-                  
-                  return (
-                    <div
-                      key={name}
-                      className="envelope-card-optimized"
-                      onClick={() => handleEnvelopeClick(category, name)}
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        lightTap();
-                        setTransactionFilter({ type: 'envelope', value: `${category}.${name}` });
-                        setShowTransactions(true);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${name} envelope, balance ₹${balance.toLocaleString()}`}
-                    >
-                      <div className="envelope-status" style={{ color: statusInfo.color }}>
-                        {statusInfo.icon}
+              {expandedCategories[category] && (
+                <div className="envelope-chips">
+                  {Object.keys(envelopes[category]).map(name => {
+                    const balance = envelopeBalances[category]?.[name] || 0;
+                    const statusInfo = getStatusInfo(category, name);
+                    
+                    return (
+                      <div
+                        key={name}
+                        className="envelope-chip"
+                        onClick={() => handleEnvelopeClick(category, name)}
+                        style={{ borderColor: statusInfo.color }}
+                      >
+                        <span className="chip-name">{name.toUpperCase()}</span>
+                        <span className="chip-balance" style={{ color: statusInfo.color }}>₹{balance.toLocaleString()}</span>
                       </div>
-                      <div className="envelope-name">{name.toUpperCase()}</div>
-                      <div className="envelope-balance" style={{ color: statusInfo.color }}>
-                        ₹{balance.toLocaleString()}
-                      </div>
-                      <div className="envelope-progress">
-                        <div className="progress-bar" style={{ width: `${Math.min(percentage, 100)}%`, backgroundColor: statusInfo.color }}></div>
-                      </div>
-                      <div className="envelope-budget-info">₹{spent.toLocaleString()} / ₹{env.budgeted.toLocaleString()}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* Payment Methods Quick View - Collapsible */}
+      <div className="payment-quick-view">
+        <div className="section-header-collapsible" onClick={() => setShowPaymentMethods(!showPaymentMethods)}>
+          <h4 className="section-title">💳 Payment Methods</h4>
+          <span className="collapse-icon">{showPaymentMethods ? '▲' : '▼'}</span>
+        </div>
+        {showPaymentMethods && (
+          <div className="payment-scroll">
+            {Object.entries(paymentBalances).map(([method, balance]) => (
+              <div 
+                key={method} 
+                className="payment-quick-card"
+                onDoubleClick={() => {
+                  lightTap();
+                  setTransactionFilter({ type: 'payment', value: method });
+                  setShowTransactions(true);
+                }}
+              >
+                <div className="payment-method-name">{method}</div>
+                <div className="payment-method-balance" style={{ color: balance >= 0 ? '#10b981' : '#ef4444' }}>
+                  ₹{balance.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {showTransactions && (
@@ -583,7 +678,7 @@ const QuickAddOptimized = ({
               />
 
               <MobileInput
-                label="Description"
+                label="Description (Optional)"
                 type="text"
                 placeholder="What did you buy?"
                 value={expenseForm.description}
@@ -597,6 +692,7 @@ const QuickAddOptimized = ({
                   {(customPaymentMethods || []).map(method => {
                     const balance = paymentBalances[method] || 0;
                     const isSelected = expenseForm.paymentMethod === method;
+                    const isSufficient = balance >= parseFloat(expenseForm.amount || 0);
                     
                     return (
                       <div 
@@ -611,10 +707,11 @@ const QuickAddOptimized = ({
                         aria-label={`${method} payment method, balance ₹${balance.toLocaleString()}`}
                       >
                         <div className="payment-name">{method}</div>
-                        <div className="payment-balance" style={{ color: balance >= 0 ? '#10b981' : '#ef4444' }}>
+                        <div className="payment-balance" style={{ color: isSufficient || !expenseForm.amount ? '#10b981' : '#ef4444' }}>
                           ₹{balance.toLocaleString()}
                         </div>
                         {isSelected && <div className="payment-selected-indicator">✓</div>}
+                        {!isSufficient && expenseForm.amount && <div className="payment-insufficient">⚠️</div>}
                       </div>
                     );
                   })}
@@ -796,25 +893,32 @@ const QuickAddOptimized = ({
         .quick-add-optimized {
           padding: 16px;
           min-height: calc(100vh - 200px);
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ffffff 100%);
         }
 
         .summary-cards {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: 1fr;
           gap: 12px;
           margin-bottom: 20px;
         }
 
         .summary-card {
           background: white;
-          border-radius: 12px;
-          padding: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
+          border: 2px solid transparent;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .summary-card:active {
+          transform: scale(0.98);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .summary-card.warning {
@@ -822,7 +926,8 @@ const QuickAddOptimized = ({
         }
 
         .summary-icon {
-          font-size: 24px;
+          font-size: 32px;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
 
         .summary-content {
@@ -830,16 +935,20 @@ const QuickAddOptimized = ({
         }
 
         .summary-label {
-          font-size: 10px;
-          color: #6b7280;
-          font-weight: 600;
+          font-size: 11px;
+          color: #9ca3af;
+          font-weight: 500;
           margin-bottom: 4px;
         }
 
         .summary-value {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1f2937;
+          font-size: 36px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -1px;
         }
 
         .payment-quick-view {
@@ -850,7 +959,214 @@ const QuickAddOptimized = ({
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .section-title {
+        .quick-add-inline {
+          background: white;
+          border-radius: 16px;
+          padding: 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          border: 2px solid #e0f2fe;
+        }
+
+        .quick-add-form {
+          display: grid;
+          grid-template-columns: 1fr 2fr auto;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .quick-input, .quick-select {
+          padding: 12px;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .quick-input:focus, .quick-select:focus {
+          outline: none;
+          border-color: #10b981;
+        }
+
+        .quick-add-btn {
+          padding: 12px 24px;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .quick-add-btn:active {
+          transform: scale(0.96);
+          box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+        }
+
+        .budget-status-card {
+          background: white;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 20px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .category-group {
+          margin-bottom: 16px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .category-group:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .category-summary {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          cursor: pointer;
+          padding: 8px 0;
+        }
+
+        .category-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .category-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #374151;
+        }
+
+        .expand-icon {
+          font-size: 10px;
+          color: #9ca3af;
+        }
+
+        .category-amounts {
+          font-size: 16px;
+        }
+
+        .category-progress {
+          height: 6px;
+          background: #f1f5f9;
+          border-radius: 3px;
+          overflow: hidden;
+          margin: 8px 0;
+        }
+
+        .category-progress-bar {
+          height: 100%;
+          transition: width 0.3s ease;
+        }
+
+        .envelope-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .envelope-chip {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          background: white;
+          border: 2px solid #e5e7eb;
+          border-radius: 24px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .envelope-chip:active {
+          transform: scale(0.96);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chip-name {
+          font-size: 11px;
+          font-weight: 600;
+          color: #6b7280;
+        }
+
+        .chip-balance {
+          font-size: 13px;
+          font-weight: 700;
+        }
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .collapse-icon {
+          font-size: 12px;
+          color: #6b7280;
+        }
+
+        .undo-notification {
+          position: fixed;
+          bottom: 80px;
+          left: 16px;
+          right: 16px;
+          background: #10b981;
+          color: white;
+          border-radius: 12px;
+          padding: 16px;
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+          z-index: 999;
+          animation: slideUp 0.3s ease;
+        }
+
+        .undo-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .undo-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .undo-actions button {
+          background: rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .undo-actions button:active {
+          background: rgba(255, 255, 255, 0.3);
+        }
+
+        .payment-card-optimized.insufficient {
+          opacity: 1;
+          cursor: pointer;
+        }
+
+        .payment-insufficient {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          font-size: 14px;
+        }
           font-size: 14px;
           font-weight: 700;
           color: #1f2937;
@@ -894,7 +1210,7 @@ const QuickAddOptimized = ({
         }
 
         .payment-method-balance {
-          font-size: 14px;
+          font-size: 18px;
           font-weight: 700;
         }
 
@@ -1036,7 +1352,7 @@ const QuickAddOptimized = ({
         }
 
         .envelope-balance {
-          font-size: 16px;
+          font-size: 20px;
           font-weight: 700;
           margin-bottom: 6px;
         }
