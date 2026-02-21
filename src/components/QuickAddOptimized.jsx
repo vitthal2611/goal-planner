@@ -124,19 +124,27 @@ const QuickAddOptimized = ({
         }
       });
     } else {
-      // Month view - get transactions only from current period
-      const periodTransactions = monthlyData[currentPeriod]?.transactions || [];
-      periodTransactions.forEach(transaction => {
-        if (transaction.paymentMethod === paymentMethod) {
-          if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
-            balance += transaction.amount;
-          } else if (transaction.type === 'transfer-out' || transaction.type === 'repay') {
-            balance -= transaction.amount;
-          } else {
-            balance -= transaction.amount;
-          }
-        }
-      });
+      // Month view - get cumulative balance from start to current period
+      const allPeriods = Object.keys(monthlyData).sort();
+      const currentIndex = allPeriods.indexOf(currentPeriod);
+      
+      if (currentIndex >= 0) {
+        // Get all transactions up to and including current period
+        allPeriods.slice(0, currentIndex + 1).forEach(period => {
+          const periodTransactions = monthlyData[period]?.transactions || [];
+          periodTransactions.forEach(transaction => {
+            if (transaction.paymentMethod === paymentMethod) {
+              if (transaction.type === 'income' || transaction.type === 'transfer-in' || transaction.type === 'loan') {
+                balance += transaction.amount;
+              } else if (transaction.type === 'transfer-out' || transaction.type === 'repay') {
+                balance -= transaction.amount;
+              } else {
+                balance -= transaction.amount;
+              }
+            }
+          });
+        });
+      }
     }
     
     return balance;
@@ -283,54 +291,6 @@ const QuickAddOptimized = ({
 
   return (
     <div className="quick-add-optimized">
-      {/* Summary Cards */}
-      <div className="summary-cards">
-        <div className="summary-card">
-          <div className="summary-icon">💰</div>
-          <div className="summary-content">
-            <div className="summary-label">Total Available</div>
-            <div className="summary-value">₹{Object.values(envelopeBalances).reduce((sum, cat) => sum + Object.values(cat).reduce((s, bal) => s + bal, 0), 0).toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-icon">📊</div>
-          <div className="summary-content">
-            <div className="summary-label">Today's Spent</div>
-            <div className="summary-value">₹{transactions.filter(t => t.date === new Date().toISOString().split('T')[0] && !t.type).reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="summary-card warning">
-          <div className="summary-icon">⚠️</div>
-          <div className="summary-content">
-            <div className="summary-label">Low Balance</div>
-            <div className="summary-value">{Object.values(envelopeBalances).reduce((count, cat) => count + Object.values(cat).filter(bal => bal <= 0).length, 0)}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Methods Quick View */}
-      <div className="payment-quick-view">
-        <h4 className="section-title">💳 Payment Methods</h4>
-        <div className="payment-scroll">
-          {Object.entries(paymentBalances).map(([method, balance]) => (
-            <div 
-              key={method} 
-              className="payment-quick-card"
-              onDoubleClick={() => {
-                lightTap();
-                setTransactionFilter({ type: 'payment', value: method });
-                setShowTransactions(true);
-              }}
-            >
-              <div className="payment-method-name">{method}</div>
-              <div className="payment-method-balance" style={{ color: balance >= 0 ? '#10b981' : '#ef4444' }}>
-                ₹{balance.toLocaleString()}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Compact Action Bar */}
       <div className="quick-actions-bar">
         <button className="action-button transfer" onClick={onTransferClick}>

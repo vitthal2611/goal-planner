@@ -989,8 +989,19 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 .filter(period => period.startsWith(currentPeriod))
                 .flatMap(period => monthlyData[period]?.transactions || []);
         } else {
-            // Month selected - get only that month's transactions
-            relevantTransactions = monthlyData[currentPeriod]?.transactions || [];
+            // Month selected - get all transactions from start to current month (cumulative)
+            const allPeriods = Object.keys(monthlyData).sort();
+            const currentIndex = allPeriods.indexOf(currentPeriod);
+            
+            if (currentIndex >= 0) {
+                // Get all transactions up to and including current period
+                relevantTransactions = allPeriods
+                    .slice(0, currentIndex + 1)
+                    .flatMap(period => monthlyData[period]?.transactions || []);
+            } else {
+                // Current period has no data, just use it
+                relevantTransactions = monthlyData[currentPeriod]?.transactions || [];
+            }
         }
         
         relevantTransactions.forEach(transaction => {
@@ -1301,7 +1312,11 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                 <div className="card payment-overview-compact">
                     <div className="card-header">
                         <h3>💳 Payment Methods Balance</h3>
-                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>Balance for {currentPeriod.match(/^\d{4}$/) ? `${currentPeriod} (Full Year)` : currentPeriod}</small>
+                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>
+                            {currentPeriod.match(/^\d{4}$/) 
+                                ? `Cumulative balance for ${currentPeriod} (Full Year)` 
+                                : `Cumulative balance up to ${currentPeriod}`}
+                        </small>
                     </div>
                     <div className="card-content">
                         <div className="payment-methods-grid">
@@ -1320,190 +1335,6 @@ const EnvelopeBudget = ({ activeView, setActiveView }) => {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* Enhanced Spending Breakdown */}
-            {activeView !== 'quickadd' && activeView !== 'transactions' && (
-            <div className="card spending-insights-enhanced">
-                <div className="card-header-enhanced">
-                    <div className="header-content">
-                        <h3>📊 Spending Breakdown</h3>
-                        <div className="period-badge">{currentPeriod}</div>
-                    </div>
-                    <div className="total-spent-summary">
-                        ₹{totalSpent.toLocaleString()} spent this month
-                    </div>
-                </div>
-                <div className="card-content-enhanced">
-                    {(() => {
-                        const needsSpent = Object.keys(envelopes.needs || {}).reduce((sum, name) => sum + (getSpentAmount('needs', name) || 0), 0);
-                        const wantsSpent = Object.keys(envelopes.wants || {}).reduce((sum, name) => sum + (getSpentAmount('wants', name) || 0), 0);
-                        const savingsSpent = Object.keys(envelopes.savings || {}).reduce((sum, name) => sum + (getSpentAmount('savings', name) || 0), 0);
-                        const total = needsSpent + wantsSpent + savingsSpent;
-                        
-                        const needsPercent = total > 0 ? ((needsSpent / total) * 100) : 0;
-                        const wantsPercent = total > 0 ? ((wantsSpent / total) * 100) : 0;
-                        const savingsPercent = total > 0 ? ((savingsSpent / total) * 100) : 0;
-                        
-                        if (total === 0) {
-                            return (
-                                <div className="no-spending-state">
-                                    <div className="empty-chart-icon">📈</div>
-                                    <h4>No spending data yet</h4>
-                                    <p>Start adding expenses to see your spending breakdown</p>
-                                </div>
-                            );
-                        }
-                        
-                        return (
-                            <div className="spending-breakdown-enhanced">
-                                <div className="chart-and-legend">
-                                    <div className="enhanced-pie-container">
-                                        <svg width="240" height="240" viewBox="0 0 240 240" className="enhanced-pie-chart">
-                                            <defs>
-                                                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                                                    <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)"/>
-                                                </filter>
-                                                <linearGradient id="needsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor="#10b981"/>
-                                                    <stop offset="100%" stopColor="#059669"/>
-                                                </linearGradient>
-                                                <linearGradient id="wantsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor="#3b82f6"/>
-                                                    <stop offset="100%" stopColor="#2563eb"/>
-                                                </linearGradient>
-                                                <linearGradient id="savingsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor="#f59e0b"/>
-                                                    <stop offset="100%" stopColor="#d97706"/>
-                                                </linearGradient>
-                                            </defs>
-                                            
-                                            {/* Background circle */}
-                                            <circle cx="120" cy="120" r="90" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2"/>
-                                            
-                                            {(() => {
-                                                let currentAngle = -90; // Start from top
-                                                const radius = 85;
-                                                const centerX = 120;
-                                                const centerY = 120;
-                                                
-                                                const createEnhancedPath = (startAngle, endAngle, gradient, category) => {
-                                                    const start = (startAngle * Math.PI) / 180;
-                                                    const end = (endAngle * Math.PI) / 180;
-                                                    const x1 = centerX + radius * Math.cos(start);
-                                                    const y1 = centerY + radius * Math.sin(start);
-                                                    const x2 = centerX + radius * Math.cos(end);
-                                                    const y2 = centerY + radius * Math.sin(end);
-                                                    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-                                                    
-                                                    return (
-                                                        <g key={category} className={`pie-segment ${category}-segment`}>
-                                                            <path
-                                                                d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                                                                fill={gradient}
-                                                                stroke="white"
-                                                                strokeWidth="3"
-                                                                filter="url(#shadow)"
-                                                                className="pie-slice"
-                                                            />
-                                                        </g>
-                                                    );
-                                                };
-                                                
-                                                const segments = [];
-                                                if (needsPercent > 0) {
-                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (needsPercent * 3.6), 'url(#needsGradient)', 'needs'));
-                                                    currentAngle += needsPercent * 3.6;
-                                                }
-                                                if (wantsPercent > 0) {
-                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (wantsPercent * 3.6), 'url(#wantsGradient)', 'wants'));
-                                                    currentAngle += wantsPercent * 3.6;
-                                                }
-                                                if (savingsPercent > 0) {
-                                                    segments.push(createEnhancedPath(currentAngle, currentAngle + (savingsPercent * 3.6), 'url(#savingsGradient)', 'savings'));
-                                                }
-                                                
-                                                return segments;
-                                            })()
-                                            }
-                                            
-                                            {/* Center circle with total */}
-                                            <circle cx="120" cy="120" r="45" fill="white" stroke="#e2e8f0" strokeWidth="2" filter="url(#shadow)"/>
-                                            <text x="120" y="115" textAnchor="middle" className="chart-center-label">Total</text>
-                                            <text x="120" y="130" textAnchor="middle" className="chart-center-value">₹{total.toLocaleString()}</text>
-                                        </svg>
-                                    </div>
-                                    
-                                    <div className="chart-legend">
-                                        <div className="legend-item needs-legend">
-                                            <div className="legend-color"></div>
-                                            <div className="legend-details">
-                                                <div className="legend-label">🏠 Needs</div>
-                                                <div className="legend-value">₹{needsSpent.toLocaleString()}</div>
-                                                <div className="legend-percent">{needsPercent.toFixed(1)}%</div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="legend-item wants-legend">
-                                            <div className="legend-color"></div>
-                                            <div className="legend-details">
-                                                <div className="legend-label">🎯 Wants</div>
-                                                <div className="legend-value">₹{wantsSpent.toLocaleString()}</div>
-                                                <div className="legend-percent">{wantsPercent.toFixed(1)}%</div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="legend-item savings-legend">
-                                            <div className="legend-color"></div>
-                                            <div className="legend-details">
-                                                <div className="legend-label">💰 Savings</div>
-                                                <div className="legend-value">₹{savingsSpent.toLocaleString()}</div>
-                                                <div className="legend-percent">{savingsPercent.toFixed(1)}%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="spending-insights-grid">
-                                    <div className="insight-card needs-insight">
-                                        <div className="insight-icon">🏠</div>
-                                        <div className="insight-content">
-                                            <div className="insight-title">Essential Needs</div>
-                                            <div className="insight-amount">₹{needsSpent.toLocaleString()}</div>
-                                            <div className="insight-bar">
-                                                <div className="insight-fill needs-fill" style={{width: `${needsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="insight-card wants-insight">
-                                        <div className="insight-icon">🎯</div>
-                                        <div className="insight-content">
-                                            <div className="insight-title">Lifestyle Wants</div>
-                                            <div className="insight-amount">₹{wantsSpent.toLocaleString()}</div>
-                                            <div className="insight-bar">
-                                                <div className="insight-fill wants-fill" style={{width: `${wantsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="insight-card savings-insight">
-                                        <div className="insight-icon">💰</div>
-                                        <div className="insight-content">
-                                            <div className="insight-title">Future Savings</div>
-                                            <div className="insight-amount">₹{savingsSpent.toLocaleString()}</div>
-                                            <div className="insight-bar">
-                                                <div className="insight-fill savings-fill" style={{width: `${savingsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })()
-                    }
-                </div>
-            </div>
             )}
 
             {/* Year View - Show monthly breakdown when year is selected */}
