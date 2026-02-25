@@ -19,7 +19,6 @@ const QuickAdd = ({
   onIncrementBudget,
   onDeleteEnvelope,
   onCopyFromLastMonth,
-  onSaveBulkEdit,
   income
 }) => {
   const [selectedEnvelope, setSelectedEnvelope] = useState(null);
@@ -39,8 +38,6 @@ const QuickAdd = ({
   const [newEnvelope, setNewEnvelope] = useState({ category: '', name: '' });
   const [budgetInputs, setBudgetInputs] = useState({});
   const [incrementInputs, setIncrementInputs] = useState({});
-  const [bulkEditMode, setBulkEditMode] = useState(false);
-  const [bulkEditValues, setBulkEditValues] = useState({});
 
   useEffect(() => {
     if (customPaymentMethods.length > 0 && !incomeForm.paymentMethod) {
@@ -228,14 +225,9 @@ const QuickAdd = ({
     }));
   };
 
-  const getSortIcon = (columnKey) => {
-    if (sortConfig.key !== columnKey) return '↕️';
-    return sortConfig.direction === 'asc' ? '↑' : '↓';
-  };
-
-  const SortIcon = ({ column }) => {
-    return <span>{getSortIcon(column)}</span>;
-  };
+  const SortIcon = ({ column }) => (
+    <span>{sortConfig.key !== column ? '↕️' : sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+  );
 
   return (
     <div className="quick-add-container">
@@ -304,18 +296,7 @@ const QuickAdd = ({
       <div className="budget-allocation-section">
         <div className="budget-header">
           <h3 className="section-title">💼 Budget Allocation</h3>
-          <div className="budget-actions">
-            <button className="btn-secondary" onClick={onCopyFromLastMonth}>📋 Copy</button>
-            <button className={bulkEditMode ? 'btn-warning' : 'btn-secondary'} onClick={() => {
-              if (bulkEditMode) { setBulkEditValues({}); setBulkEditMode(false); }
-              else { const v = {}; Object.keys(envelopes).forEach(c => Object.keys(envelopes[c]).forEach(n => v[`${c}.${n}`] = envelopes[c][n].budgeted)); setBulkEditValues(v); setBulkEditMode(true); }
-            }}>{bulkEditMode ? '✖ Cancel' : '✏️ Bulk'}</button>
-            {bulkEditMode && <button className="btn-add-income" onClick={() => {
-              let t = 0; Object.keys(bulkEditValues).forEach(k => t += parseFloat(bulkEditValues[k]) || 0);
-              if (t > income) { onShowNotification('error', `Total (₹${t.toLocaleString()}) exceeds income (₹${income.toLocaleString()})`); return; }
-              onSaveBulkEdit(bulkEditValues); setBulkEditMode(false); setBulkEditValues({});
-            }}>💾 Save</button>}
-          </div>
+          <button className="btn-secondary" onClick={onCopyFromLastMonth}>📋 Copy</button>
         </div>
         
         {/* Add New Envelope */}
@@ -340,12 +321,12 @@ const QuickAdd = ({
             />
             <button 
               className="btn-add-income" 
-              onClick={() => {
-                if (!newEnvelope.category || !newEnvelope.name) {
+              onClick={async () => {
+                if (!newEnvelope.category || !newEnvelope.name.trim()) {
                   onShowNotification('error', 'Select category and enter name');
                   return;
                 }
-                onAddEnvelope();
+                await onAddEnvelope(newEnvelope.category, newEnvelope.name);
                 setNewEnvelope({ category: '', name: '' });
               }}
             >
@@ -366,25 +347,14 @@ const QuickAdd = ({
                 <div key={name} className="envelope-budget-item">
                   <div className="envelope-header">
                     <label>{name.toUpperCase()}: ₹{envelopes[category][name].budgeted.toLocaleString()}</label>
-                    {!bulkEditMode && <button className="btn-delete" onClick={() => onDeleteEnvelope(category, name)}>🗑️</button>}
+                    <button className="btn-delete" onClick={() => onDeleteEnvelope(category, name)}>🗑️</button>
                   </div>
-                  {bulkEditMode ? (
-                    <input type="number" step="0.01" min="0" value={bulkEditValues[`${category}.${name}`] ?? 0}
-                      onChange={(e) => setBulkEditValues(p => ({...p, [`${category}.${name}`]: e.target.value}))}
-                      placeholder="Set budget" className="budget-input" />
-                  ) : (
-                    <>
-                      <input
+                  <input
                     type="number"
                     step="0.01"
                     min="0"
                     value={budgetInputs[`${category}.${name}`] ?? envelopes[category][name].budgeted}
-                    onChange={(e) => {
-                      setBudgetInputs(prev => ({
-                        ...prev,
-                        [`${category}.${name}`]: e.target.value
-                      }));
-                    }}
+                    onChange={(e) => setBudgetInputs(prev => ({...prev, [`${category}.${name}`]: e.target.value}))}
                     onBlur={(e) => {
                       onAllocateBudget(category, name, e.target.value);
                       setBudgetInputs(prev => {
@@ -402,12 +372,7 @@ const QuickAdd = ({
                       step="0.01"
                       min="0"
                       value={incrementInputs[`${category}.${name}`] || ''}
-                      onChange={(e) => {
-                        setIncrementInputs(prev => ({
-                          ...prev,
-                          [`${category}.${name}`]: e.target.value
-                        }));
-                      }}
+                      onChange={(e) => setIncrementInputs(prev => ({...prev, [`${category}.${name}`]: e.target.value}))}
                       placeholder="+ Amount"
                       className="increment-input"
                     />
@@ -428,8 +393,6 @@ const QuickAdd = ({
                       + Add
                     </button>
                   </div>
-                  </>
-                  )}
                 </div>
               ))}
             </div>
