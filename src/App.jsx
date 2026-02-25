@@ -1,8 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
-import EnvelopeBudget from './components/EnvelopeBudget';
 import Auth from './components/Auth';
+
+const EnvelopeBudget = lazy(() => import('./components/EnvelopeBudget'));
+
+let cachedAuthState = null;
+const getCachedAuthState = () => {
+  if (cachedAuthState !== null) return cachedAuthState;
+  try {
+    const cached = localStorage.getItem('authState');
+    cachedAuthState = cached ? JSON.parse(cached) : null;
+    return cachedAuthState;
+  } catch {
+    cachedAuthState = null;
+    return null;
+  }
+};
 
 // Memoized styles to prevent recreation on each render
 const headerStyles = {
@@ -46,12 +60,21 @@ const logoutButtonStyles = {
 };
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getCachedAuthState);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setLoading(false);
+      // Cache auth state
+      if (user) {
+        localStorage.setItem('authState', JSON.stringify({ uid: user.uid, email: user.email }));
+      } else {
+        localStorage.removeItem('authState');
+      }
+    }, (error) => {
+      console.error('Auth error:', error);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -81,9 +104,16 @@ function App() {
 
   if (loading) {
     return (
-      <div className="loading">
+      <div className="loading" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        gap: '20px'
+      }}>
         <div className="loading-spinner"></div>
-        <div className="loading-text">Loading your budget...</div>
+        <div className="loading-text">Loading...</div>
       </div>
     );
   }
@@ -94,7 +124,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Enhanced notification system */}
       {notification.message && (
         <div className={`notification ${notification.type}`}>
           {notification.message}
@@ -105,17 +134,39 @@ function App() {
         <span style={userEmailStyles}>
           Welcome, {userEmailDisplay}
         </span>
-        <button 
-          onClick={handleLogout} 
-          style={logoutButtonStyles}
-          aria-label="Logout"
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('openProfile'))}
+            style={{
+              ...logoutButtonStyles,
+              backgroundColor: '#667eea',
+              minWidth: '44px',
+              padding: '10px 16px'
+            }}
+            aria-label="Profile"
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#5568d3'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#667eea'}
+          >
+            👤 Profile
+          </button>
+          <button 
+            onClick={handleLogout} 
+            style={logoutButtonStyles}
+            aria-label="Logout"
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}
+          >
+            Logout
+          </button>
+        </div>
       </div>
-      <EnvelopeBudget />
+      <Suspense fallback={
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+          <div className="loading-spinner"></div>
+        </div>
+      }>
+        <EnvelopeBudget />
+      </Suspense>
     </div>
   );
 }

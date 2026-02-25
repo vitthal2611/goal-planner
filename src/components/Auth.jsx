@@ -21,19 +21,14 @@ const Auth = () => {
         await createUserWithEmailAndPassword(auth, email, password);
       }
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        setError('Email already exists. Try logging in instead.');
-      } else if (error.code === 'auth/weak-password') {
-        setError('Password should be at least 6 characters.');
-      } else if (error.code === 'auth/user-not-found') {
-        setError('No account found with this email.');
-      } else if (error.code === 'auth/wrong-password') {
-        setError('Incorrect password.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else {
-        setError(error.message);
-      }
+      const errorMessages = {
+        'auth/email-already-in-use': 'Email already exists. Try logging in instead.',
+        'auth/weak-password': 'Password should be at least 6 characters.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-email': 'Please enter a valid email address.'
+      };
+      setError(errorMessages[error.code] || error.message);
     } finally {
       setLoading(false);
     }

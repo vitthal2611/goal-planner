@@ -9,19 +9,9 @@ const BudgetAllocation = ({
     setCustomIncomePayment,
     customPaymentMethods,
     dateRange,
-    newEnvelope,
-    setNewEnvelope,
-    budgetInputs,
-    setBudgetInputs,
-    incrementInputs,
-    setIncrementInputs,
     insights,
     blockedTransactions,
     onAddIncome,
-    onAddEnvelope,
-    onAllocateBudget,
-    onIncrementBudget,
-    onDeleteEnvelope,
     onExportData,
     onBackup,
     onRollover
@@ -104,118 +94,6 @@ const BudgetAllocation = ({
                         <button className="btn btn-primary" onClick={onRollover}>
                             🔄 Rollover Unused Funds
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Budget Allocation */}
-            <div className="card">
-                <div className="card-header">
-                    <h3>💼 Budget Allocation</h3>
-                </div>
-                <div className="card-content">
-                    {/* Add New Envelope */}
-                    <div className="add-envelope-form">
-                        <h4>Add New Envelope</h4>
-                        <div className="envelope-form-row">
-                            <select
-                                value={newEnvelope.category}
-                                onChange={(e) => setNewEnvelope({...newEnvelope, category: e.target.value})}
-                                className="envelope-select"
-                            >
-                                <option value="">Select Category</option>
-                                <option value="needs">🏠 Needs</option>
-                                <option value="savings">💰 Savings</option>
-                                <option value="wants">🎯 Wants</option>
-                            </select>
-                            <input
-                                type="text"
-                                placeholder="Envelope name"
-                                value={newEnvelope.name}
-                                onChange={(e) => setNewEnvelope({...newEnvelope, name: e.target.value})}
-                                className="envelope-input-field"
-                            />
-                            <button className="btn btn-success" onClick={onAddEnvelope}>
-                                ➕ Add
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="budget-grid">
-                        {Object.keys(envelopes).map(category => (
-                            <div key={category} className="category-card">
-                                <div className="category-title">
-                                    {category === 'needs' ? '🏠 Needs' :
-                                        category === 'savings' ? '💰 Savings' : '🎯 Wants'}
-                                </div>
-                                {Object.keys(envelopes[category]).map(name => (
-                                    <div key={name} className="envelope-input">
-                                        <div className="envelope-header">
-                                            <label>{name.toUpperCase()}: ₹{envelopes[category][name].budgeted.toLocaleString()}</label>
-                                            <button
-                                                className="btn-delete"
-                                                onClick={() => onDeleteEnvelope(category, name)}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={budgetInputs[`${category}.${name}`] ?? envelopes[category][name].budgeted}
-                                            onChange={(e) => {
-                                                setBudgetInputs(prev => ({
-                                                    ...prev,
-                                                    [`${category}.${name}`]: e.target.value
-                                                }));
-                                            }}
-                                            onBlur={(e) => {
-                                                onAllocateBudget(category, name, e.target.value);
-                                                setBudgetInputs(prev => {
-                                                    const updated = { ...prev };
-                                                    delete updated[`${category}.${name}`];
-                                                    return updated;
-                                                });
-                                            }}
-                                            placeholder="Set budget"
-                                        />
-                                        <div className="increment-row">
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                value={incrementInputs[`${category}.${name}`] || ''}
-                                                onChange={(e) => {
-                                                    setIncrementInputs(prev => ({
-                                                        ...prev,
-                                                        [`${category}.${name}`]: e.target.value
-                                                    }));
-                                                }}
-                                                placeholder="+ Amount"
-                                                className="increment-input"
-                                            />
-                                            <button
-                                                className="btn btn-success increment-btn"
-                                                onClick={() => {
-                                                    const incrementAmount = incrementInputs[`${category}.${name}`];
-                                                    if (incrementAmount) {
-                                                        onIncrementBudget(category, name, incrementAmount);
-                                                        setIncrementInputs(prev => {
-                                                            const updated = { ...prev };
-                                                            delete updated[`${category}.${name}`];
-                                                            return updated;
-                                                        });
-                                                    }
-                                                }}
-                                            >
-                                                + Add
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>

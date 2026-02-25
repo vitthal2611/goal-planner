@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './QuickAdd.css';
 
 const QuickAdd = ({ 
@@ -9,15 +9,44 @@ const QuickAdd = ({
   onShowNotification,
   transactions = [],
   monthlyData,
-  currentPeriod
+  currentPeriod,
+  onAddIncome,
+  onAddCustomPaymentMethod,
+  onDeleteTransaction,
+  onTransfer,
+  onAddEnvelope,
+  onAllocateBudget,
+  onIncrementBudget,
+  onDeleteEnvelope,
+  onCopyFromLastMonth,
+  onSaveBulkEdit,
+  income
 }) => {
   const [selectedEnvelope, setSelectedEnvelope] = useState(null);
   const [expenseForm, setExpenseForm] = useState({
     amount: '',
     description: '',
-    paymentMethod: customPaymentMethods[0] || 'HDFC',
-    date: new Date().toISOString().split('T')[0]
+    paymentMethod: customPaymentMethods[0] || 'HDFC'
   });
+  const [incomeForm, setIncomeForm] = useState({
+    amount: '',
+    description: '',
+    paymentMethod: customPaymentMethods[0] || ''
+  });
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [newEnvelope, setNewEnvelope] = useState({ category: '', name: '' });
+  const [budgetInputs, setBudgetInputs] = useState({});
+  const [incrementInputs, setIncrementInputs] = useState({});
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [bulkEditValues, setBulkEditValues] = useState({});
+
+  useEffect(() => {
+    if (customPaymentMethods.length > 0 && !incomeForm.paymentMethod) {
+      setIncomeForm(prev => ({ ...prev, paymentMethod: customPaymentMethods[0] }));
+    }
+  }, [customPaymentMethods, incomeForm.paymentMethod]);
 
   const getPreviousPeriod = (currentPeriodStr) => {
     if (!currentPeriodStr) return null;
@@ -86,8 +115,7 @@ const QuickAdd = ({
     setExpenseForm({
       amount: '',
       description: '',
-      paymentMethod: customPaymentMethods[0] || 'HDFC',
-      date: new Date().toISOString().split('T')[0]
+      paymentMethod: customPaymentMethods[0] || 'HDFC'
     });
   };
 
@@ -111,7 +139,7 @@ const QuickAdd = ({
       amount,
       description: expenseForm.description || 'Quick expense',
       paymentMethod: expenseForm.paymentMethod,
-      date: expenseForm.date
+      date: new Date().toISOString().split('T')[0]
     };
 
     onAddTransaction(transaction);
@@ -119,8 +147,7 @@ const QuickAdd = ({
     setExpenseForm({
       amount: '',
       description: '',
-      paymentMethod: customPaymentMethods[0] || 'HDFC',
-      date: new Date().toISOString().split('T')[0]
+      paymentMethod: customPaymentMethods[0] || 'HDFC'
     });
   };
 
@@ -138,8 +165,278 @@ const QuickAdd = ({
     return '#10b981';
   };
 
+  const categories = useMemo(() => {
+    const cats = new Set(transactions.map(t => t.envelope.split('.')[1] || t.envelope));
+    return ['all', ...Array.from(cats)];
+  }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    let result = transactions;
+    
+    if (searchTerm) {
+      result = result.filter(t => 
+        t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.envelope.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (categoryFilter !== 'all') {
+      result = result.filter(t => 
+        (t.envelope.split('.')[1] || t.envelope).toLowerCase() === categoryFilter.toLowerCase()
+      );
+    }
+    
+    result = [...result].sort((a, b) => {
+      if (sortConfig.key === 'date') {
+        const comparison = new Date(b.date) - new Date(a.date);
+        return sortConfig.direction === 'asc' ? -comparison : comparison;
+      }
+      if (sortConfig.key === 'amount') {
+        const comparison = b.amount - a.amount;
+        return sortConfig.direction === 'asc' ? -comparison : comparison;
+      }
+      if (sortConfig.key === 'description') {
+        const comparison = a.description.localeCompare(b.description);
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      }
+      if (sortConfig.key === 'type') {
+        const aType = a.type || 'expense';
+        const bType = b.type || 'expense';
+        const comparison = aType.localeCompare(bType);
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      }
+      if (sortConfig.key === 'envelope') {
+        const aEnv = a.envelope === 'INCOME' ? 'INCOME' : a.envelope === 'TRANSFER' ? 'TRANSFER' : a.envelope.replace('.', ' - ');
+        const bEnv = b.envelope === 'INCOME' ? 'INCOME' : b.envelope === 'TRANSFER' ? 'TRANSFER' : b.envelope.replace('.', ' - ');
+        const comparison = aEnv.localeCompare(bEnv);
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      }
+      if (sortConfig.key === 'paymentMethod') {
+        const comparison = (a.paymentMethod || '').localeCompare(b.paymentMethod || '');
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      }
+      return 0;
+    });
+    
+    return result;
+  }, [transactions, searchTerm, categoryFilter, sortConfig]);
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) return '↕️';
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const SortIcon = ({ column }) => {
+    return <span>{getSortIcon(column)}</span>;
+  };
+
   return (
     <div className="quick-add-container">
+      {/* Add Income Section */}
+      <div className="income-section">
+        <h3 className="section-title">💰 Add Monthly Income</h3>
+        <div className="income-form-grid">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="₹ Amount"
+            value={incomeForm.amount}
+            onChange={(e) => setIncomeForm({ ...incomeForm, amount: e.target.value })}
+            className="income-input-field"
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={incomeForm.description}
+            onChange={(e) => setIncomeForm({ ...incomeForm, description: e.target.value })}
+            className="income-input-field"
+          />
+          <select
+            value={incomeForm.paymentMethod}
+            onChange={(e) => setIncomeForm({ ...incomeForm, paymentMethod: e.target.value })}
+            className="income-input-field"
+          >
+            {!incomeForm.paymentMethod && <option value="">Select Payment Method</option>}
+            {customPaymentMethods.map(method => (
+              <option key={method} value={method}>{method}</option>
+            ))}
+          </select>
+          <button
+            className="btn-add-income"
+            onClick={() => {
+              if (!incomeForm.amount || parseFloat(incomeForm.amount) <= 0) {
+                onShowNotification('error', 'Enter valid amount');
+                return;
+              }
+              if (!incomeForm.paymentMethod) {
+                onShowNotification('error', 'Select payment method');
+                return;
+              }
+              onAddIncome({
+                amount: parseFloat(incomeForm.amount),
+                description: incomeForm.description || 'Monthly Income',
+                paymentMethod: incomeForm.paymentMethod
+              });
+              setIncomeForm({ amount: '', description: '', paymentMethod: customPaymentMethods[0] || '' });
+            }}
+          >
+            ➕ Add Income
+          </button>
+          <button
+            className="btn-transfer"
+            onClick={onTransfer}
+            title="Transfer between payment methods"
+          >
+            🔄 Transfer
+          </button>
+        </div>
+      </div>
+
+      {/* Budget Allocation Section */}
+      <div className="budget-allocation-section">
+        <div className="budget-header">
+          <h3 className="section-title">💼 Budget Allocation</h3>
+          <div className="budget-actions">
+            <button className="btn-secondary" onClick={onCopyFromLastMonth}>📋 Copy</button>
+            <button className={bulkEditMode ? 'btn-warning' : 'btn-secondary'} onClick={() => {
+              if (bulkEditMode) { setBulkEditValues({}); setBulkEditMode(false); }
+              else { const v = {}; Object.keys(envelopes).forEach(c => Object.keys(envelopes[c]).forEach(n => v[`${c}.${n}`] = envelopes[c][n].budgeted)); setBulkEditValues(v); setBulkEditMode(true); }
+            }}>{bulkEditMode ? '✖ Cancel' : '✏️ Bulk'}</button>
+            {bulkEditMode && <button className="btn-add-income" onClick={() => {
+              let t = 0; Object.keys(bulkEditValues).forEach(k => t += parseFloat(bulkEditValues[k]) || 0);
+              if (t > income) { onShowNotification('error', `Total (₹${t.toLocaleString()}) exceeds income (₹${income.toLocaleString()})`); return; }
+              onSaveBulkEdit(bulkEditValues); setBulkEditMode(false); setBulkEditValues({});
+            }}>💾 Save</button>}
+          </div>
+        </div>
+        
+        {/* Add New Envelope */}
+        <div className="add-envelope-form">
+          <div className="envelope-form-row">
+            <select
+              value={newEnvelope.category}
+              onChange={(e) => setNewEnvelope({...newEnvelope, category: e.target.value})}
+              className="envelope-select"
+            >
+              <option value="">Select Category</option>
+              <option value="needs">🏠 Needs</option>
+              <option value="savings">💰 Savings</option>
+              <option value="wants">🎯 Wants</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Envelope name"
+              value={newEnvelope.name}
+              onChange={(e) => setNewEnvelope({...newEnvelope, name: e.target.value})}
+              className="envelope-input-field"
+            />
+            <button 
+              className="btn-add-income" 
+              onClick={() => {
+                if (!newEnvelope.category || !newEnvelope.name) {
+                  onShowNotification('error', 'Select category and enter name');
+                  return;
+                }
+                onAddEnvelope();
+                setNewEnvelope({ category: '', name: '' });
+              }}
+            >
+              ➕ Add Envelope
+            </button>
+          </div>
+        </div>
+
+        {/* Budget Grid */}
+        <div className="budget-grid">
+          {Object.keys(envelopes).map(category => (
+            <div key={category} className="category-section">
+              <h3 className="category-title">
+                {category === 'needs' ? '🏠 Needs' :
+                 category === 'savings' ? '💰 Savings' : '🎯 Wants'}
+              </h3>
+              {Object.keys(envelopes[category]).map(name => (
+                <div key={name} className="envelope-budget-item">
+                  <div className="envelope-header">
+                    <label>{name.toUpperCase()}: ₹{envelopes[category][name].budgeted.toLocaleString()}</label>
+                    {!bulkEditMode && <button className="btn-delete" onClick={() => onDeleteEnvelope(category, name)}>🗑️</button>}
+                  </div>
+                  {bulkEditMode ? (
+                    <input type="number" step="0.01" min="0" value={bulkEditValues[`${category}.${name}`] ?? 0}
+                      onChange={(e) => setBulkEditValues(p => ({...p, [`${category}.${name}`]: e.target.value}))}
+                      placeholder="Set budget" className="budget-input" />
+                  ) : (
+                    <>
+                      <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={budgetInputs[`${category}.${name}`] ?? envelopes[category][name].budgeted}
+                    onChange={(e) => {
+                      setBudgetInputs(prev => ({
+                        ...prev,
+                        [`${category}.${name}`]: e.target.value
+                      }));
+                    }}
+                    onBlur={(e) => {
+                      onAllocateBudget(category, name, e.target.value);
+                      setBudgetInputs(prev => {
+                        const updated = { ...prev };
+                        delete updated[`${category}.${name}`];
+                        return updated;
+                      });
+                    }}
+                    placeholder="Set budget"
+                    className="budget-input"
+                  />
+                  <div className="increment-row">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={incrementInputs[`${category}.${name}`] || ''}
+                      onChange={(e) => {
+                        setIncrementInputs(prev => ({
+                          ...prev,
+                          [`${category}.${name}`]: e.target.value
+                        }));
+                      }}
+                      placeholder="+ Amount"
+                      className="increment-input"
+                    />
+                    <button
+                      className="btn-add-income"
+                      onClick={() => {
+                        const incrementAmount = incrementInputs[`${category}.${name}`];
+                        if (incrementAmount) {
+                          onIncrementBudget(category, name, incrementAmount);
+                          setIncrementInputs(prev => {
+                            const updated = { ...prev };
+                            delete updated[`${category}.${name}`];
+                            return updated;
+                          });
+                        }
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  </>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Compact Envelope Grid */}
       <div className="compact-envelope-grid">
         {Object.keys(envelopes).map(category => (
@@ -172,6 +469,136 @@ const QuickAdd = ({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Current Month Summary */}
+      <div className="month-summary">
+        <div className="summary-item income">
+          <span className="summary-icon">💰</span>
+          <div className="summary-details">
+            <span className="summary-label">Income</span>
+            <span className="summary-count">
+              {transactions.filter(t => t.type === 'income').length} | ₹{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+        <div className="summary-item expense">
+          <span className="summary-icon">💸</span>
+          <div className="summary-details">
+            <span className="summary-label">Expenses</span>
+            <span className="summary-count">
+              {transactions.filter(t => !t.type || t.type === 'expense').length} | ₹{transactions.filter(t => !t.type || t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+        <div className="summary-item transfer">
+          <span className="summary-icon">🔄</span>
+          <div className="summary-details">
+            <span className="summary-label">Transfers</span>
+            <span className="summary-count">
+              {transactions.filter(t => t.type && t.type.includes('transfer')).length / 2} | ₹{(transactions.filter(t => t.type === 'transfer-out').reduce((sum, t) => sum + t.amount, 0)).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Transaction Details - Matching Transaction Tab */}
+      <div className="transactions-section">
+        <h3 className="section-title">📋 Recent Transaction Details</h3>
+        
+        <div className="transactions-filters">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="🔍 Search transactions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="category-filter"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'all' ? 'All Categories' : cat.toUpperCase()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="table-container">
+          <table className="envelope-table">
+            <thead>
+              <tr>
+                <th onClick={() => handleSort('date')} style={{cursor: 'pointer'}}>
+                  Date <SortIcon column="date" />
+                </th>
+                <th onClick={() => handleSort('type')} style={{cursor: 'pointer'}}>
+                  Type <SortIcon column="type" />
+                </th>
+                <th onClick={() => handleSort('description')} style={{cursor: 'pointer'}}>
+                  Description <SortIcon column="description" />
+                </th>
+                <th onClick={() => handleSort('envelope')} style={{cursor: 'pointer'}}>
+                  Envelope <SortIcon column="envelope" />
+                </th>
+                <th onClick={() => handleSort('amount')} style={{cursor: 'pointer'}}>
+                  Amount <SortIcon column="amount" />
+                </th>
+                <th onClick={() => handleSort('paymentMethod')} style={{cursor: 'pointer'}}>
+                  Payment <SortIcon column="paymentMethod" />
+                </th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTransactions.map(transaction => {
+                const transactionType = transaction.type === 'income' ? '💰' : 
+                                      transaction.type === 'transfer-in' ? '⬅️' :
+                                      transaction.type === 'transfer-out' ? '➡️' : '💸';
+                const typeLabel = transaction.type === 'income' ? 'Income' : 
+                                transaction.type === 'transfer-in' ? 'Transfer In' :
+                                transaction.type === 'transfer-out' ? 'Transfer Out' : 'Expense';
+                return (
+                  <tr key={transaction.id}>
+                    <td>{transaction.date}</td>
+                    <td>{transactionType} {typeLabel}</td>
+                    <td>{transaction.description}</td>
+                    <td style={{textTransform: 'uppercase'}}>
+                      {transaction.envelope === 'INCOME' ? 'INCOME' :
+                       transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
+                       transaction.envelope.replace('.', ' - ')}
+                    </td>
+                    <td style={{
+                      color: transaction.type === 'income' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
+                      fontWeight: '600'
+                    }}>
+                      {transaction.type === 'income' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                    </td>
+                    <td>{transaction.paymentMethod || 'Unknown'}</td>
+                    <td>
+                      <button
+                        className="btn-delete"
+                        onClick={() => onDeleteTransaction(transaction.id)}
+                        title="Delete transaction"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredTransactions.length === 0 && (
+                <tr>
+                  <td colSpan="7" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No transactions found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Expense Modal */}
@@ -233,18 +660,6 @@ const QuickAdd = ({
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label>Date</label>
-                <input
-                  type="date"
-                  value={expenseForm.date}
-                  min={dateRange.min}
-                  max={dateRange.max}
-                  onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                  className="date-input"
-                />
               </div>
             </div>
 

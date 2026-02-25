@@ -10,37 +10,41 @@ const getEnvelopePath = () => {
 // Default envelope structure
 const defaultEnvelopes = {
   needs: {
-    housing: { budgeted: 0, spent: 0, rollover: 0 },
-    groceries: { budgeted: 0, spent: 0, rollover: 0 },
-    utilities: { budgeted: 0, spent: 0, rollover: 0 },
-    transport: { budgeted: 0, spent: 0, rollover: 0 },
-    medical: { budgeted: 0, spent: 0, rollover: 0 },
     emi: { budgeted: 0, spent: 0, rollover: 0 },
+    grocery: { budgeted: 0, spent: 0, rollover: 0 },
+    milk: { budgeted: 0, spent: 0, rollover: 0 },
+    gas: { budgeted: 0, spent: 0, rollover: 0 },
+    water: { budgeted: 0, spent: 0, rollover: 0 },
+    electricity: { budgeted: 0, spent: 0, rollover: 0 },
+    petrol: { budgeted: 0, spent: 0, rollover: 0 },
+    school: { budgeted: 0, spent: 0, rollover: 0 },
+    vegetable: { budgeted: 0, spent: 0, rollover: 0 },
+    medical: { budgeted: 0, spent: 0, rollover: 0 },
     insurance: { budgeted: 0, spent: 0, rollover: 0 }
   },
   savings: {
-    emergency: { budgeted: 0, spent: 0, rollover: 0 },
-    sip: { budgeted: 0, spent: 0, rollover: 0 },
-    longterm: { budgeted: 0, spent: 0, rollover: 0 }
+    'wife sip': { budgeted: 0, spent: 0, rollover: 0 },
+    'my sip': { budgeted: 0, spent: 0, rollover: 0 },
+    ssy: { budgeted: 0, spent: 0, rollover: 0 }
   },
   wants: {
-    dining: { budgeted: 0, spent: 0, rollover: 0 },
-    shopping: { budgeted: 0, spent: 0, rollover: 0 },
-    entertainment: { budgeted: 0, spent: 0, rollover: 0 }
+    'salary-bai': { budgeted: 0, spent: 0, rollover: 0 },
+    vacation: { budgeted: 0, spent: 0, rollover: 0 },
+    misc: { budgeted: 0, spent: 0, rollover: 0 }
   }
 };
 
 export const getGlobalEnvelopes = async () => {
   try {
     const result = await getData(getEnvelopePath());
-    if (result.success) {
-      return result.data || {};
+    if (result.success && result.data && Object.keys(result.data).length > 0) {
+      return result.data;
     } else {
-      return {};
+      return defaultEnvelopes;
     }
   } catch (error) {
     console.error('Failed to load envelopes:', error);
-    return {};
+    return defaultEnvelopes;
   }
 };
 

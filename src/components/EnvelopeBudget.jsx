@@ -10,6 +10,8 @@ import QuickExpenseForm from './QuickExpenseForm';
 import TransactionsList from './TransactionsList';
 import EnvelopeStatusEnhanced from './EnvelopeStatusEnhanced';
 import QuickAdd from './QuickAdd';
+import PaymentMethodsManager from './PaymentMethodsManager';
+import UserProfile from './UserProfile';
 
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';
@@ -66,6 +68,9 @@ const EnvelopeBudget = () => {
     const [selectedSpendingCategory, setSelectedSpendingCategory] = useState(null);
     const [preSelectedEnvelope, setPreSelectedEnvelope] = useState(null);
     const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
+    const [showManagePaymentModal, setShowManagePaymentModal] = useState(false);
+    const [showPaymentMethodsManager, setShowPaymentMethodsManager] = useState(false);
+    const [showUserProfile, setShowUserProfile] = useState(false);
     const [filters, setFilters] = useState({
         type: '',
         envelope: '',
@@ -122,7 +127,8 @@ const EnvelopeBudget = () => {
     const [budgetInputs, setBudgetInputs] = useState({});
     const [incrementInputs, setIncrementInputs] = useState({});
     const [dataLoaded, setDataLoaded] = useState(false);
-    const [rolloverConfirm, setRolloverConfirm] = useState(false);
+    const [bulkEditMode, setBulkEditMode] = useState(false);
+    const [bulkEditValues, setBulkEditValues] = useState({});
 
     // Get current period's data with simple calculation
     const getCurrentPeriodData = async () => {
@@ -222,43 +228,55 @@ const EnvelopeBudget = () => {
 
     useEffect(() => {
         const loadData = async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
             try {
-                const savedData = await loadFromLocalStorage();
-                console.log('Loaded data:', savedData);
-                if (savedData && savedData.monthlyData && Object.keys(savedData.monthlyData).length > 0) {
+                console.log('Loading data for:', user.uid);
+                
+                // PARALLEL LOADING - Load everything at once
+                const [savedData, paymentMethodsResult] = await Promise.all([
+                    loadFromLocalStorage(),
+                    getData(`users/${user.uid}/paymentMethods`)
+                ]);
+                
+                // Process budget data
+                if (savedData?.monthlyData && Object.keys(savedData.monthlyData).length > 0) {
                     setMonthlyData(savedData.monthlyData);
                     if (savedData.currentPeriod) {
                         setCurrentPeriod(savedData.currentPeriod);
                     }
-                } else {
-                    console.log('No saved data found, using defaults');
+                    sessionStorage.setItem('budgetCache', JSON.stringify(savedData));
                 }
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
-        };
-        
-        // Wait for auth state and load data
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                console.log('User authenticated, loading data for:', user.uid);
-                setDataLoaded(false);
-                await loadData();
                 
-                // Load custom payment methods from Firebase
-                const paymentMethodsResult = await getData(`users/${user.uid}/customPaymentMethods`);
+                // Process payment methods
                 if (paymentMethodsResult.success && paymentMethodsResult.data) {
                     setCustomPaymentMethods(paymentMethodsResult.data);
+                } else {
+                    const defaultMethods = ['Cash', 'UPI', 'Credit Card', 'Debit Card'];
+                    setCustomPaymentMethods(defaultMethods);
+                    saveData(`users/${user.uid}/paymentMethods`, defaultMethods);
                 }
                 
                 setDataLoaded(true);
-            } else {
-                console.log('User logged out');
-                setDataLoaded(false);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                setDataLoaded(true);
             }
-        });
+        };
         
-        return () => unsubscribe();
+        // Check if user is already authenticated (from App.jsx)
+        if (auth.currentUser) {
+            loadData();
+        }
+        
+        // Listen for profile open event
+        const handleOpenProfile = () => setShowUserProfile(true);
+        window.addEventListener('openProfile', handleOpenProfile);
+        
+        return () => {
+            window.removeEventListener('openProfile', handleOpenProfile);
+        };
     }, []);
 
     const saveLocalData = useCallback(async () => {
@@ -266,10 +284,10 @@ const EnvelopeBudget = () => {
             // Only save if data is loaded and we have actual data
             if (dataLoaded && Object.keys(monthlyData).length > 0) {
                 console.log('Saving data:', { monthlyData, currentPeriod });
-                await saveToLocalStorage({
-                    monthlyData,
-                    currentPeriod
-                });
+                const dataToSave = { monthlyData, currentPeriod };
+                await saveToLocalStorage(dataToSave);
+                // Update cache for instant loading next time
+                sessionStorage.setItem('budgetCache', JSON.stringify(dataToSave));
             } else {
                 console.log('Skipping save - data not loaded or empty');
             }
@@ -348,18 +366,43 @@ const EnvelopeBudget = () => {
     const addCustomPaymentMethod = async (method) => {
         if (method && !customPaymentMethods.includes(method) && validatePaymentMethod(method)) {
             const sanitizedMethod = sanitizeInput(method);
-            const updatedMethods = [...customPaymentMethods, sanitizedMethod];
+            const updatedMethods = [...customPaymentMethods, sanitizedMethod].sort((a, b) => a.localeCompare(b));
             setCustomPaymentMethods(updatedMethods);
             
             // Save to Firebase
             const user = auth.currentUser;
             if (user) {
                 try {
-                    await saveData(`users/${user.uid}/customPaymentMethods`, updatedMethods);
+                    await saveData(`users/${user.uid}/paymentMethods`, updatedMethods);
+                    showNotification('success', `${sanitizedMethod} added`);
                 } catch (error) {
                     console.error('Failed to save payment method:', error);
                     showNotification('error', 'Failed to save payment method');
                 }
+            }
+        }
+    };
+
+    const deletePaymentMethod = async (method) => {
+        // Check if payment method is used in any transaction
+        const isUsed = transactions.some(t => t.paymentMethod === method);
+        if (isUsed) {
+            showNotification('error', `Cannot delete ${method}. It is used in transactions.`);
+            return;
+        }
+        
+        const updatedMethods = customPaymentMethods.filter(m => m !== method);
+        setCustomPaymentMethods(updatedMethods);
+        
+        // Save to Firebase
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                await saveData(`users/${user.uid}/paymentMethods`, updatedMethods);
+                showNotification('success', `${method} deleted`);
+            } catch (error) {
+                console.error('Failed to delete payment method:', error);
+                showNotification('error', 'Failed to delete payment method');
             }
         }
     };
@@ -375,6 +418,11 @@ const EnvelopeBudget = () => {
         const incomeAmount = parseFloat(amount);
 
         let paymentMethod = incomeTransaction.paymentMethod === 'Custom' ? customIncomePayment : incomeTransaction.paymentMethod;
+        
+        if (!paymentMethod) {
+            showNotification('error', 'Select payment method');
+            return;
+        }
         
         if (incomeTransaction.paymentMethod === 'Custom' && customIncomePayment) {
             if (!validatePaymentMethod(customIncomePayment)) {
@@ -515,6 +563,11 @@ const EnvelopeBudget = () => {
             return;
         }
 
+        if (!paymentMethod) {
+            showNotification('error', 'Select payment method');
+            return;
+        }
+
         const [category, name] = envelope.split('.');
         const env = envelopes[category]?.[name];
 
@@ -598,7 +651,8 @@ const EnvelopeBudget = () => {
         }
 
         if (income <= 0) {
-            showNotification('error', 'Add income first before incrementing budget');
+            showNotification('error', 'Step 1: Add income first!');
+            document.querySelector('.income-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
@@ -673,6 +727,8 @@ const EnvelopeBudget = () => {
         } else if (deleteConfirm.type === 'envelope') {
             const [category, name] = deleteConfirm.id.split('.');
             deleteEnvelope(category, name);
+        } else if (deleteConfirm.type === 'paymentMethod') {
+            deletePaymentMethod(deleteConfirm.id);
         }
         setDeleteConfirm({ type: '', id: '', name: '' });
     };
@@ -685,127 +741,74 @@ const EnvelopeBudget = () => {
         
         return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
     };
-    const rolloverToNextPeriod = () => {
-        const nextPeriod = getNextBudgetPeriod(currentPeriod);
+
+    const copyFromLastMonth = async () => {
+        const previousPeriod = getPreviousPeriod(currentPeriod);
+        const previousData = monthlyData[previousPeriod];
         
-        // Check if there are unused funds to rollover
-        const hasUnusedFunds = Object.values(envelopes).some(category =>
-            Object.values(category).some(env => {
-                const unused = env.budgeted + env.rollover - env.spent;
-                return unused > 0;
-            })
-        );
-        
-        if (!hasUnusedFunds) {
-            showNotification('info', 'No unused funds to rollover');
+        if (!previousData?.envelopes) {
+            showNotification('error', 'No budget data found in previous month');
             return;
         }
         
-        if (confirm(`Rollover unused funds to ${nextPeriod}?`)) {
-            confirmRollover(nextPeriod);
-        }
-    };
-    
-    const resetCurrentMonth = async () => {
-        if (!confirm(`Reset budget allocations for ${currentPeriod}? This will set all envelope budgets to zero but keep transactions.`)) {
-            return;
-        }
-        
-        const resetEnvelopes = {};
+        const copiedEnvelopes = {};
         Object.keys(envelopes).forEach(category => {
-            resetEnvelopes[category] = {};
+            copiedEnvelopes[category] = {};
             Object.keys(envelopes[category]).forEach(name => {
-                resetEnvelopes[category][name] = {
-                    budgeted: 0
+                const prevBudget = previousData.envelopes[category]?.[name]?.budgeted || 0;
+                copiedEnvelopes[category][name] = {
+                    budgeted: prevBudget
                 };
             });
         });
         
-        await updatePeriodData({
-            envelopes: resetEnvelopes
-        });
-        
-        showNotification('success', `${currentPeriod} budget allocations reset to zero`);
+        await updatePeriodData({ envelopes: copiedEnvelopes });
+        showNotification('success', `Budget copied from ${previousPeriod}`);
     };
     
-    const confirmRollover = async (targetPeriod) => {
-        try {
-            const rolledOverEnvelopes = {};
-            let totalRollover = 0;
-            
-            // Calculate rollover for all envelopes
+    const toggleBulkEditMode = () => {
+        if (bulkEditMode) {
+            setBulkEditValues({});
+        } else {
+            const initialValues = {};
             Object.keys(envelopes).forEach(category => {
-                rolledOverEnvelopes[category] = {};
                 Object.keys(envelopes[category]).forEach(name => {
-                    const env = envelopes[category][name];
-                    const unused = env.budgeted + env.rollover - env.spent;
-                    const rolloverAmount = Math.max(0, unused);
-                    
-                    rolledOverEnvelopes[category][name] = {
-                        budgeted: 0
-                    };
-                    
-                    totalRollover += rolloverAmount;
+                    initialValues[`${category}.${name}`] = envelopes[category][name].budgeted;
                 });
             });
-
-            // Get existing target period data
-            const existingData = monthlyData[targetPeriod];
-            if (existingData?.envelopes) {
-                Object.keys(rolledOverEnvelopes).forEach(category => {
-                    Object.keys(rolledOverEnvelopes[category]).forEach(name => {
-                        const existing = existingData.envelopes[category]?.[name];
-                        if (existing) {
-                            rolledOverEnvelopes[category][name].budgeted = existing.budgeted;
-                        }
-                    });
-                });
-            }
-
-            // Update target period
-            setMonthlyData(prev => ({
-                ...prev,
-                [targetPeriod]: {
-                    income: existingData?.income || 0,
-                    envelopes: rolledOverEnvelopes,
-                    transactions: existingData?.transactions || [],
-                    blockedTransactions: existingData?.blockedTransactions || []
-                }
-            }));
-
-            setCurrentPeriod(targetPeriod);
-            showNotification('success', `₹${totalRollover.toLocaleString()} rolled over to ${targetPeriod}`);
-        } catch (error) {
-            console.error('Rollover failed:', error);
-            showNotification('error', 'Rollover failed');
+            setBulkEditValues(initialValues);
         }
+        setBulkEditMode(!bulkEditMode);
     };
-
-    const exportData = () => {
-        const data = { monthlyData, currentPeriod };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `budget-${currentPeriod}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showNotification('success', 'Data exported successfully');
-    };
-
-    const handleBackup = async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            showNotification('error', 'Please login to backup data');
+    
+    const saveBulkEdit = async () => {
+        const updatedEnvelopes = { ...envelopes };
+        let totalAllocated = 0;
+        
+        Object.keys(bulkEditValues).forEach(key => {
+            const [category, name] = key.split('.');
+            const amount = parseFloat(bulkEditValues[key]) || 0;
+            totalAllocated += amount;
+        });
+        
+        if (totalAllocated > income) {
+            showNotification('error', `Total allocation (₹${totalAllocated.toLocaleString()}) exceeds income (₹${income.toLocaleString()})`);
             return;
         }
         
-        const result = await backupTransactions(user.uid);
-        if (result.success) {
-            showNotification('success', 'Backup downloaded successfully');
-        } else {
-            showNotification('error', `Backup failed: ${result.error}`);
-        }
+        Object.keys(bulkEditValues).forEach(key => {
+            const [category, name] = key.split('.');
+            const amount = parseFloat(bulkEditValues[key]) || 0;
+            updatedEnvelopes[category][name] = {
+                ...updatedEnvelopes[category][name],
+                budgeted: amount
+            };
+        });
+        
+        await updatePeriodData({ envelopes: updatedEnvelopes });
+        setBulkEditMode(false);
+        setBulkEditValues({});
+        showNotification('success', 'All budgets updated');
     };
 
     const importExpenses = (event) => {
@@ -944,15 +947,37 @@ const EnvelopeBudget = () => {
         [transactions]
     );
 
+    const spendingTrend = useMemo(() => {
+        const previousPeriod = getPreviousPeriod(currentPeriod);
+        const previousData = monthlyData[previousPeriod];
+        
+        if (!previousData?.transactions) return null;
+        
+        const previousSpent = previousData.transactions
+            .filter(t => !t.type || t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        if (previousSpent === 0) return null;
+        
+        const change = totalSpent - previousSpent;
+        const percentChange = ((change / previousSpent) * 100).toFixed(1);
+        
+        return {
+            change,
+            percentChange,
+            isIncrease: change > 0
+        };
+    }, [monthlyData, currentPeriod, totalSpent]);
+
     const getPaymentMethodBalances = useMemo(() => {
         const balances = {};
         
-        // Get ALL transactions from ALL periods (not restricted to current period)
-        const allTransactions = Object.keys(monthlyData)
-            .flatMap(period => monthlyData[period]?.transactions || []);
+        // Get transactions from current period only
+        const currentTransactions = transactions || [];
         
-        allTransactions.forEach(transaction => {
-            const method = sanitizeInput(transaction.paymentMethod || 'Unknown');
+        currentTransactions.forEach(transaction => {
+            const method = sanitizeInput(transaction.paymentMethod || '');
+            if (!method) return; // Skip transactions without payment method
             if (!balances[method]) balances[method] = 0;
             
             if (transaction.type === 'income' || transaction.type === 'transfer-in') {
@@ -964,7 +989,7 @@ const EnvelopeBudget = () => {
             }
         });
         return balances;
-    }, [monthlyData]);
+    }, [transactions]);
 
     const paymentBalances = getPaymentMethodBalances;
 
@@ -1092,7 +1117,7 @@ const EnvelopeBudget = () => {
     };
 
     return (
-        <div className="envelope-budget" {...swipeGesture} {...pullToRefresh}>
+        <div className="envelope-budget" {...swipeGesture}>
             {/* Swipe Indicators */}
             {swipeIndicator.show && (
                 <div className={`swipe-indicator ${swipeIndicator.direction} show`}>
@@ -1110,18 +1135,36 @@ const EnvelopeBudget = () => {
                 <h1>💰 Envelope Budget Tracker</h1>
                 <div className="header-controls">
                     <label>Budget Period</label>
-                    <select
-                        value={currentPeriod}
-                        onChange={(e) => setCurrentPeriod(e.target.value)}
-                        className="period-selector"
-                        aria-label="Select budget period"
-                    >
-                        {generatePeriodOptions().map(period => (
-                            <option key={period.key} value={period.key}>
-                                {period.label}
-                            </option>
-                        ))}
-                    </select>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                            onClick={() => setCurrentPeriod(getPreviousPeriod(currentPeriod))}
+                            className="btn btn-secondary"
+                            style={{ padding: '8px 12px', minWidth: 'auto' }}
+                            title="Previous month"
+                        >
+                            ←
+                        </button>
+                        <select
+                            value={currentPeriod}
+                            onChange={(e) => setCurrentPeriod(e.target.value)}
+                            className="period-selector"
+                            aria-label="Select budget period"
+                        >
+                            {generatePeriodOptions().map(period => (
+                                <option key={period.key} value={period.key}>
+                                    {period.label}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={() => setCurrentPeriod(getNextBudgetPeriod(currentPeriod))}
+                            className="btn btn-secondary"
+                            style={{ padding: '8px 12px', minWidth: 'auto' }}
+                            title="Next month"
+                        >
+                            →
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1133,31 +1176,6 @@ const EnvelopeBudget = () => {
                 >
                     ⚡ QuickAdd
                 </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'daily' ? 'active' : ''}`}
-                    onClick={() => setActiveView('daily')}
-                >
-                    📋 Daily
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'spending' ? 'active' : ''}`}
-                    onClick={() => setActiveView('spending')}
-                >
-                    💳 Spending
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'transactions' ? 'active' : ''}`}
-                    onClick={() => setActiveView('transactions')}
-                >
-                    📝 Transactions
-                </button>
-                <button
-                    className={`tab-btn touch-feedback ${activeView === 'budget' ? 'active' : ''}`}
-                    onClick={() => setActiveView('budget')}
-                >
-                    📊 Budget
-                </button>
-
             </div>
 
             {notification.message && (
@@ -1166,172 +1184,8 @@ const EnvelopeBudget = () => {
                 </div>
             )}
 
-            {activeView !== 'quickadd' && (
-            <div className="summary-grid">
-                <div className="summary-card">
-                    <div className="summary-value">₹{income.toLocaleString()}</div>
-                    <div className="summary-label">Monthly Income</div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value">₹{totalBudgeted.toLocaleString()}</div>
-                    <div className="summary-label">Total Budgeted</div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value">₹{totalSpent.toLocaleString()}</div>
-                    <div className="summary-label">Total Spent</div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value">₹{(income - totalSpent).toLocaleString()}</div>
-                    <div className="summary-label">Remaining</div>
-                </div>
-            </div>
-            )}
-
-            {/* Payment Method Overview - Shows actual balances across ALL periods */}
-            {Object.keys(paymentBalances).length > 0 && (
-                <div className="card payment-overview-compact">
-                    <div className="card-header">
-                        <h3>💳 Payment Methods (All Time Balance)</h3>
-                        <small style={{color: 'var(--gray-600)', fontSize: '0.8em'}}>Actual balances across all periods</small>
-                    </div>
-                    <div className="card-content">
-                        <div className="payment-methods-grid">
-                            {Object.entries(paymentBalances).map(([method, amount]) => (
-                                <div key={method} className="payment-method-item">
-                                    <span className="payment-method-name">{method}</span>
-                                    <span className="payment-method-balance" style={{
-                                        color: amount >= 0 ? 'var(--success)' : 'var(--danger)',
-                                        fontWeight: '600'
-                                    }}>₹{amount.toLocaleString()}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Spending Insights */}
-            {activeView !== 'quickadd' && (
-            <div className="card spending-insights-card">
-                <div className="card-header">
-                    <h3>📈 Spending Breakdown</h3>
-                    {selectedSpendingCategory && (
-                        <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setSelectedSpendingCategory(null)}
-                        >
-                            ← Back
-                        </button>
-                    )}
-                </div>
-                <div className="card-content">
-                    {!selectedSpendingCategory ? (
-                        (() => {
-                            const needsSpent = Object.keys(envelopes.needs || {}).reduce((sum, name) => sum + (envelopes.needs[name]?.spent || 0), 0);
-                            const wantsSpent = Object.keys(envelopes.wants || {}).reduce((sum, name) => sum + (envelopes.wants[name]?.spent || 0), 0);
-                            const savingsSpent = Object.keys(envelopes.savings || {}).reduce((sum, name) => sum + (envelopes.savings[name]?.spent || 0), 0);
-                            const total = needsSpent + wantsSpent + savingsSpent;
-                            
-                            const needsPercent = total > 0 ? ((needsSpent / total) * 100).toFixed(1) : 0;
-                            const wantsPercent = total > 0 ? ((wantsSpent / total) * 100).toFixed(1) : 0;
-                            const savingsPercent = total > 0 ? ((savingsSpent / total) * 100).toFixed(1) : 0;
-                            
-                            return (
-                                <div className="spending-breakdown-alt">
-                                    <div className="spending-cards">
-                                        <div className="spending-card needs-card" onClick={() => setSelectedSpendingCategory('needs')}>
-                                            <div className="spending-card-icon">🏠</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Needs</div>
-                                                <div className="spending-card-amount">₹{needsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{needsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill needs-fill" style={{width: `${needsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="spending-card wants-card" onClick={() => setSelectedSpendingCategory('wants')}>
-                                            <div className="spending-card-icon">🎯</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Wants</div>
-                                                <div className="spending-card-amount">₹{wantsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{wantsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill wants-fill" style={{width: `${wantsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="spending-card savings-card" onClick={() => setSelectedSpendingCategory('savings')}>
-                                            <div className="spending-card-icon">💰</div>
-                                            <div className="spending-card-content">
-                                                <div className="spending-card-label">Savings</div>
-                                                <div className="spending-card-amount">₹{savingsSpent.toLocaleString()}</div>
-                                                <div className="spending-card-percent">{savingsPercent}%</div>
-                                            </div>
-                                            <div className="spending-card-bar">
-                                                <div className="spending-card-fill savings-fill" style={{width: `${savingsPercent}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()
-                    ) : (
-                        <div className="category-transactions">
-                            <h4>
-                                {selectedSpendingCategory === 'needs' ? '🏠 Needs' : 
-                                 selectedSpendingCategory === 'wants' ? '🎯 Wants' : '💰 Savings'} Transactions
-                            </h4>
-                            <div className="table-container">
-                                <table className="envelope-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Envelope</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Payment</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {transactions
-                                            .filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`))
-                                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                            .map(transaction => (
-                                                <tr key={transaction.id}>
-                                                    <td>{transaction.date}</td>
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        {transaction.envelope.split('.')[1]}
-                                                    </td>
-                                                    <td>{transaction.description}</td>
-                                                    <td style={{color: 'var(--danger)', fontWeight: '600'}}>
-                                                        -₹{transaction.amount.toLocaleString()}
-                                                    </td>
-                                                    <td>{transaction.paymentMethod}</td>
-                                                </tr>
-                                            ))
-                                        }
-                                        {transactions.filter(t => t.envelope.startsWith(`${selectedSpendingCategory}.`)).length === 0 && (
-                                            <tr>
-                                                <td colSpan="5" style={{textAlign: 'center', color: 'var(--gray-600)'}}>
-                                                    No transactions yet
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-            )}
-
             {/* Conditional Views */}
-            {activeView === 'quickadd' ? (
-                <QuickAdd
+            <QuickAdd
                     envelopes={envelopes}
                     customPaymentMethods={customPaymentMethods}
                     dateRange={dateRange}
@@ -1340,714 +1194,34 @@ const EnvelopeBudget = () => {
                     transactions={transactions}
                     monthlyData={monthlyData}
                     currentPeriod={currentPeriod}
+                    onAddIncome={(incomeData) => {
+                        const transactionRecord = {
+                            id: Date.now() + Math.random(),
+                            date: new Date().toISOString().split('T')[0],
+                            envelope: 'INCOME',
+                            amount: incomeData.amount,
+                            description: incomeData.description,
+                            paymentMethod: incomeData.paymentMethod,
+                            type: 'income'
+                        };
+                        updatePeriodData({
+                            income: income + incomeData.amount,
+                            transactions: [...transactions, transactionRecord]
+                        });
+                        showNotification('success', '✓ Income Added!');
+                    }}
+                    onAddCustomPaymentMethod={addCustomPaymentMethod}
+                    onDeleteTransaction={deleteTransaction}
+                    onTransfer={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
+                    onAddEnvelope={addEnvelope}
+                    onAllocateBudget={allocateBudget}
+                    onIncrementBudget={incrementBudget}
+                    onDeleteEnvelope={(category, name) => setDeleteConfirm({ type: 'envelope', id: `${category}.${name}`, name })}
+                    onCopyFromLastMonth={copyFromLastMonth}
+                    onSaveBulkEdit={saveBulkEdit}
+                    income={income}
                 />
-            ) : activeView === 'daily' ? (
-                <>
-                    {/* Quick Expense Interface */}
-                    <QuickExpenseForm
-                        envelopes={envelopes}
-                        customPaymentMethods={customPaymentMethods}
-                        dateRange={dateRange}
-                        onAddTransaction={addTransaction}
-                        onAddCustomPaymentMethod={addCustomPaymentMethod}
-                        onShowNotification={showNotification}
-                        onTransfer={() => setTransferModal({ show: true, from: '', to: '', amount: '' })}
-                        preSelectedEnvelope={preSelectedEnvelope}
-                    />
-
-                    {/* Last 10 Transactions */}
-                    <TransactionsList
-                        transactions={transactions}
-                        onDeleteTransaction={deleteTransaction}
-                        onUpdatePaymentMethod={updateTransactionPayment}
-                        customPaymentMethods={customPaymentMethods}
-                        title="📋 Last 10 Transactions"
-                        limit={10}
-                    />
-                </>
-            ) : activeView === 'spending' ? (
-                <>
-                    {/* Envelope Status Summary */}
-                    <div className="card envelope-status-summary">
-                        <div className="card-header">
-                            <h3>📊 Status Overview</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="status-summary-grid">
-                                <div className="status-summary-item healthy">
-                                    <div className="status-icon">✅</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.healthy.length}</div>
-                                        <div className="status-label">Healthy</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item warning">
-                                    <div className="status-icon">⚠️</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.warnings.length}</div>
-                                        <div className="status-label">Warning</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item blocked">
-                                    <div className="status-icon">🚫</div>
-                                    <div className="status-info">
-                                        <div className="status-count">{insights.blocked.length}</div>
-                                        <div className="status-label">Blocked</div>
-                                    </div>
-                                </div>
-                                <div className="status-summary-item total">
-                                    <div className="status-icon">💰</div>
-                                    <div className="status-info">
-                                        <div className="status-count">
-                                            {Object.values(envelopes).reduce((sum, cat) => sum + Object.keys(cat).length, 0)}
-                                        </div>
-                                        <div className="status-label">Total</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Envelope Status */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>📊 Envelope Status</h3>
-                        </div>
-                        <div className="card-content">
-                            <EnvelopeStatusEnhanced 
-                                envelopes={envelopes}
-                                getRolloverAmount={getRolloverAmount}
-                                onAddExpense={(category, name) => {
-                                    setPreSelectedEnvelope(`${category}.${name}`);
-                                    setShowQuickExpenseModal(true);
-                                }}
-                                onAllocateBudget={(category, name) => setActiveView('budget')}
-                            />
-                        </div>
-                    </div>
-                    
-                    {/* Original Table View - Hidden by default, can be toggled if needed */}
-                    <div className="card" style={{ display: 'none' }}>
-                        <div className="card-header">
-                            <h3>📊 Envelope Status (Table View)</h3>
-                        </div>
-                        <div className="table-container">
-                            <table className="envelope-table">
-                                <thead>
-                                <tr>
-                                    <th>Envelope</th>
-                                    <th>Category</th>
-                                    <th>Budgeted</th>
-                                    <th>Spent</th>
-                                    <th>Remaining</th>
-                                    <th>Rollover</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {Object.keys(envelopes).map(category =>
-                                        Object.keys(envelopes[category]).map(name => {
-                                            const env = envelopes[category][name];
-                                            const remaining = env.budgeted + env.rollover - env.spent;
-                                            const statusInfo = getStatus(env, category, name);
-                                            const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
-                                            return (
-                                                <tr key={`${category}.${name}`} className="envelope-status-row">
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        <div className="envelope-name-cell">
-                                                            <span className="status-icon-inline">{statusInfo.icon}</span>
-                                                            <span>{name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{textTransform: 'uppercase'}}>{category}</td>
-                                                    <td>₹{env.budgeted.toLocaleString()}</td>
-                                                    <td>
-                                                        <div className="spent-cell">
-                                                            <span>₹{env.spent.toLocaleString()}</span>
-                                                            <div className="mini-progress">
-                                                                <div 
-                                                                    className="mini-progress-fill" 
-                                                                    style={{ 
-                                                                        width: `${Math.min(percentage, 100)}%`,
-                                                                        backgroundColor: statusInfo.color
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ color: remaining <= 0 ? 'var(--danger)' : 'inherit', fontWeight: remaining <= 0 ? '700' : '600' }}>
-                                                        ₹{remaining.toLocaleString()}
-                                                    </td>
-                                                    <td>₹{env.rollover.toLocaleString()}</td>
-                                                    <td>
-                                                        <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
-                                                            {statusInfo.icon} {statusInfo.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                )}
-                                </tbody>
-                            </table>
-                            <div className="mobile-card-view" style={{ display: 'none' }}>
-                                {Object.keys(envelopes).map(category =>
-                                    Object.keys(envelopes[category]).map(name => {
-                                        const env = envelopes[category][name];
-                                        const remaining = env.budgeted + env.rollover - env.spent;
-                                        const statusInfo = getStatus(env, category, name);
-                                        const percentage = env.budgeted > 0 ? (env.spent / env.budgeted) * 100 : 0;
-                                        return (
-                                            <div key={`${category}.${name}`} className="mobile-envelope-card enhanced">
-                                                <div className="mobile-card-header">
-                                                    <div className="envelope-title">
-                                                        <span className="status-icon-large">{statusInfo.icon}</span>
-                                                        <span style={{textTransform: 'uppercase', fontWeight: '700'}}>{name}</span>
-                                                    </div>
-                                                    <span className={`status-badge ${statusInfo.status}`} style={{ borderColor: statusInfo.color }}>
-                                                        {statusInfo.status}
-                                                    </span>
-                                                </div>
-                                                <div className="mobile-progress-bar">
-                                                    <div 
-                                                        className="mobile-progress-fill" 
-                                                        style={{ 
-                                                            width: `${Math.min(percentage, 100)}%`,
-                                                            backgroundColor: statusInfo.color
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="mobile-card-content">
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Category</span>
-                                                        <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>{category}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Budgeted</span>
-                                                        <span className="mobile-card-value">₹{env.budgeted.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Spent</span>
-                                                        <span className="mobile-card-value" style={{ color: statusInfo.color }}>₹{env.spent.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="mobile-card-field">
-                                                        <span className="mobile-card-label">Remaining</span>
-                                                        <span className="mobile-card-value" style={{ 
-                                                            color: remaining <= 0 ? 'var(--danger)' : 'var(--success)',
-                                                            fontWeight: '700'
-                                                        }}>₹{remaining.toLocaleString()}</span>
-                                                    </div>
-                                                    {env.rollover > 0 && (
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Rollover</span>
-                                                            <span className="mobile-card-value">₹{env.rollover.toLocaleString()}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </>
-            ) : activeView === 'transactions' ? (
-                <>
-                    {/* Transactions */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>📝 Transactions</h3>
-                        </div>
-                        <div className="card-content">
-                            {/* Recent Transactions Summary */}
-                            <div className="transactions-summary">
-                                <div className="summary-grid">
-                                    <div className="summary-card">
-                                        <div className="summary-value">{transactions.filter(t => t.type === 'income').length}</div>
-                                        <div className="summary-label">Income Entries</div>
-                                    </div>
-                                    <div className="summary-card">
-                                        <div className="summary-value">{transactions.filter(t => !t.type || t.type === 'expense').length}</div>
-                                        <div className="summary-label">Expenses</div>
-                                    </div>
-                                    <div className="summary-card">
-                                        <div className="summary-value">{transactions.filter(t => t.type && t.type.includes('transfer')).length / 2}</div>
-                                        <div className="summary-label">Transfers</div>
-                                    </div>
-                                    <div className="summary-card">
-                                        <div className="summary-value">{transactions.length}</div>
-                                        <div className="summary-label">Total Transactions</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Recent Transactions Details */}
-                            <div className="transactions-details">
-                                <h4>📋 Recent Transaction Details</h4>
-                                
-                                {/* Filter Controls */}
-                                <div className="transaction-filters">
-                                    <div className="filter-row">
-                                        <select
-                                            value={filters.type}
-                                            onChange={(e) => setFilters({...filters, type: e.target.value})}
-                                            className="filter-select"
-                                        >
-                                            <option value="">All Types</option>
-                                            <option value="income">Income</option>
-                                            <option value="expense">Expense</option>
-                                            <option value="transfer-in">Transfer In</option>
-                                            <option value="transfer-out">Transfer Out</option>
-                                        </select>
-                                        
-                                        <select
-                                            value={filters.envelope}
-                                            onChange={(e) => setFilters({...filters, envelope: e.target.value})}
-                                            className="filter-select"
-                                        >
-                                            <option value="">All Envelopes</option>
-                                            {getUniqueEnvelopes().map(envelope => (
-                                                <option key={envelope} value={envelope}>{envelope}</option>
-                                            ))}
-                                        </select>
-                                        
-                                        <select
-                                            value={filters.paymentMethod}
-                                            onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
-                                            className="filter-select"
-                                        >
-                                            <option value="">All Payment Methods</option>
-                                            {getUniquePaymentMethods().map(method => (
-                                                <option key={method} value={method}>{method}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    
-                                    <div className="filter-row">
-                                        <input
-                                            type="text"
-                                            placeholder="Search description..."
-                                            value={filters.description}
-                                            onChange={(e) => setFilters({...filters, description: e.target.value})}
-                                            className="filter-input"
-                                        />
-                                        
-                                        <input
-                                            type="date"
-                                            placeholder="From date"
-                                            value={filters.dateFrom}
-                                            onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-                                            className="filter-input"
-                                        />
-                                        
-                                        <input
-                                            type="date"
-                                            placeholder="To date"
-                                            value={filters.dateTo}
-                                            onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-                                            className="filter-input"
-                                        />
-                                        
-                                        <button
-                                            onClick={clearFilters}
-                                            className="btn btn-secondary filter-clear-btn"
-                                        >
-                                            🗑️ Clear
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="table-container">
-                                    <table className="envelope-table">
-                                        <thead>
-                                        <tr>
-                                            <th onClick={() => handleSort('date')} style={{cursor: 'pointer'}}>
-                                                Date {getSortIcon('date')}
-                                            </th>
-                                            <th onClick={() => handleSort('type')} style={{cursor: 'pointer'}}>
-                                                Type {getSortIcon('type')}
-                                            </th>
-                                            <th onClick={() => handleSort('description')} style={{cursor: 'pointer'}}>
-                                                Description {getSortIcon('description')}
-                                            </th>
-                                            <th onClick={() => handleSort('envelope')} style={{cursor: 'pointer'}}>
-                                                Envelope {getSortIcon('envelope')}
-                                            </th>
-                                            <th onClick={() => handleSort('amount')} style={{cursor: 'pointer'}}>
-                                                Amount {getSortIcon('amount')}
-                                            </th>
-                                            <th onClick={() => handleSort('paymentMethod')} style={{cursor: 'pointer'}}>
-                                                Payment {getSortIcon('paymentMethod')}
-                                            </th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {getSortedTransactions().map(transaction => {
-                                            const transactionType = transaction.type === 'income' ? '💰' : 
-                                                                  transaction.type === 'transfer-in' ? '⬅️' :
-                                                                  transaction.type === 'transfer-out' ? '➡️' : '💸';
-                                            const typeLabel = transaction.type === 'income' ? 'Income' : 
-                                                            transaction.type === 'transfer-in' ? 'Transfer In' :
-                                                            transaction.type === 'transfer-out' ? 'Transfer Out' : 'Expense';
-                                            return (
-                                                <tr key={transaction.id}>
-                                                    <td>{transaction.date}</td>
-                                                    <td>{transactionType} {typeLabel}</td>
-                                                    <td>{transaction.description}</td>
-                                                    <td style={{textTransform: 'uppercase'}}>
-                                                        {transaction.envelope === 'INCOME' ? 'INCOME' :
-                                                         transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
-                                                         transaction.envelope.replace('.', ' - ')}
-                                                    </td>
-                                                    <td style={{
-                                                        color: transaction.type === 'income' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
-                                                        fontWeight: '600'
-                                                    }}>
-                                                        {transaction.type === 'income' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                                                    </td>
-                                                    <td 
-                                                        onDoubleClick={() => setEditingPayment({ id: transaction.id, method: transaction.paymentMethod || '' })}
-                                                        style={{ cursor: 'pointer' }}
-                                                    >
-                                                        {editingPayment.id === transaction.id ? (
-                                                            <select
-                                                                value={editingPayment.method}
-                                                                onChange={(e) => setEditingPayment({ ...editingPayment, method: e.target.value })}
-                                                                onBlur={() => updateTransactionPayment(transaction.id, editingPayment.method)}
-                                                                onKeyDown={(e) => e.key === 'Enter' && updateTransactionPayment(transaction.id, editingPayment.method)}
-                                                                autoFocus
-                                                                style={{ width: '100%' }}
-                                                            >
-                                                                {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
-                                                                    <option key={method} value={method}>{method}</option>
-                                                                ))}
-                                                            </select>
-                                                        ) : (
-                                                            transaction.paymentMethod || 'Unknown'
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        <button
-                                                            className="btn-delete"
-                                                            onClick={() => setDeleteConfirm({
-                                                                type: 'transaction',
-                                                                id: transaction.id,
-                                                                name: transaction.description
-                                                            })}
-                                                            title="Delete transaction"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                        {transactions.length === 0 && (
-                                            <tr>
-                                                <td colSpan="7" style={{textAlign: 'center', color: 'var(--gray-600)'}}>No transactions yet</td>
-                                            </tr>
-                                        )}
-                                        </tbody>
-                                    </table>
-                                    <div className="mobile-card-view">
-                                        {getSortedTransactions().map(transaction => {
-                                            const transactionType = transaction.type === 'income' ? '💰' : 
-                                                                  transaction.type === 'transfer-in' ? '⬅️' :
-                                                                  transaction.type === 'transfer-out' ? '➡️' : '💸';
-                                            const typeLabel = transaction.type === 'income' ? 'Income' : 
-                                                            transaction.type === 'transfer-in' ? 'Transfer In' :
-                                                            transaction.type === 'transfer-out' ? 'Transfer Out' : 'Expense';
-                                            return (
-                                                <div key={transaction.id} className="mobile-transaction-card">
-                                                    <div className="mobile-card-header">
-                                                        <span>{transactionType} {transaction.description}</span>
-                                                        <button
-                                                            className="btn-delete"
-                                                            onClick={() => setDeleteConfirm({
-                                                                type: 'transaction',
-                                                                id: transaction.id,
-                                                                name: transaction.description
-                                                            })}
-                                                            title="Delete transaction"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </div>
-                                                    <div className="mobile-card-content">
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Date</span>
-                                                            <span className="mobile-card-value">{transaction.date}</span>
-                                                        </div>
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Type</span>
-                                                            <span className="mobile-card-value">{typeLabel}</span>
-                                                        </div>
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Amount</span>
-                                                            <span className="mobile-card-value" style={{
-                                                                color: transaction.type === 'income' || transaction.type === 'transfer-in' ? 'var(--success)' : 'var(--danger)',
-                                                                fontWeight: '600'
-                                                            }}>
-                                                                {transaction.type === 'income' || transaction.type === 'transfer-in' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Envelope</span>
-                                                            <span className="mobile-card-value" style={{textTransform: 'uppercase'}}>
-                                                                {transaction.envelope === 'INCOME' ? 'INCOME' :
-                                                                 transaction.envelope === 'TRANSFER' ? 'TRANSFER' :
-                                                                 transaction.envelope.replace('.', ' - ')}
-                                                            </span>
-                                                        </div>
-                                                        <div className="mobile-card-field">
-                                                            <span className="mobile-card-label">Payment</span>
-                                                            <span className="mobile-card-value">{transaction.paymentMethod || 'Unknown'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        {transactions.length === 0 && (
-                                            <div style={{textAlign: 'center', color: 'var(--gray-600)', padding: '20px'}}>No transactions yet</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <>
-                    {/* Budget Controls */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>💼 Budget Controls</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="control-group">
-                                <label>Add Monthly Income</label>
-                                <div className="income-form">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="₹ Income Amount"
-                                        value={incomeTransaction.amount}
-                                        onChange={(e) => setIncomeTransaction({...incomeTransaction, amount: e.target.value})}
-                                        className="income-input"
-                                        inputMode="decimal"
-                                        autoComplete="off"
-                                        aria-label="Income amount"
-                                    />
-                                    <input
-                                        type="date"
-                                        value={incomeTransaction.date}
-                                        min={dateRange.min}
-                                        max={dateRange.max}
-                                        onChange={(e) => setIncomeTransaction({...incomeTransaction, date: e.target.value})}
-                                        className="income-input"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Description (e.g., Salary, Bonus)"
-                                        value={incomeTransaction.description}
-                                        onChange={(e) => setIncomeTransaction({...incomeTransaction, description: e.target.value})}
-                                        className="income-input"
-                                        autoComplete="off"
-                                        aria-label="Income description"
-                                    />
-                                    <select
-                                        value={incomeTransaction.paymentMethod}
-                                        onChange={(e) => {
-                                            setIncomeTransaction({...incomeTransaction, paymentMethod: e.target.value});
-                                            if (e.target.value !== 'Custom') setCustomIncomePayment('');
-                                        }}
-                                        className="income-input"
-                                    >
-                                        <option value="">Select Payment Method</option>
-                                        {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => (
-                                            <option key={method} value={method}>{method}</option>
-                                        ))}
-                                        <option value="Custom">➕ Add New</option>
-                                    </select>
-                                    {incomeTransaction.paymentMethod === 'Custom' && (
-                                        <input
-                                            type="text"
-                                            placeholder="Enter payment method"
-                                            value={customIncomePayment}
-                                            onChange={(e) => setCustomIncomePayment(e.target.value)}
-                                            className="income-input"
-                                        />
-                                    )}
-                                    <button className="btn btn-success" onClick={addIncome}>
-                                        ➕ Add Income
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="budget-actions">
-                                <button className="btn btn-secondary" onClick={exportData}>
-                                    📤 Export
-                                </button>
-                                <button className="btn btn-warning" onClick={handleBackup}>
-                                    💾 Backup All Data
-                                </button>
-                                <button className="btn btn-primary" onClick={rolloverToNextPeriod}>
-                                    🔄 Rollover Unused Funds
-                                </button>
-                                <button className="btn btn-danger" onClick={resetCurrentMonth}>
-                                    🗑️ Reset Current Month
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Budget Allocation */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>💼 Budget Allocation</h3>
-                        </div>
-                        <div className="card-content">
-                            {/* Add New Envelope */}
-                            <div className="add-envelope-form">
-                                <h4>Add New Envelope</h4>
-                                <div className="envelope-form-row">
-                                    <select
-                                        value={newEnvelope.category}
-                                        onChange={(e) => setNewEnvelope({...newEnvelope, category: e.target.value})}
-                                        className="envelope-select"
-                                    >
-                                        <option value="">Select Category</option>
-                                        <option value="needs">🏠 Needs</option>
-                                        <option value="savings">💰 Savings</option>
-                                        <option value="wants">🎯 Wants</option>
-                                    </select>
-                                    <input
-                                        type="text"
-                                        placeholder="Envelope name"
-                                        value={newEnvelope.name}
-                                        onChange={(e) => setNewEnvelope({...newEnvelope, name: e.target.value})}
-                                        className="envelope-input-field"
-                                    />
-                                    <button className="btn btn-success" onClick={addEnvelope}>
-                                        ➕ Add
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="budget-grid">
-                                {Object.keys(envelopes).map(category => (
-                                    <div key={category} className="category-card">
-                                        <div className="category-title">
-                                            {category === 'needs' ? '🏠 Needs' :
-                                                category === 'savings' ? '💰 Savings' : '🎯 Wants'}
-                                        </div>
-                                        {Object.keys(envelopes[category]).map(name => (
-                                            <div key={name} className="envelope-input">
-                                                <div className="envelope-header">
-                                                    <label>{name.toUpperCase()}: ₹{envelopes[category][name].budgeted.toLocaleString()}</label>
-                                                    <button
-                                                        className="btn-delete"
-                                                        onClick={() => setDeleteConfirm({ type: 'envelope', id: `${category}.${name}`, name })}
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </div>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={budgetInputs[`${category}.${name}`] ?? envelopes[category][name].budgeted}
-                                                    onChange={(e) => {
-                                                        setBudgetInputs(prev => ({
-                                                            ...prev,
-                                                            [`${category}.${name}`]: e.target.value
-                                                        }));
-                                                    }}
-                                                    onBlur={(e) => {
-                                                        allocateBudget(category, name, e.target.value);
-                                                        setBudgetInputs(prev => {
-                                                            const updated = { ...prev };
-                                                            delete updated[`${category}.${name}`];
-                                                            return updated;
-                                                        });
-                                                    }}
-                                                    placeholder="Set budget"
-                                                />
-                                                <div className="increment-row">
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={incrementInputs[`${category}.${name}`] || ''}
-                                                        onChange={(e) => {
-                                                            setIncrementInputs(prev => ({
-                                                                ...prev,
-                                                                [`${category}.${name}`]: e.target.value
-                                                            }));
-                                                        }}
-                                                        placeholder="+ Amount"
-                                                        className="increment-input"
-                                                    />
-                                                    <button
-                                                        className="btn btn-success increment-btn"
-                                                        onClick={() => {
-                                                            const incrementAmount = incrementInputs[`${category}.${name}`];
-                                                            if (incrementAmount) {
-                                                                incrementBudget(category, name, incrementAmount);
-                                                                setIncrementInputs(prev => {
-                                                                    const updated = { ...prev };
-                                                                    delete updated[`${category}.${name}`];
-                                                                    return updated;
-                                                                });
-                                                            }
-                                                        }}
-                                                    >
-                                                        + Add
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Monthly Insights */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>📈 Monthly Insights</h3>
-                        </div>
-                        <div className="card-content">
-                            <div className="insights-grid">
-                                <div className="insight-item healthy">
-                                    <div className="insight-label">✅ Healthy Envelopes</div>
-                                    <div className="insight-value">
-                                        {insights.healthy.length > 0 ? insights.healthy.join(', ') : 'None'}
-                                    </div>
-                                </div>
-                                <div className="insight-item warning">
-                                    <div className="insight-label">⚠️ Warning Envelopes</div>
-                                    <div className="insight-value">
-                                        {insights.warnings.length > 0 ? insights.warnings.join(', ') : 'None'}
-                                    </div>
-                                </div>
-                                <div className="insight-item blocked">
-                                    <div className="insight-label">🚫 Blocked Envelopes</div>
-                                    <div className="insight-value">
-                                        {insights.blocked.length > 0 ? insights.blocked.join(', ') : 'None'}
-                                    </div>
-                                </div>
-                                <div className="insight-item blocked">
-                                    <div className="insight-label">❌ Blocked Transactions</div>
-                                    <div className="insight-value">{blockedTransactions.length} transactions</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
+            ) : null}
 
             {/* Quick Actions for Mobile */}
             <div className="quick-actions">
@@ -2097,7 +1271,7 @@ const EnvelopeBudget = () => {
                                 <button 
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        setActiveView('spending');
+                                        setActiveView('budget');
                                         setQuickActionSheet(false);
                                     }}
                                     style={{ width: '100%', padding: '16px' }}
@@ -2173,51 +1347,7 @@ const EnvelopeBudget = () => {
                 </div>
             )}
 
-            {rolloverConfirm && (
-                <div className="modal-overlay" onClick={() => setRolloverConfirm(false)}>
-                    <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
-                        <button 
-                            className="modal-close"
-                            onClick={() => setRolloverConfirm(false)}
-                            aria-label="Close modal"
-                        >
-                            ×
-                        </button>
-                        <h3>🔄 Rollover to Which Period?</h3>
-                        <p>Select the target budget period for rollover:</p>
-                        <div style={{ maxHeight: '300px', overflowY: 'auto', margin: '20px 0' }}>
-                            {generatePeriodOptions().filter(period => period.key !== currentPeriod).map(period => (
-                                <button
-                                    key={period.key}
-                                    onClick={() => confirmRollover(period.key)}
-                                    style={{
-                                        display: 'block',
-                                        width: '100%',
-                                        padding: '10px',
-                                        margin: '5px 0',
-                                        backgroundColor: '#f8f9fa',
-                                        border: '1px solid #dee2e6',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        textAlign: 'left'
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                                >
-                                    {period.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="modal-actions">
-                            <button className="btn btn-secondary" onClick={() => setRolloverConfirm(false)}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showQuickExpenseModal && (
+{showQuickExpenseModal && (
                 <div className="modal-overlay" onClick={() => {
                     setShowQuickExpenseModal(false);
                     setPreSelectedEnvelope(null);
@@ -2304,6 +1434,109 @@ const EnvelopeBudget = () => {
                             </button>
                             <button className="btn btn-danger" onClick={confirmDelete}>
                                 Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showPaymentMethodsManager && (
+                <div className="modal-overlay" onClick={() => setShowPaymentMethodsManager(false)}>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <PaymentMethodsManager
+                            paymentMethods={customPaymentMethods}
+                            onAdd={addCustomPaymentMethod}
+                            onDelete={(method) => {
+                                const isUsed = transactions.some(t => t.paymentMethod === method);
+                                if (isUsed) {
+                                    showNotification('error', `Cannot delete ${method}. It is used in transactions.`);
+                                } else {
+                                    deletePaymentMethod(method);
+                                }
+                            }}
+                            transactions={transactions}
+                            onClose={() => setShowPaymentMethodsManager(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {showUserProfile && (
+                <div className="modal-overlay" onClick={() => setShowUserProfile(false)}>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <UserProfile
+                            user={auth.currentUser}
+                            paymentMethods={customPaymentMethods}
+                            envelopes={envelopes}
+                            transactions={transactions}
+                            onAddPaymentMethod={addCustomPaymentMethod}
+                            onDeletePaymentMethod={(method) => {
+                                const isUsed = transactions.some(t => t.paymentMethod === method);
+                                if (isUsed) {
+                                    showNotification('error', `Cannot delete ${method}. It is used in transactions.`);
+                                } else {
+                                    deletePaymentMethod(method);
+                                }
+                            }}
+                            onAddEnvelope={addEnvelope}
+                            onDeleteEnvelope={deleteEnvelope}
+                            onClose={() => setShowUserProfile(false)}
+                            onShowNotification={showNotification}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {showManagePaymentModal && (
+                <div className="modal-overlay" onClick={() => setShowManagePaymentModal(false)}>
+                    <div className="modal mobile-optimized" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="modal-close"
+                            onClick={() => setShowManagePaymentModal(false)}
+                            aria-label="Close modal"
+                        >
+                            ×
+                        </button>
+                        <h3>💳 Manage Payment Methods</h3>
+                        <div style={{ margin: '20px 0' }}>
+                            {customPaymentMethods.length === 0 ? (
+                                <p style={{ textAlign: 'center', color: '#6b7280' }}>No payment methods yet</p>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {customPaymentMethods.sort((a, b) => a.localeCompare(b)).map(method => {
+                                        const isUsed = transactions.some(t => t.paymentMethod === method);
+                                        return (
+                                            <div key={method} style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                padding: '12px',
+                                                background: '#f9fafb',
+                                                borderRadius: '8px',
+                                                border: '1px solid #e5e7eb'
+                                            }}>
+                                                <span style={{ fontWeight: '600' }}>{method}</span>
+                                                <button
+                                                    className="btn-delete"
+                                                    onClick={() => {
+                                                        setShowManagePaymentModal(false);
+                                                        setDeleteConfirm({ type: 'paymentMethod', id: method, name: method });
+                                                    }}
+                                                    disabled={isUsed}
+                                                    title={isUsed ? 'Cannot delete - used in transactions' : 'Delete payment method'}
+                                                    style={{ opacity: isUsed ? 0.3 : 1, cursor: isUsed ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={() => setShowManagePaymentModal(false)}>
+                                Close
                             </button>
                         </div>
                     </div>
