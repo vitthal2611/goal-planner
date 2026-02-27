@@ -1,63 +1,20 @@
-.payment-methods-manager {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
+.payment-methods-content {
   display: flex;
   flex-direction: column;
-}
-
-.manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.manager-header h3 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 28px;
-  cursor: pointer;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.manager-content {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
+  gap: 20px;
 }
 
 .add-method-section {
-  margin-bottom: 30px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
 }
 
 .add-method-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
   color: #374151;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .add-method-form {
@@ -109,9 +66,9 @@
 }
 
 .methods-list-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
   color: #374151;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .empty-state {
@@ -193,18 +150,17 @@
 }
 
 .info-section {
-  margin-top: 20px;
-  padding: 16px;
+  padding: 12px;
   background: #eff6ff;
   border-left: 4px solid #3b82f6;
   border-radius: 6px;
 }
 
 .info-section p {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 4px 0;
+  font-size: 13px;
   color: #1e40af;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .info-section p:last-child {
@@ -213,29 +169,16 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .payment-methods-manager {
-    width: 95%;
-    max-height: 90vh;
-  }
-
-  .manager-header {
-    padding: 16px;
-  }
-
-  .manager-header h3 {
-    font-size: 1.25rem;
-  }
-
-  .manager-content {
-    padding: 16px;
-  }
-
   .add-method-form {
-    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .method-input {
+    flex: 1 1 100%;
   }
 
   .btn-add {
-    width: 100%;
+    flex: 1 1 100%;
   }
 
   .method-item {

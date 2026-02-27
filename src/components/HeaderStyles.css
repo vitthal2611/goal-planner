@@ -1,0 +1,194 @@
+/* Modern Header Styles */
+.header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.95));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.5px;
+    text-align: center;
+}
+
+/* Period Controls - Grid Layout */
+.period-controls {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.year-selector-group,
+.month-selector-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 2px solid rgba(59, 130, 246, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.year-selector-group label,
+.month-selector-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.year-selector-group .period-selector,
+.month-selector-group .period-selector {
+    border: none;
+    padding: 4px 20px 4px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: auto;
+    background-position: right 2px center;
+    background-size: 12px;
+    color: #374151;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: white;
+    padding: 4px;
+    border-radius: 10px;
+    border: 2px solid rgba(59, 130, 246, 0.1);
+    justify-self: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-option {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-height: auto;
+}
+
+.toggle-option:hover {
+    background: #f3f4f6;
+}
+
+.toggle-option.active {
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    color: white;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.month-selector-group > div {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.month-selector-group .btn-secondary {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
+    font-size: 14px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    border: none;
+    font-weight: 700;
+    color: #374151;
+}
+
+.month-selector-group .btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 16px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .period-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .year-selector-group,
+    .view-toggle,
+    .month-selector-group {
+        width: 100%;
+    }
+
+    .view-toggle {
+        justify-self: stretch;
+    }
+
+    .toggle-option {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+    }
+
+    .year-selector-group .period-selector,
+    .month-selector-group .period-selector {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 14px;
+    }
+
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .year-selector-group,
+    .month-selector-group {
+        padding: 5px 8px;
+    }
+
+    .year-selector-group label,
+    .month-selector-group label {
+        font-size: 11px;
+    }
+
+    .toggle-option {
+        font-size: 11px;
+        padding: 7px;
+    }
+}
