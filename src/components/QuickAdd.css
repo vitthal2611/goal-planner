@@ -162,8 +162,17 @@
   border-left: 4px solid #3b82f6;
 }
 
+.budget-card {
+  border-left: 4px solid #8b5cf6;
+}
+
+.remaining-card {
+  border-left: 4px solid #f59e0b;
+}
+
 @media (min-width: 768px) {
   .dashboard-summary {
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     margin-bottom: 20px;
   }
@@ -1523,6 +1532,14 @@
 @media (max-width: 640px) {
   .dashboard-summary {
     grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    padding: 14px;
+  }
+
+  .summary-amount {
+    font-size: 22px;
   }
 
   .envelope-cards {

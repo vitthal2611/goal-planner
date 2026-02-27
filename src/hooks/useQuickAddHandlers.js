@@ -22,15 +22,10 @@ export const useQuickAddHandlers = ({
   onAddIncome
 }) => {
   const handleEnvelopeClick = (category, name, dashboardData) => {
-    const envelopeData = dashboardData.envelopeBalances[category]?.[name];
-    if (!envelopeData || envelopeData.balance <= 0) {
-      onShowNotification('error', 'No balance available in this envelope');
-      return;
-    }
     setSelectedEnvelope({ category, name });
     setForms(prev => ({
       ...prev,
-      expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC' }
+      expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC', allowOverspend: false }
     }));
   };
 
@@ -43,25 +38,20 @@ export const useQuickAddHandlers = ({
       return;
     }
 
-    const balance = getEnvelopeBalance(selectedEnvelope.category, selectedEnvelope.name, envelopes, currentPeriod, monthlyData, transactions);
-    if (amount > balance) {
-      onShowNotification('error', `Insufficient balance! Available: ₹${balance.toLocaleString()}`);
-      return;
-    }
-
     const transaction = {
       envelope: `${selectedEnvelope.category}.${selectedEnvelope.name}`,
       amount,
       description: forms.expense.description || 'Quick expense',
       paymentMethod: forms.expense.paymentMethod,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      allowOverspend: forms.expense.allowOverspend || false
     };
 
     onAddTransaction(transaction);
     setSelectedEnvelope(null);
     setForms(prev => ({
       ...prev,
-      expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC' }
+      expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC', allowOverspend: false }
     }));
   };
 

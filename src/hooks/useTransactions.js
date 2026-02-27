@@ -24,12 +24,7 @@ export const useTransactions = () => {
       throw new Error('Invalid envelope');
     }
 
-    const available = env.budgeted + env.rollover - env.spent;
     const expenseAmount = parseFloat(amount);
-
-    if (available < expenseAmount) {
-      throw new Error('Insufficient funds!');
-    }
 
     const transactionRecord = {
       id: Date.now() + Math.random(),

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { sanitizeInput, validatePaymentMethod } from '../utils/sanitize';
+import BulkExpenseModal from './BulkExpenseModal';
+import CSVImport from './CSVImport';
 import './QuickExpenseForm.css';
 
 const QuickExpenseForm = ({ 
@@ -10,6 +12,7 @@ const QuickExpenseForm = ({
   onAddCustomPaymentMethod,
   onShowNotification,
   onTransfer,
+  onBulkAdd,
   preSelectedEnvelope = null,
   hideSubmitButton = false
 }) => {
@@ -22,6 +25,8 @@ const QuickExpenseForm = ({
   });
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [errors, setErrors] = useState({});
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
 
   // Update envelope when preSelectedEnvelope changes
   React.useEffect(() => {
@@ -117,16 +122,36 @@ const QuickExpenseForm = ({
     setErrors({});
   };
 
+  const handleBulkSubmit = (expenses) => {
+    expenses.forEach(exp => onAddTransaction(exp));
+    onShowNotification('success', `✓ Added ${expenses.length} expenses!`);
+  };
+
   return (
+    <>
     <div className="card mobile-optimized quick-expense-card">
       <div className="card-header">
         <h3>⚡ Quick Expense</h3>
-        <button 
-          className="btn btn-primary btn-sm touch-feedback"
-          onClick={onTransfer}
-        >
-          🔄 Transfer
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className="btn btn-secondary btn-sm touch-feedback"
+            onClick={() => setShowBulkModal(true)}
+          >
+            📝 Bulk
+          </button>
+          <button 
+            className="btn btn-secondary btn-sm touch-feedback"
+            onClick={() => setShowCSVImport(true)}
+          >
+            📥 CSV
+          </button>
+          <button 
+            className="btn btn-primary btn-sm touch-feedback"
+            onClick={onTransfer}
+          >
+            🔄 Transfer
+          </button>
+        </div>
       </div>
       <div className="card-content">
         <div className="quick-expense-form">
@@ -251,6 +276,27 @@ const QuickExpenseForm = ({
         </div>
       </div>
     </div>
+
+    {showBulkModal && (
+      <BulkExpenseModal
+        envelopes={envelopes}
+        paymentMethods={customPaymentMethods}
+        dateRange={dateRange}
+        onClose={() => setShowBulkModal(false)}
+        onSubmit={handleBulkSubmit}
+      />
+    )}
+
+    {showCSVImport && (
+      <CSVImport
+        envelopes={envelopes}
+        paymentMethods={customPaymentMethods}
+        dateRange={dateRange}
+        onClose={() => setShowCSVImport(false)}
+        onSubmit={handleBulkSubmit}
+      />
+    )}
+    </>
   );
 };
 

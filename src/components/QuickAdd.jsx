@@ -6,6 +6,8 @@ import PaymentMethodCard from './PaymentMethodCard';
 import SummaryCard from './SummaryCard';
 import EnvelopeGrid from './EnvelopeGrid';
 import ErrorBoundary from './ErrorBoundary';
+import BulkExpenseModal from './BulkExpenseModal';
+import CSVImport from './CSVImport';
 import { calculateDashboardData } from '../utils/envelopeUtils';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useQuickAddHandlers } from '../hooks/useQuickAddHandlers';
@@ -26,7 +28,7 @@ const QuickAdd = ({
   const [transferModal, setTransferModal] = useState({ show: false, from: '', to: '', amount: '' });
   const [forms, setForms] = useState({
     income: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || '' },
-    expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC' }
+    expense: { amount: '', description: '', paymentMethod: customPaymentMethods[0] || 'HDFC', allowOverspend: false }
   });
   const [filters, setFilters] = useState({
     search: '',
@@ -41,6 +43,8 @@ const QuickAdd = ({
     transactionLimit: 10
   });
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
 
   useEffect(() => {
     if (customPaymentMethods.length > 0 && !forms.income.paymentMethod) {
@@ -55,6 +59,14 @@ const QuickAdd = ({
     calculateDashboardData(transactions, envelopes, customPaymentMethods, currentPeriod, monthlyData),
     [transactions, envelopes, customPaymentMethods, currentPeriod, monthlyData]
   );
+
+  const totalBudget = useMemo(() => {
+    return Object.values(envelopes).reduce((sum, category) => 
+      sum + Object.values(category).reduce((catSum, env) => catSum + env.budgeted, 0), 0
+    );
+  }, [envelopes]);
+
+  const remainingBudget = useMemo(() => totalBudget - dashboardData.expenses.total, [totalBudget, dashboardData.expenses.total]);
 
   const filteredTransactions = useTransactionFilters(transactions, filters);
   const displayedTransactions = filteredTransactions.slice(0, uiState.transactionLimit);
@@ -99,6 +111,11 @@ const QuickAdd = ({
     setTransferModal({ show: false, from: '', to: '', amount: '' });
   };
 
+  const handleBulkSubmit = (expenses) => {
+    expenses.forEach(exp => onAddTransaction(exp));
+    onShowNotification('success', `✓ Added ${expenses.length} expenses!`);
+  };
+
   return (
     <div className="quick-add-container">
       <ErrorBoundary fallbackMessage="Unable to load financial overview">
@@ -136,6 +153,21 @@ const QuickAdd = ({
               meta={`${dashboardData.transfers.count} transfers`}
               className="balance-card"
               amountColor={dashboardData.income.total - dashboardData.expenses.total >= 0 ? '#10b981' : '#ef4444'}
+            />
+            <SummaryCard
+              icon="📊"
+              label="Total Budget"
+              amount={totalBudget}
+              meta={`${Object.keys(envelopes).reduce((sum, cat) => sum + Object.keys(envelopes[cat]).length, 0)} envelopes`}
+              className="budget-card"
+            />
+            <SummaryCard
+              icon="💰"
+              label="Remaining"
+              amount={remainingBudget}
+              meta={`${totalBudget > 0 ? Math.round((dashboardData.expenses.total / totalBudget) * 100) : 0}% used`}
+              className="remaining-card"
+              amountColor={remainingBudget >= 0 ? '#10b981' : '#ef4444'}
             />
           </div>
         ) : (
@@ -224,6 +256,8 @@ const QuickAdd = ({
                 🗑️ Delete ({selectedTransactions.size})
               </button>
             )}
+            <button className="btn-secondary" onClick={() => setShowBulkModal(true)}>📝 Bulk</button>
+            <button className="btn-secondary" onClick={() => setShowCSVImport(true)}>📥 CSV</button>
             <button className="btn-export" onClick={handlers.handleExport}>📤 Export</button>
             <label className="btn-import">
               📥 Import
@@ -312,7 +346,10 @@ const QuickAdd = ({
           form={forms.expense}
           paymentMethods={customPaymentMethods}
           paymentBalances={dashboardData.paymentMethodBalances}
-          onClose={() => setSelectedEnvelope(null)}
+          onClose={() => {
+            setSelectedEnvelope(null);
+            setForms(prev => ({ ...prev, expense: { ...prev.expense, allowOverspend: false } }));
+          }}
           onFormChange={(newForm) => setForms(prev => ({ ...prev, expense: newForm }))}
           onSubmit={handlers.handleAddExpense}
         />
@@ -391,6 +428,26 @@ const QuickAdd = ({
             </div>
           </div>
         </div>
+      )}
+
+      {showBulkModal && (
+        <BulkExpenseModal
+          envelopes={envelopes}
+          paymentMethods={customPaymentMethods}
+          dateRange={{ min: `${currentPeriod}-01`, max: `${currentPeriod}-31` }}
+          onClose={() => setShowBulkModal(false)}
+          onSubmit={handleBulkSubmit}
+        />
+      )}
+
+      {showCSVImport && (
+        <CSVImport
+          envelopes={envelopes}
+          paymentMethods={customPaymentMethods}
+          dateRange={{ min: `${currentPeriod}-01`, max: `${currentPeriod}-31` }}
+          onClose={() => setShowCSVImport(false)}
+          onSubmit={handleBulkSubmit}
+        />
       )}
     </div>
   );

@@ -1,0 +1,57 @@
+.csv-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.csv-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.file-input {
+  padding: 10px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.error-msg {
+  color: #ef4444;
+  padding: 10px;
+  background: #fee;
+  border-radius: 6px;
+}
+
+.preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.preview h4 {
+  margin: 0 0 10px 0;
+}
+
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-item {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.preview-more {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}

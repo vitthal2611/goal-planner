@@ -96,6 +96,7 @@ const EnhancedDashboard = memo(({
               }}
               onAddCustomPaymentMethod={onAddCustomPaymentMethod}
               onShowNotification={onShowNotification}
+              onTransfer={() => onShowNotification('info', 'Transfer feature available in main view')}
             />
           </div>
         </div>

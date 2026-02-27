@@ -6,7 +6,7 @@ export class TransactionService {
   }
 
   createTransaction(data, monthlyData, currentPeriod) {
-    const { envelope, amount, description, paymentMethod, date } = data;
+    const { envelope, amount, description, paymentMethod, date, allowOverspend } = data;
     const expenseAmount = parseFloat(amount);
 
     if (!expenseAmount || expenseAmount <= 0) {
@@ -24,7 +24,7 @@ export class TransactionService {
     const [category, name] = envelope.split('.');
     const available = this.envelopeService.getAvailableBalance(monthlyData, category, name, currentPeriod);
 
-    if (available < expenseAmount) {
+    if (available < expenseAmount && !allowOverspend) {
       throw new Error('Insufficient funds!');
     }
 
@@ -34,7 +34,8 @@ export class TransactionService {
       envelope,
       amount: expenseAmount,
       description: sanitizeInput(description || 'Quick expense'),
-      paymentMethod: sanitizeInput(paymentMethod)
+      paymentMethod: sanitizeInput(paymentMethod),
+      overBudget: available < expenseAmount
     };
   }
 
