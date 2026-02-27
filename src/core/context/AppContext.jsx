@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useMemo, useEffect } from 'react';
 import { auth } from '../../config/firebase';
+import { getGlobalEnvelopes } from '../../utils/globalEnvelopes';
 
 const AppContext = createContext();
 
@@ -15,7 +16,8 @@ const initialState = {
   monthlyData: {},
   customPaymentMethods: [],
   dataLoaded: false,
-  notification: { type: '', message: '' }
+  notification: { type: '', message: '' },
+  globalEnvelopes: null
 };
 
 const budgetReducer = (state, action) => {
@@ -89,38 +91,42 @@ const envelopeReducer = (state, action) => {
   switch (action.type) {
     case 'ENVELOPE_CREATED':
       const { category, name } = action.payload;
-      return {
-        ...state,
-        monthlyData: {
-          ...monthlyData,
-          [currentPeriod]: {
-            ...currentData,
-            envelopes: {
-              ...(currentData.envelopes || {}),
-              [category]: {
-                ...(currentData.envelopes?.[category] || {}),
-                [name]: { budgeted: 0 }
-              }
-            }
-          }
+      const updatedMonthlyData = { ...monthlyData };
+      Object.keys(updatedMonthlyData).forEach(period => {
+        if (!updatedMonthlyData[period].envelopes) {
+          updatedMonthlyData[period].envelopes = {};
+        }
+        if (!updatedMonthlyData[period].envelopes[category]) {
+          updatedMonthlyData[period].envelopes[category] = {};
+        }
+        updatedMonthlyData[period].envelopes[category][name] = { budgeted: 0 };
+      });
+      const updatedGlobalEnvelopes = {
+        ...state.globalEnvelopes,
+        [category]: {
+          ...(state.globalEnvelopes?.[category] || {}),
+          [name]: { budgeted: 0 }
         }
       };
+      return { ...state, monthlyData: updatedMonthlyData, globalEnvelopes: updatedGlobalEnvelopes };
     case 'ENVELOPE_DELETED':
       const { category: cat, name: envName } = action.payload;
-      const updatedEnvelopes = { ...(currentData.envelopes || {}) };
-      if (updatedEnvelopes[cat]) {
-        delete updatedEnvelopes[cat][envName];
-      }
-      return {
-        ...state,
-        monthlyData: {
-          ...monthlyData,
-          [currentPeriod]: {
-            ...currentData,
-            envelopes: updatedEnvelopes
-          }
+      const deletedMonthlyData = { ...monthlyData };
+      Object.keys(deletedMonthlyData).forEach(period => {
+        const envelopes = { ...(deletedMonthlyData[period].envelopes || {}) };
+        if (envelopes[cat]) {
+          delete envelopes[cat][envName];
         }
-      };
+        deletedMonthlyData[period] = {
+          ...deletedMonthlyData[period],
+          envelopes
+        };
+      });
+      const deletedGlobalEnvelopes = { ...state.globalEnvelopes };
+      if (deletedGlobalEnvelopes[cat]) {
+        delete deletedGlobalEnvelopes[cat][envName];
+      }
+      return { ...state, monthlyData: deletedMonthlyData, globalEnvelopes: deletedGlobalEnvelopes };
     default:
       return state;
   }
@@ -129,9 +135,20 @@ const envelopeReducer = (state, action) => {
 const appReducer = (state, action) => {
   switch (action.type) {
     case 'SET_CURRENT_PERIOD':
-      return { ...state, currentPeriod: action.payload };
+      const newPeriod = action.payload;
+      const updatedMonthlyData = { ...state.monthlyData };
+      if (!updatedMonthlyData[newPeriod]) {
+        updatedMonthlyData[newPeriod] = {
+          income: 0,
+          envelopes: {},
+          transactions: []
+        };
+      }
+      return { ...state, currentPeriod: newPeriod, monthlyData: updatedMonthlyData };
     case 'SET_MONTHLY_DATA':
       return { ...state, monthlyData: action.payload };
+    case 'SET_GLOBAL_ENVELOPES':
+      return { ...state, globalEnvelopes: action.payload };
     case 'SET_PAYMENT_METHODS':
       return { ...state, customPaymentMethods: action.payload };
     case 'SET_DATA_LOADED':

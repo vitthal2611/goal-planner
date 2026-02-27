@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useApp } from '../../../core/context/AppContext';
+import { addGlobalEnvelope, removeGlobalEnvelope } from '../../../utils/globalEnvelopes';
 
 export const useEnvelopes = () => {
   const { state, dispatch, services } = useApp();
@@ -22,12 +23,14 @@ export const useEnvelopes = () => {
     return envelopeService.getStatusColor(monthlyData, category, name, currentPeriod);
   }, [envelopeService, monthlyData, currentPeriod]);
 
-  const create = useCallback((category, name) => {
+  const create = useCallback(async (category, name) => {
     dispatch({ type: 'ENVELOPE_CREATED', payload: { category, name } });
+    await addGlobalEnvelope(category, name);
   }, [dispatch]);
 
-  const remove = useCallback((category, name) => {
+  const remove = useCallback(async (category, name) => {
     dispatch({ type: 'ENVELOPE_DELETED', payload: { category, name } });
+    await removeGlobalEnvelope(category, name);
   }, [dispatch]);
 
   const envelopes = useMemo(() => {

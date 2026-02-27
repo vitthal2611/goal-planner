@@ -47,18 +47,17 @@ export const useDataLoader = (userId) => {
 
         const monthlyData = budgetData?.monthlyData || {};
         
-        // Initialize current period with global envelopes if not exists
+        // Initialize current period if not exists
         if (!monthlyData[currentPeriod]) {
           monthlyData[currentPeriod] = {
             income: 0,
-            envelopes: globalEnvelopes,
+            envelopes: {},
             transactions: []
           };
-        } else if (!monthlyData[currentPeriod].envelopes || Object.keys(monthlyData[currentPeriod].envelopes).length === 0) {
-          monthlyData[currentPeriod].envelopes = globalEnvelopes;
         }
 
         dispatch({ type: 'SET_MONTHLY_DATA', payload: monthlyData });
+        dispatch({ type: 'SET_GLOBAL_ENVELOPES', payload: globalEnvelopes });
         dispatch({ type: 'SET_CURRENT_PERIOD', payload: budgetData?.currentPeriod || currentPeriod });
         dispatch({ type: 'SET_PAYMENT_METHODS', payload: paymentMethods });
         dispatch({ type: 'SET_DATA_LOADED', payload: true });

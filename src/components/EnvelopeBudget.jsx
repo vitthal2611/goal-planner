@@ -38,6 +38,11 @@ const EnvelopeBudget = () => {
     return () => window.removeEventListener('openProfile', handleOpenProfile);
   }, []);
 
+  useEffect(() => {
+    const [year] = currentPeriod.split('-').map(Number);
+    setSelectedYear(year);
+  }, [currentPeriod]);
+
   const handleAllocate = (category, name, amount) => {
     try {
       allocate(category, name, amount);
@@ -135,6 +140,11 @@ const EnvelopeBudget = () => {
     const [year, month] = currentPeriod.split('-').map(Number);
     const newMonth = direction === 'next' ? (month === 12 ? 1 : month + 1) : (month === 1 ? 12 : month - 1);
     const newYear = direction === 'next' ? (month === 12 ? year + 1 : year) : (month === 1 ? year - 1 : year);
+    
+    // Don't go before January 2026
+    if (newYear < 2026) return;
+    
+    setSelectedYear(newYear);
     dispatch({ type: 'SET_CURRENT_PERIOD', payload: `${newYear}-${String(newMonth).padStart(2, '0')}` });
   };
 
@@ -186,7 +196,7 @@ const EnvelopeBudget = () => {
       )}
 
       <div className="header">
-        <h1>💰 Envelope Budget Tracker</h1>
+        <h1>💰 Envelope Budget Tracker - {currentPeriod.split('-')[1] === '01' ? 'January' : currentPeriod.split('-')[1] === '02' ? 'February' : currentPeriod.split('-')[1] === '03' ? 'March' : currentPeriod.split('-')[1] === '04' ? 'April' : currentPeriod.split('-')[1] === '05' ? 'May' : currentPeriod.split('-')[1] === '06' ? 'June' : currentPeriod.split('-')[1] === '07' ? 'July' : currentPeriod.split('-')[1] === '08' ? 'August' : currentPeriod.split('-')[1] === '09' ? 'September' : currentPeriod.split('-')[1] === '10' ? 'October' : currentPeriod.split('-')[1] === '11' ? 'November' : 'December'} {currentPeriod.split('-')[0]}</h1>
         <div className="period-controls">
           <div className="year-selector-group">
             <label>Year:</label>
@@ -202,7 +212,7 @@ const EnvelopeBudget = () => {
               }}
               className="period-selector"
             >
-              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+              {Array.from({ length: 5 }, (_, i) => 2026 + i).map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -228,26 +238,9 @@ const EnvelopeBudget = () => {
               <label>Month:</label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button onClick={() => changePeriod('prev')} className="btn btn-secondary" style={{ padding: '8px 12px', minWidth: 'auto' }}>←</button>
-                <select 
-                  value={currentPeriod.split('-')[1]} 
-                  onChange={(e) => {
-                    dispatch({ type: 'SET_CURRENT_PERIOD', payload: `${selectedYear}-${e.target.value}` });
-                  }}
-                  className="period-selector"
-                >
-                  <option value="01">January</option>
-                  <option value="02">February</option>
-                  <option value="03">March</option>
-                  <option value="04">April</option>
-                  <option value="05">May</option>
-                  <option value="06">June</option>
-                  <option value="07">July</option>
-                  <option value="08">August</option>
-                  <option value="09">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
+                <div style={{ minWidth: '150px', textAlign: 'center', fontWeight: 'bold' }}>
+                  {currentPeriod.split('-')[1] === '01' ? 'January' : currentPeriod.split('-')[1] === '02' ? 'February' : currentPeriod.split('-')[1] === '03' ? 'March' : currentPeriod.split('-')[1] === '04' ? 'April' : currentPeriod.split('-')[1] === '05' ? 'May' : currentPeriod.split('-')[1] === '06' ? 'June' : currentPeriod.split('-')[1] === '07' ? 'July' : currentPeriod.split('-')[1] === '08' ? 'August' : currentPeriod.split('-')[1] === '09' ? 'September' : currentPeriod.split('-')[1] === '10' ? 'October' : currentPeriod.split('-')[1] === '11' ? 'November' : 'December'} {currentPeriod.split('-')[0]}
+                </div>
                 <button onClick={() => changePeriod('next')} className="btn btn-secondary" style={{ padding: '8px 12px', minWidth: 'auto' }}>→</button>
               </div>
             </div>

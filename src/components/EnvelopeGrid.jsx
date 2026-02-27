@@ -2,28 +2,24 @@ import React from 'react';
 
 const EnvelopeGrid = ({ envelopes, dashboardData, onEnvelopeClick, onCreateEnvelope }) => {
   if (Object.keys(envelopes).length === 0) {
-    return (
-      <div className="empty-state">
-        <div className="empty-icon">📊</div>
-        <div className="empty-title">No envelopes created</div>
-        <div className="empty-text">Create envelopes to start budgeting</div>
-        <button className="btn-empty-action" onClick={onCreateEnvelope}>
-          ➕ Create Envelope
-        </button>
-      </div>
-    );
+    return null;
   }
 
   return (
     <>
-      {Object.keys(envelopes).map(category => (
+      {Object.keys(envelopes).map(category => {
+        const categoryEnvelopes = Object.keys(envelopes[category]);
+        
+        if (categoryEnvelopes.length === 0) return null;
+        
+        return (
         <div key={category} className="category-section">
           <h3 className="category-title">
             {category === 'needs' ? '🏠 Needs' :
              category === 'savings' ? '💰 Savings' : '🎯 Wants'}
           </h3>
           <div className="envelope-cards">
-            {Object.keys(envelopes[category]).map(name => {
+            {categoryEnvelopes.map(name => {
               const envelopeData = dashboardData.envelopeBalances[category]?.[name];
               if (!envelopeData) return null;
 
@@ -59,7 +55,8 @@ const EnvelopeGrid = ({ envelopes, dashboardData, onEnvelopeClick, onCreateEnvel
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </>
   );
 };
