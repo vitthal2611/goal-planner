@@ -6,8 +6,6 @@ import PaymentMethodCard from './PaymentMethodCard';
 import SummaryCard from './SummaryCard';
 import EnvelopeGrid from './EnvelopeGrid';
 import ErrorBoundary from './ErrorBoundary';
-import BulkExpenseModal from './BulkExpenseModal';
-import CSVImport from './CSVImport';
 import { calculateDashboardData } from '../utils/envelopeUtils';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useQuickAddHandlers } from '../hooks/useQuickAddHandlers';
@@ -43,8 +41,6 @@ const QuickAdd = ({
     transactionLimit: 10
   });
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
-  const [showBulkModal, setShowBulkModal] = useState(false);
-  const [showCSVImport, setShowCSVImport] = useState(false);
 
   useEffect(() => {
     if (customPaymentMethods.length > 0 && !forms.income.paymentMethod) {
@@ -256,13 +252,6 @@ const QuickAdd = ({
                 🗑️ Delete ({selectedTransactions.size})
               </button>
             )}
-            <button className="btn-secondary" onClick={() => setShowBulkModal(true)}>📝 Bulk</button>
-            <button className="btn-secondary" onClick={() => setShowCSVImport(true)}>📥 CSV</button>
-            <button className="btn-export" onClick={handlers.handleExport}>📤 Export</button>
-            <label className="btn-import">
-              📥 Import
-              <input type="file" accept=".json" onChange={handlers.handleImport} style={{ display: 'none' }} />
-            </label>
           </div>
         </div>
         
@@ -428,26 +417,6 @@ const QuickAdd = ({
             </div>
           </div>
         </div>
-      )}
-
-      {showBulkModal && (
-        <BulkExpenseModal
-          envelopes={envelopes}
-          paymentMethods={customPaymentMethods}
-          dateRange={{ min: `${currentPeriod}-01`, max: `${currentPeriod}-31` }}
-          onClose={() => setShowBulkModal(false)}
-          onSubmit={handleBulkSubmit}
-        />
-      )}
-
-      {showCSVImport && (
-        <CSVImport
-          envelopes={envelopes}
-          paymentMethods={customPaymentMethods}
-          dateRange={{ min: `${currentPeriod}-01`, max: `${currentPeriod}-31` }}
-          onClose={() => setShowCSVImport(false)}
-          onSubmit={handleBulkSubmit}
-        />
       )}
     </div>
   );

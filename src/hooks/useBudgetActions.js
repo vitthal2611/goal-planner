@@ -15,7 +15,6 @@ const budgetService = new BudgetService();
 export const useBudgetActions = () => {
   const { state, dispatch } = useBudget();
   const { addTransaction } = useTransactions();
-  const { addCustomPaymentMethod: addPaymentMethod } = usePaymentMethods();
 
   const showNotification = useCallback((type, message) => {
     dispatch({ type: 'SET_NOTIFICATION', payload: { type, message } });

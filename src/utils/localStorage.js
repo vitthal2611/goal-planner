@@ -1,65 +1,45 @@
-// Firebase storage utility functions
-import { saveData, getData } from '../services/database.js';
-import { auth } from '../config/firebase.js';
+// Local storage utility functions - Updated to work without Firebase
 import { getGlobalEnvelopes } from './globalEnvelopes.js';
-
-const getStoragePath = () => {
-  const user = auth.currentUser;
-  return user ? `users/${user.uid}/envelopeBudget_v1` : 'envelopeBudget_v1';
-};
 
 export const saveToLocalStorage = async (data) => {
   try {
-    const user = auth.currentUser;
-    if (!user) {
-      return { success: false, error: 'No authenticated user' };
-    }
-    
     const dataToSave = {
       ...data,
       lastUpdated: new Date().toISOString()
     };
     
-    // Save to sessionStorage immediately for instant access
+    // Save to localStorage for persistence
+    localStorage.setItem('budgetData', JSON.stringify(dataToSave));
+    // Also save to sessionStorage for instant access
     sessionStorage.setItem('budgetCache', JSON.stringify(dataToSave));
     
-    // Save to Firebase in background
-    const result = await saveData(getStoragePath(), dataToSave);
-    return result;
+    return { success: true };
   } catch (error) {
-    console.error('Failed to save to Firebase:', error);
+    console.error('Failed to save to localStorage:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const loadFromLocalStorage = async () => {
   try {
-    const user = auth.currentUser;
-    if (!user) {
-      return null;
-    }
-    
     // Try sessionStorage first (instant)
     const cached = sessionStorage.getItem('budgetCache');
     if (cached) {
-      const parsed = JSON.parse(cached);
-      // Load from Firebase in background to update cache
-      getData(getStoragePath()).then(result => {
-        if (result.success && result.data) {
-          sessionStorage.setItem('budgetCache', JSON.stringify(result.data));
-        }
-      });
+      return JSON.parse(cached);
+    }
+    
+    // Try localStorage
+    const stored = localStorage.getItem('budgetData');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Update sessionStorage cache
+      sessionStorage.setItem('budgetCache', stored);
       return parsed;
     }
     
-    // Load from Firebase
-    const result = await getData(getStoragePath());
-    if (result.success && result.data) {
-      sessionStorage.setItem('budgetCache', JSON.stringify(result.data));
-    }
-    return result.success ? result.data : null;
+    return null;
   } catch (error) {
-    console.error('Failed to load from Firebase:', error);
+    console.error('Failed to load from localStorage:', error);
     return null;
   }
 };
@@ -67,10 +47,10 @@ export const loadFromLocalStorage = async () => {
 export const clearLocalStorage = async () => {
   try {
     sessionStorage.removeItem('budgetCache');
-    const result = await saveData(getStoragePath(), null);
-    return result;
+    localStorage.removeItem('budgetData');
+    return { success: true };
   } catch (error) {
-    console.error('Failed to clear Firebase data:', error);
+    console.error('Failed to clear localStorage:', error);
     return { success: false, error: error.message };
   }
 };

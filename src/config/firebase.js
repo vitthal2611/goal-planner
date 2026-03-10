@@ -1,21 +1,9 @@
-import { initializeApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+// Stub firebase config - Firebase has been removed from this project
+// This file exists only to prevent import errors during transition
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDkVbVhmFA301ZERkgNuxzfkjxzmlpe7Uk",
-  authDomain: "goal-planner-b604e.firebaseapp.com",
-  databaseURL: "https://goal-planner-b604e-default-rtdb.firebaseio.com",
-  projectId: "goal-planner-b604e",
-  storageBucket: "goal-planner-b604e.firebasestorage.app",
-  messagingSenderId: "82233624728",
-  appId: "1:82233624728:web:49b5d083a39237d987e8ed"
+export const auth = {
+  currentUser: null
 };
 
-const app = initializeApp(firebaseConfig);
-export const database = getDatabase(app);
-export const auth = getAuth(app);
-
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error('Auth persistence error:', error);
-});
+// This is a placeholder - the app now uses Google Sheets for data storage
+console.warn('Firebase config loaded but Firebase has been removed. Use Google Sheets service instead.');

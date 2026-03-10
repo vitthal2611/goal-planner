@@ -2,24 +2,32 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 
-class GoogleSheetsService {
+class OptimizedGoogleSheetsService {
   constructor() {
     this.accessToken = null;
     this.tokenClient = null;
     this.spreadsheetId = import.meta.env.VITE_GOOGLE_SHEETS_ID;
     this.cache = new Map();
-    this.CACHE_TTL = 30000;
+    this.CACHE_TTL = 30000; // 30 seconds
     
     this.SHEETS = {
-      TRANSACTIONS: 'Transactions',
-      BUDGETS: 'Budgets',
-      PAYMENT_METHODS: 'PaymentMethods'
+      INCOME: 'Income',
+      EXPENSES: 'Expenses', 
+      TRANSFERS: 'Transfers',
+      BUDGETS: 'Budgets'
+    };
+    
+    this.HEADERS = {
+      [this.SHEETS.INCOME]: ['Month', 'Description', 'Amount', 'Payment Method', 'Date', 'ID'],
+      [this.SHEETS.EXPENSES]: ['Month', 'Type', 'Description', 'Envelope', 'Category', 'Amount', 'Payment Method', 'Date', 'ID'],
+      [this.SHEETS.TRANSFERS]: ['Month', 'From', 'To', 'Amount', 'Description', 'Date', 'ID'],
+      [this.SHEETS.BUDGETS]: ['Month', 'Category', 'Envelope', 'Budgeted', 'Spent']
     };
   }
 
   async initialize() {
     if (!window.google?.accounts?.oauth2) {
-      await this.loadGoogleScript();
+      throw new Error('Google OAuth library not loaded');
     }
     
     this.tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -34,18 +42,6 @@ class GoogleSheetsService {
     
     await this.ensureSheets();
     return true;
-  }
-
-  async loadGoogleScript() {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
   }
 
   async getAccessToken() {
@@ -73,7 +69,7 @@ class GoogleSheetsService {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        properties: { title: 'Budget Planner - Google Sheets Dashboard' }
+        properties: { title: 'Budget Planner Data' }
       })
     });
     
@@ -93,7 +89,7 @@ class GoogleSheetsService {
     
     const existingSheets = data.sheets.map(s => s.properties.title);
     
-    for (const sheetName of Object.values(this.SHEETS)) {
+    for (const [key, sheetName] of Object.entries(this.SHEETS)) {
       if (!existingSheets.includes(sheetName)) {
         await this.createSheet(sheetName);
         await this.initializeHeaders(sheetName);
@@ -116,14 +112,9 @@ class GoogleSheetsService {
   }
 
   async initializeHeaders(sheetName) {
-    const headers = {
-      [this.SHEETS.TRANSACTIONS]: ['Month', 'Type', 'Description', 'Envelope', 'Category', 'Amount', 'Payment Method', 'Date', 'ID'],
-      [this.SHEETS.BUDGETS]: ['Month', 'Category', 'Envelope', 'Budgeted', 'Spent'],
-      [this.SHEETS.PAYMENT_METHODS]: ['Name', 'Type', 'Active']
-    };
-    
-    if (headers[sheetName]) {
-      await this.writeToSheet(sheetName, 'A1', [headers[sheetName]]);
+    const headers = this.HEADERS[sheetName];
+    if (headers) {
+      await this.writeToSheet(sheetName, 'A1', [headers]);
     }
   }
 
@@ -181,23 +172,56 @@ class GoogleSheetsService {
     return values;
   }
 
-  // Transaction operations
-  async saveTransaction(transaction, month) {
+  // Income operations
+  async saveIncome(income, month) {
     const id = this.generateId();
     const row = [
       month,
-      transaction.type,
-      transaction.description,
-      transaction.envelope || '',
-      transaction.category || '',
-      transaction.amount,
-      transaction.paymentMethod,
+      income.description,
+      income.amount,
+      income.paymentMethod,
       new Date().toISOString(),
       id
     ];
     
-    await this.appendToSheet(this.SHEETS.TRANSACTIONS, row);
-    return { ...transaction, id, month };
+    await this.appendToSheet(this.SHEETS.INCOME, row);
+    return { ...income, id, month, type: 'income' };
+  }
+
+  // Expense operations
+  async saveExpense(expense, month) {
+    const id = this.generateId();
+    const row = [
+      month,
+      'expense',
+      expense.description,
+      expense.envelope,
+      expense.category,
+      expense.amount,
+      expense.paymentMethod,
+      new Date().toISOString(),
+      id
+    ];
+    
+    await this.appendToSheet(this.SHEETS.EXPENSES, row);
+    return { ...expense, id, month, type: 'expense' };
+  }
+
+  // Transfer operations
+  async saveTransfer(transfer, month) {
+    const id = this.generateId();
+    const row = [
+      month,
+      transfer.from,
+      transfer.to,
+      transfer.amount,
+      transfer.description,
+      new Date().toISOString(),
+      id
+    ];
+    
+    await this.appendToSheet(this.SHEETS.TRANSFERS, row);
+    return { ...transfer, id, month, type: 'transfer' };
   }
 
   // Budget operations
@@ -208,30 +232,47 @@ class GoogleSheetsService {
     );
     
     if (existingIndex >= 0) {
-      const rowIndex = existingIndex + 2;
+      // Update existing budget
+      const rowIndex = existingIndex + 2; // +1 for header, +1 for 0-based index
       await this.writeToSheet(this.SHEETS.BUDGETS, `A${rowIndex}:E${rowIndex}`, [[
-        month, budget.category, budget.envelope, budget.budgeted, budget.spent
+        month,
+        budget.category,
+        budget.envelope,
+        budget.budgeted,
+        budget.spent
       ]]);
     } else {
+      // Add new budget
       await this.appendToSheet(this.SHEETS.BUDGETS, [
-        month, budget.category, budget.envelope, budget.budgeted, budget.spent
-      ]);
-    }
-  }
-
-  // Payment method operations
-  async savePaymentMethod(method) {
-    const existingMethods = await this.loadPaymentMethods();
-    if (!existingMethods.find(m => m.name === method.name)) {
-      await this.appendToSheet(this.SHEETS.PAYMENT_METHODS, [
-        method.name, method.type || 'card', method.active !== false
+        month,
+        budget.category,
+        budget.envelope,
+        budget.budgeted,
+        budget.spent
       ]);
     }
   }
 
   // Load operations
-  async loadTransactions(month = null) {
-    const rows = await this.readFromSheet(this.SHEETS.TRANSACTIONS);
+  async loadIncome(month = null) {
+    const rows = await this.readFromSheet(this.SHEETS.INCOME);
+    if (rows.length <= 1) return [];
+    
+    return rows.slice(1)
+      .filter(row => !month || row[0] === month)
+      .map(row => ({
+        month: row[0],
+        description: row[1],
+        amount: parseFloat(row[2]) || 0,
+        paymentMethod: row[3],
+        date: row[4],
+        id: row[5],
+        type: 'income'
+      }));
+  }
+
+  async loadExpenses(month = null) {
+    const rows = await this.readFromSheet(this.SHEETS.EXPENSES);
     if (rows.length <= 1) return [];
     
     return rows.slice(1)
@@ -246,6 +287,24 @@ class GoogleSheetsService {
         paymentMethod: row[6],
         date: row[7],
         id: row[8]
+      }));
+  }
+
+  async loadTransfers(month = null) {
+    const rows = await this.readFromSheet(this.SHEETS.TRANSFERS);
+    if (rows.length <= 1) return [];
+    
+    return rows.slice(1)
+      .filter(row => !month || row[0] === month)
+      .map(row => ({
+        month: row[0],
+        from: row[1],
+        to: row[2],
+        amount: parseFloat(row[3]) || 0,
+        description: row[4],
+        date: row[5],
+        id: row[6],
+        type: 'transfer'
       }));
   }
 
@@ -264,25 +323,21 @@ class GoogleSheetsService {
       }));
   }
 
-  async loadPaymentMethods() {
-    const rows = await this.readFromSheet(this.SHEETS.PAYMENT_METHODS);
-    if (rows.length <= 1) return [];
-    
-    return rows.slice(1).map(row => ({
-      name: row[0],
-      type: row[1] || 'card',
-      active: row[2] !== 'false'
-    }));
-  }
-
   async loadAllData(month = null) {
-    const [transactions, budgets, paymentMethods] = await Promise.all([
-      this.loadTransactions(month),
-      this.loadBudgets(month),
-      this.loadPaymentMethods()
+    const [income, expenses, transfers, budgets] = await Promise.all([
+      this.loadIncome(month),
+      this.loadExpenses(month),
+      this.loadTransfers(month),
+      this.loadBudgets(month)
     ]);
     
-    return { transactions, budgets, paymentMethods, currentPeriod: month || this.getCurrentPeriod() };
+    const transactions = [...income, ...expenses, ...transfers];
+    
+    return {
+      transactions,
+      budgets,
+      currentPeriod: month || this.getCurrentPeriod()
+    };
   }
 
   getCurrentPeriod() {
@@ -306,4 +361,4 @@ class GoogleSheetsService {
   }
 }
 
-export const googleSheetsService = new GoogleSheetsService();
+export const googleSheetsService = new OptimizedGoogleSheetsService();
