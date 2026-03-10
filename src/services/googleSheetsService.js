@@ -8,34 +8,32 @@ class GoogleSheetsService {
     this.tokenClient = null;
     this.spreadsheetId = import.meta.env.VITE_GOOGLE_SHEETS_ID;
     this.cache = new Map();
-    this.CACHE_TTL = 60000; // Increased cache time for better performance
-    this.requestQueue = [];
-    this.processing = false;
+    this.CACHE_TTL = 30000;
     
     this.SHEETS = {
       TRANSACTIONS: 'Transactions',
-      BUDGETS: 'Budgets', 
+      BUDGETS: 'Budgets',
       PAYMENT_METHODS: 'PaymentMethods'
     };
   }
 
   async initialize() {
-    try {
-      if (!window.google?.accounts?.oauth2) {
-        await this.loadGoogleScript();
-      }
-      
-      this.tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES.join(' '),
-        callback: ''
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Initialize error:', error);
-      throw new Error('Failed to initialize Google Sheets service');
+    if (!window.google?.accounts?.oauth2) {
+      await this.loadGoogleScript();
     }
+    
+    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES.join(' '),
+      callback: ''
+    });
+    
+    if (!this.spreadsheetId) {
+      this.spreadsheetId = await this.createSpreadsheet();
+    }
+    
+    await this.ensureSheets();
+    return true;
   }
 
   async loadGoogleScript() {
@@ -54,22 +52,12 @@ class GoogleSheetsService {
     if (this.accessToken) return this.accessToken;
     
     return new Promise((resolve, reject) => {
-      this.tokenClient.callback = async (response) => {
+      this.tokenClient.callback = (response) => {
         if (response.error) {
           reject(new Error(response.error));
         } else {
           this.accessToken = response.access_token;
-          
-          // Initialize spreadsheet after getting token
-          try {
-            if (!this.spreadsheetId) {
-              this.spreadsheetId = await this.createSpreadsheet();
-            }
-            await this.ensureSheets();
-            resolve(this.accessToken);
-          } catch (error) {
-            reject(error);
-          }
+          resolve(this.accessToken);
         }
       };
       this.tokenClient.requestAccessToken({ prompt: 'consent' });
@@ -140,50 +128,36 @@ class GoogleSheetsService {
   }
 
   async writeToSheet(sheetName, range, values) {
-    return this.queueRequest(async () => {
-      const token = await this.getAccessToken();
-      const fullRange = `${sheetName}!${range}`;
-      
-      const response = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${fullRange}?valueInputOption=RAW`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ values })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Failed to write to ${sheetName}: ${error}`);
-      }
-      
-      this.invalidateCache(sheetName);
-      return response.json();
+    const token = await this.getAccessToken();
+    const fullRange = `${sheetName}!${range}`;
+    
+    const response = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${fullRange}?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ values })
     });
+    
+    if (!response.ok) throw new Error(`Failed to write to ${sheetName}`);
+    this.clearCache();
   }
 
   async appendToSheet(sheetName, values) {
-    return this.queueRequest(async () => {
-      const token = await this.getAccessToken();
-      
-      const response = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${sheetName}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ values: [values] })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Failed to append to ${sheetName}: ${error}`);
-      }
-      
-      this.invalidateCache(sheetName);
-      return response.json();
+    const token = await this.getAccessToken();
+    
+    const response = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${sheetName}:append?valueInputOption=RAW`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ values: [values] })
     });
+    
+    if (!response.ok) throw new Error(`Failed to append to ${sheetName}`);
+    this.clearCache();
   }
 
   async readFromSheet(sheetName, range = 'A:Z') {
@@ -320,47 +294,6 @@ class GoogleSheetsService {
 
   generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-
-  // Request queue for better performance
-  async queueRequest(requestFn) {
-    return new Promise((resolve, reject) => {
-      this.requestQueue.push({ requestFn, resolve, reject });
-      this.processQueue();
-    });
-  }
-
-  async processQueue() {
-    if (this.processing || this.requestQueue.length === 0) return;
-    
-    this.processing = true;
-    
-    while (this.requestQueue.length > 0) {
-      const { requestFn, resolve, reject } = this.requestQueue.shift();
-      
-      try {
-        const result = await requestFn();
-        resolve(result);
-        // Small delay to avoid rate limiting
-        await new Promise(r => setTimeout(r, 100));
-      } catch (error) {
-        reject(error);
-      }
-    }
-    
-    this.processing = false;
-  }
-
-  invalidateCache(sheetName = null) {
-    if (sheetName) {
-      for (const key of this.cache.keys()) {
-        if (key.startsWith(sheetName)) {
-          this.cache.delete(key);
-        }
-      }
-    } else {
-      this.cache.clear();
-    }
   }
 
   clearCache() {
