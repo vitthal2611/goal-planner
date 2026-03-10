@@ -1,0 +1,33 @@
+{
+  "name": "budget-planner-google-sheets",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A modern, mobile-friendly budget planner using Google Sheets as backend storage",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist",
+    "deploy:vercel": "npm run build && vercel --prod"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "budget",
+    "planner",
+    "google-sheets",
+    "finance",
+    "expense-tracker",
+    "mobile-friendly",
+    "oauth2"
+  ],
+  "author": "Budget Planner Team",
+  "license": "MIT"
+}

@@ -1,103 +1,50 @@
-import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '../config/queryClient';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import { optimizedGoogleSheetsService } from '../services/optimizedGoogleSheetsService.js';
 
-// Separate contexts to prevent unnecessary re-renders
-const BudgetStateContext = createContext();
-const BudgetActionsContext = createContext();
+const BudgetContext = createContext();
 
 const initialState = {
   currentPeriod: '',
-  monthlyData: {},
-  currentData: { income: 0, envelopes: {}, transactions: [], blockedTransactions: [] },
-  customPaymentMethods: [],
+  transactions: [],
+  budgets: [],
+  paymentMethods: [],
   dataLoaded: false,
-  notification: { type: '', message: '' },
-  ui: {
-    activeView: 'daily',
-    loading: false,
-    filters: {},
-    sortConfig: { key: null, direction: 'asc' }
-  }
+  loading: false,
+  notification: { type: '', message: '' }
 };
 
 const budgetReducer = (state, action) => {
   switch (action.type) {
-    case 'SET_CURRENT_PERIOD':
-      return { ...state, currentPeriod: action.payload };
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
     
-    case 'SET_MONTHLY_DATA':
-      return { ...state, monthlyData: action.payload };
-    
-    case 'UPDATE_PERIOD_DATA':
-      const updatedMonthlyData = {
-        ...state.monthlyData,
-        [state.currentPeriod]: {
-          ...state.monthlyData[state.currentPeriod],
-          ...action.payload
-        }
-      };
+    case 'SET_DATA':
       return {
         ...state,
-        monthlyData: updatedMonthlyData,
-        currentData: {
-          ...state.currentData,
-          ...action.payload
-        }
+        ...action.payload,
+        dataLoaded: true,
+        loading: false
       };
-    
-    case 'SET_CURRENT_DATA':
-      return { ...state, currentData: action.payload };
-    
-    case 'SET_CUSTOM_PAYMENT_METHODS':
-      return { ...state, customPaymentMethods: action.payload };
-    
-    case 'SET_DATA_LOADED':
-      return { ...state, dataLoaded: action.payload };
     
     case 'SET_NOTIFICATION':
       return { ...state, notification: action.payload };
     
-    case 'CLEAR_NOTIFICATION':
-      return { ...state, notification: { type: '', message: '' } };
-    
     case 'ADD_TRANSACTION':
       return {
         ...state,
-        currentData: {
-          ...state.currentData,
-          transactions: [...state.currentData.transactions, action.payload]
-        }
+        transactions: [action.payload, ...state.transactions]
       };
     
-    case 'UPDATE_ENVELOPES':
+    case 'UPDATE_BUDGETS':
       return {
         ...state,
-        currentData: {
-          ...state.currentData,
-          envelopes: action.payload
-        }
+        budgets: action.payload
       };
     
-    case 'UPDATE_INCOME':
+    case 'UPDATE_PAYMENT_METHODS':
       return {
         ...state,
-        currentData: {
-          ...state.currentData,
-          income: action.payload
-        }
-      };
-    
-    case 'SET_UI_STATE':
-      return {
-        ...state,
-        ui: { ...state.ui, ...action.payload }
-      };
-    
-    case 'SET_LOADING':
-      return {
-        ...state,
-        ui: { ...state.ui, loading: action.payload }
+        paymentMethods: action.payload
       };
     
     default:
@@ -105,200 +52,151 @@ const budgetReducer = (state, action) => {
   }
 };
 
-const OptimizedBudgetProvider = ({ children }) => {
+export const OptimizedBudgetProvider = ({ children }) => {
   const [state, dispatch] = useReducer(budgetReducer, initialState);
-  
-  // Memoize actions to prevent recreation on every render
-  const actions = useMemo(() => ({
-    setCurrentPeriod: (period) => dispatch({ type: 'SET_CURRENT_PERIOD', payload: period }),
-    
-    setMonthlyData: (data) => dispatch({ type: 'SET_MONTHLY_DATA', payload: data }),
-    
-    updatePeriodData: (data) => dispatch({ type: 'UPDATE_PERIOD_DATA', payload: data }),
-    
-    setCurrentData: (data) => dispatch({ type: 'SET_CURRENT_DATA', payload: data }),
-    
-    setCustomPaymentMethods: (methods) => dispatch({ type: 'SET_CUSTOM_PAYMENT_METHODS', payload: methods }),
-    
-    setDataLoaded: (loaded) => dispatch({ type: 'SET_DATA_LOADED', payload: loaded }),
-    
-    showNotification: (type, message) => {
-      dispatch({ type: 'SET_NOTIFICATION', payload: { type, message } });
-      setTimeout(() => dispatch({ type: 'CLEAR_NOTIFICATION' }), 3000);
-    },
-    
-    clearNotification: () => dispatch({ type: 'CLEAR_NOTIFICATION' }),
-    
-    addTransaction: (transaction) => dispatch({ type: 'ADD_TRANSACTION', payload: transaction }),
-    
-    updateEnvelopes: (envelopes) => dispatch({ type: 'UPDATE_ENVELOPES', payload: envelopes }),
-    
-    updateIncome: (income) => dispatch({ type: 'UPDATE_INCOME', payload: income }),
-    
-    setUIState: (uiState) => dispatch({ type: 'SET_UI_STATE', payload: uiState }),
-    
-    setLoading: (loading) => dispatch({ type: 'SET_LOADING', payload: loading })
-  }), []);
-  
-  // Memoize state selectors to prevent unnecessary re-renders
-  const stateSelectors = useMemo(() => ({
-    // Basic state
-    currentPeriod: state.currentPeriod,
-    monthlyData: state.monthlyData,
-    currentData: state.currentData,
-    customPaymentMethods: state.customPaymentMethods,
-    dataLoaded: state.dataLoaded,
-    notification: state.notification,
-    ui: state.ui,
-    
-    // Computed values
-    totalBudgeted: Object.values(state.currentData.envelopes).reduce((sum, category) =>
-      sum + Object.values(category).reduce((catSum, env) => catSum + env.budgeted, 0), 0),
-    
-    totalSpent: Object.values(state.currentData.envelopes).reduce((sum, category) =>
-      sum + Object.values(category).reduce((catSum, env) => catSum + env.spent, 0), 0),
-    
-    availableToAllocate: state.currentData.income - Object.values(state.currentData.envelopes).reduce((sum, category) =>
-      sum + Object.values(category).reduce((catSum, env) => catSum + env.budgeted, 0), 0),
-    
-    // Payment method balances
-    paymentMethodBalances: state.currentData.transactions.reduce((balances, transaction) => {
-      const method = transaction.paymentMethod || 'Unknown';
-      if (!balances[method]) balances[method] = 0;
-      
-      if (transaction.type === 'income' || transaction.type === 'transfer-in') {
-        balances[method] += transaction.amount;
-      } else if (transaction.type === 'transfer-out') {
-        balances[method] -= transaction.amount;
-      } else {
-        balances[method] -= transaction.amount;
-      }
-      return balances;
-    }, {})
-  }), [state]);
-  
-  return (
-    <BudgetStateContext.Provider value={stateSelectors}>
-      <BudgetActionsContext.Provider value={actions}>
-        {children}
-      </BudgetActionsContext.Provider>
-    </BudgetStateContext.Provider>
-  );
-};
 
-export const BudgetProvider = ({ children }) => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <OptimizedBudgetProvider>
-        {children}
-      </OptimizedBudgetProvider>
-    </QueryClientProvider>
-  );
-};
+  const showNotification = useCallback((type, message) => {
+    dispatch({ type: 'SET_NOTIFICATION', payload: { type, message } });
+    setTimeout(() => {
+      dispatch({ type: 'SET_NOTIFICATION', payload: { type: '', message: '' } });
+    }, 3000);
+  }, []);
 
-// Optimized hooks for specific state slices
-export const useBudgetState = () => {
-  const context = useContext(BudgetStateContext);
-  if (!context) {
-    throw new Error('useBudgetState must be used within a BudgetProvider');
-  }
-  return context;
-};
-
-export const useBudgetActions = () => {
-  const context = useContext(BudgetActionsContext);
-  if (!context) {
-    throw new Error('useBudgetActions must be used within a BudgetProvider');
-  }
-  return context;
-};
-
-// Selector hooks to prevent unnecessary re-renders
-export const useCurrentData = () => {
-  const state = useBudgetState();
-  return useMemo(() => ({
-    income: state.currentData.income,
-    envelopes: state.currentData.envelopes,
-    transactions: state.currentData.transactions,
-    blockedTransactions: state.currentData.blockedTransactions
-  }), [state.currentData]);
-};
-
-export const useBudgetSummary = () => {
-  const state = useBudgetState();
-  return useMemo(() => ({
-    totalBudgeted: state.totalBudgeted,
-    totalSpent: state.totalSpent,
-    availableToAllocate: state.availableToAllocate,
-    paymentMethodBalances: state.paymentMethodBalances
-  }), [state.totalBudgeted, state.totalSpent, state.availableToAllocate, state.paymentMethodBalances]);
-};
-
-export const useNotification = () => {
-  const state = useBudgetState();
-  const actions = useBudgetActions();
-  
-  return useMemo(() => ({
-    notification: state.notification,
-    showNotification: actions.showNotification,
-    clearNotification: actions.clearNotification
-  }), [state.notification, actions.showNotification, actions.clearNotification]);
-};
-
-export const useUIState = () => {
-  const state = useBudgetState();
-  const actions = useBudgetActions();
-  
-  return useMemo(() => ({
-    ui: state.ui,
-    setUIState: actions.setUIState,
-    setLoading: actions.setLoading
-  }), [state.ui, actions.setUIState, actions.setLoading]);
-};
-
-// Legacy hook for backward compatibility
-export const useBudget = () => {
-  const state = useBudgetState();
-  const actions = useBudgetActions();
-  
-  return useMemo(() => ({
-    state,
-    dispatch: (action) => {
-      // Map old dispatch calls to new actions
-      switch (action.type) {
-        case 'SET_CURRENT_PERIOD':
-          actions.setCurrentPeriod(action.payload);
-          break;
-        case 'SET_MONTHLY_DATA':
-          actions.setMonthlyData(action.payload);
-          break;
-        case 'UPDATE_PERIOD_DATA':
-          actions.updatePeriodData(action.payload);
-          break;
-        case 'SET_CURRENT_DATA':
-          actions.setCurrentData(action.payload);
-          break;
-        case 'SET_CUSTOM_PAYMENT_METHODS':
-          actions.setCustomPaymentMethods(action.payload);
-          break;
-        case 'SET_DATA_LOADED':
-          actions.setDataLoaded(action.payload);
-          break;
-        case 'SET_NOTIFICATION':
-          actions.showNotification(action.payload.type, action.payload.message);
-          break;
-        case 'ADD_TRANSACTION':
-          actions.addTransaction(action.payload);
-          break;
-        case 'UPDATE_ENVELOPES':
-          actions.updateEnvelopes(action.payload);
-          break;
-        case 'UPDATE_INCOME':
-          actions.updateIncome(action.payload);
-          break;
-        default:
-          console.warn('Unknown action type:', action.type);
-      }
+  const loadData = useCallback(async (period = null) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    
+    try {
+      const data = await optimizedGoogleSheetsService.loadAllData(period);
+      dispatch({ type: 'SET_DATA', payload: data });
+    } catch (error) {
+      showNotification('error', 'Failed to load data');
+      console.error('Load data error:', error);
     }
-  }), [state, actions]);
+  }, [showNotification]);
+
+  const addTransaction = useCallback(async (transaction, type) => {
+    const period = state.currentPeriod || optimizedGoogleSheetsService.getCurrentPeriod();
+    
+    try {
+      const transactionData = { ...transaction, type };
+      const savedTransaction = await optimizedGoogleSheetsService.saveTransaction(transactionData, period);
+      
+      dispatch({ type: 'ADD_TRANSACTION', payload: savedTransaction });
+      showNotification('success', `${type.charAt(0).toUpperCase() + type.slice(1)} added successfully`);
+      
+      // Reload data to update budgets and calculations
+      await loadData(period);
+      return true;
+    } catch (error) {
+      showNotification('error', `Failed to add ${type}`);
+      console.error(`Add ${type} error:`, error);
+      return false;
+    }
+  }, [state.currentPeriod, showNotification, loadData]);
+
+  const addIncome = useCallback(async (income) => {
+    return addTransaction(income, 'income');
+  }, [addTransaction]);
+
+  const addExpense = useCallback(async (expense) => {
+    return addTransaction(expense, 'expense');
+  }, [addTransaction]);
+
+  const addTransfer = useCallback(async (transfer) => {
+    return addTransaction(transfer, 'transfer');
+  }, [addTransaction]);
+
+  const allocateBudget = useCallback(async (category, envelope, amount) => {
+    const period = state.currentPeriod || optimizedGoogleSheetsService.getCurrentPeriod();
+    
+    try {
+      const budget = {
+        category,
+        envelope,
+        budgeted: amount,
+        spent: 0
+      };
+      
+      await optimizedGoogleSheetsService.saveBudget(budget, period);
+      
+      // Reload data to get updated budgets
+      await loadData(period);
+      showNotification('success', 'Budget allocated successfully');
+      return true;
+    } catch (error) {
+      showNotification('error', 'Failed to allocate budget');
+      console.error('Allocate budget error:', error);
+      return false;
+    }
+  }, [state.currentPeriod, showNotification, loadData]);
+
+  const addPaymentMethod = useCallback(async (method) => {
+    try {
+      await optimizedGoogleSheetsService.savePaymentMethod(method);
+      
+      // Reload payment methods
+      const paymentMethods = await optimizedGoogleSheetsService.loadPaymentMethods();
+      dispatch({ type: 'UPDATE_PAYMENT_METHODS', payload: paymentMethods });
+      
+      showNotification('success', 'Payment method added successfully');
+      return true;
+    } catch (error) {
+      showNotification('error', 'Failed to add payment method');
+      console.error('Add payment method error:', error);
+      return false;
+    }
+  }, [showNotification]);
+
+  const getSummary = useCallback(() => {
+    const income = state.transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const expenses = state.transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalBudget = state.budgets
+      .reduce((sum, b) => sum + b.budgeted, 0);
+    
+    const totalSpent = state.budgets
+      .reduce((sum, b) => sum + b.spent, 0);
+    
+    return {
+      income,
+      expenses,
+      balance: income - expenses,
+      totalBudget,
+      totalSpent,
+      remaining: totalBudget - totalSpent
+    };
+  }, [state.transactions, state.budgets]);
+
+  const value = {
+    state,
+    actions: {
+      loadData,
+      addIncome,
+      addExpense,
+      addTransfer,
+      allocateBudget,
+      addPaymentMethod,
+      showNotification
+    },
+    getSummary
+  };
+
+  return (
+    <BudgetContext.Provider value={value}>
+      {children}
+    </BudgetContext.Provider>
+  );
+};
+
+export const useOptimizedBudget = () => {
+  const context = useContext(BudgetContext);
+  if (!context) {
+    throw new Error('useOptimizedBudget must be used within an OptimizedBudgetProvider');
+  }
+  return context;
 };
