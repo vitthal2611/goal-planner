@@ -1,16 +1,32 @@
 import { sanitizeInput, validatePaymentMethod } from '../../../utils/sanitize';
+import { googleSheetsAPI } from '../../../utils/googleSheetsAPI';
 
 export class PaymentMethodService {
-  constructor(repository) {
-    this.repo = repository;
-  }
-
   async save(userId, methods) {
-    await this.repo.savePaymentMethods(userId, methods);
+    try {
+      const rows = await googleSheetsAPI.readSheet('PaymentMethods!A:C');
+      const header = rows.length > 0 ? rows[0] : ['UserID', 'PaymentMethod', 'UsageCount'];
+      const otherUserRows = rows.slice(1).filter(row => row[0] !== userId);
+      const newRows = methods.map(method => [userId, method, '0']);
+      await googleSheetsAPI.writeSheet('PaymentMethods!A:C', [header, ...otherUserRows, ...newRows]);
+    } catch (err) {
+      console.error('Error saving payment methods:', err);
+      throw err;
+    }
   }
 
   async load(userId) {
-    return await this.repo.loadPaymentMethods(userId) || ['Cash', 'UPI', 'Credit Card', 'Debit Card'];
+    try {
+      const rows = await googleSheetsAPI.readSheet('PaymentMethods!A:C');
+      if (rows.length <= 1) {
+        await googleSheetsAPI.writeSheet('PaymentMethods!A:C', [['UserID', 'PaymentMethod', 'UsageCount']]);
+        return [];
+      }
+      return rows.slice(1).filter(row => row[0] === userId).map(row => row[1]);
+    } catch (err) {
+      console.error('Error loading payment methods:', err);
+      return [];
+    }
   }
 
   add(currentMethods, method) {

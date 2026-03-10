@@ -97,7 +97,7 @@ export const calculateDashboardData = (transactions, envelopes, customPaymentMet
     });
   });
   
-  const cats = new Set(transactions.map(t => t.envelope.split('.')[1] || t.envelope));
+  const cats = new Set(transactions.filter(t => t.envelope).map(t => t.envelope.split('.')[1] || t.envelope));
   
   return {
     income: { count: incomeTransactions.length, total: totalIncome },

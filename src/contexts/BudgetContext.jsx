@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useReducer, useMemo } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '../config/queryClient';
 
 const BudgetContext = createContext();
 
@@ -92,11 +90,9 @@ const BudgetContextProvider = ({ children }) => {
 
 export const BudgetProvider = ({ children }) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BudgetContextProvider>
-        {children}
-      </BudgetContextProvider>
-    </QueryClientProvider>
+    <BudgetContextProvider>
+      {children}
+    </BudgetContextProvider>
   );
 };
 

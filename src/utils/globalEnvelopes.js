@@ -1,13 +1,7 @@
-// User-specific envelope structure in Firebase
 import { saveData, getData } from '../services/database.js';
-import { auth } from '../config/firebase.js';
 
-const getEnvelopePath = () => {
-  const user = auth.currentUser;
-  return user ? `users/${user.uid}/globalEnvelopes` : 'globalEnvelopes';
-};
+const ENVELOPES_SHEET = 'globalEnvelopes';
 
-// Default envelope structure
 const defaultEnvelopes = {
   needs: {
     emi: { budgeted: 0, spent: 0, rollover: 0 },
@@ -36,7 +30,7 @@ const defaultEnvelopes = {
 
 export const getGlobalEnvelopes = async () => {
   try {
-    const result = await getData(getEnvelopePath());
+    const result = await getData(ENVELOPES_SHEET);
     if (result.success && result.data && Object.keys(result.data).length > 0) {
       return result.data;
     } else {
@@ -55,7 +49,7 @@ export const addGlobalEnvelope = async (category, name) => {
       envelopes[category] = {};
     }
     envelopes[category][name] = { budgeted: 0, spent: 0, rollover: 0 };
-    await saveData(getEnvelopePath(), envelopes);
+    await saveData(ENVELOPES_SHEET, envelopes);
   } catch (error) {
     console.error('Failed to add envelope:', error);
   }
@@ -66,7 +60,7 @@ export const removeGlobalEnvelope = async (category, name) => {
     const envelopes = await getGlobalEnvelopes();
     if (envelopes[category] && envelopes[category][name]) {
       delete envelopes[category][name];
-      await saveData(getEnvelopePath(), envelopes);
+      await saveData(ENVELOPES_SHEET, envelopes);
     }
   } catch (error) {
     console.error('Failed to remove envelope:', error);

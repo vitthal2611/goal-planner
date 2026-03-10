@@ -30,10 +30,10 @@ const defaultEnvelopes = {
 
 export const useDataLoader = (userId) => {
   const { state, dispatch, services } = useApp();
-  const { budgetService, paymentMethodService } = services;
+  const { budgetService, paymentMethodService } = services || {};
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !budgetService || !paymentMethodService) return;
 
     const loadData = async () => {
       try {

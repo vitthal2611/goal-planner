@@ -1,33 +1,24 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './config/firebase';
 import { AppProvider } from './core/context/AppContext';
-import { FirebaseRepository } from './core/repositories/firebaseRepository';
-import { LocalStorageRepository } from './core/repositories/localStorageRepository';
-import { BudgetRepository } from './core/repositories/budgetRepository';
+import { DataService } from './services/dataService';
 import { BudgetService } from './features/budget/services/budgetService';
 import { EnvelopeService } from './features/envelopes/services/envelopeService';
 import { TransactionService } from './features/transactions/services/transactionService';
 import { PaymentMethodService } from './features/payments/services/paymentMethodService';
-import Auth from './components/Auth';
-import { BackupManager } from './components/BackupManager';
-import { FirebaseDataViewer } from './components/FirebaseDataViewer';
+import { useGoogleOAuth } from './hooks/useGoogleOAuth';
 import './App.css';
 
 const EnvelopeBudget = lazy(() => import('./components/EnvelopeBudget'));
 
-// Initialize repositories
-const firebaseRepo = new FirebaseRepository();
-const localStorageRepo = new LocalStorageRepository();
-const budgetRepo = new BudgetRepository(firebaseRepo, localStorageRepo);
-
 // Initialize services
-const budgetService = new BudgetService(budgetRepo);
+const dataService = new DataService();
+const budgetService = new BudgetService();
 const envelopeService = new EnvelopeService();
 const transactionService = new TransactionService(envelopeService);
-const paymentMethodService = new PaymentMethodService(budgetRepo);
+const paymentMethodService = new PaymentMethodService();
 
 const services = {
+  dataService,
   budgetService,
   envelopeService,
   transactionService,
@@ -74,18 +65,16 @@ const logoutButtonStyles = {
   flex: '0 0 auto'
 };
 
-function App() {
-  const [user, setUser] = useState(null);
+export default function AppContent() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState({ type: '', message: '' });
+  const { oauthReady, error: oauthError, user, logout, login } = useGoogleOAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    if (oauthReady !== null) {
       setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+  }, [oauthReady]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -94,7 +83,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       showNotification('success', 'Logged out successfully');
     } catch (error) {
       showNotification('error', 'Failed to logout');
@@ -110,8 +99,37 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <Auth />;
+  if (!user || !oauthReady) {
+    return (
+      <div className="loading" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '20px' }}>
+        <div className="loading-spinner"></div>
+        <div className="loading-text">
+          {!user ? 'Ready for Google Sheets authorization' : 'Initializing Google Sheets access...'}
+        </div>
+        {!user && oauthReady && (
+          <button 
+            onClick={async () => {
+              const success = await login();
+              if (!success) {
+                showNotification('error', 'Authorization failed. Please try again.');
+              }
+            }}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#4285f4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Authorize Google Sheets
+          </button>
+        )}
+        {oauthError && <div style={{ color: '#dc3545' }}>⚠️ {oauthError}</div>}
+      </div>
+    );
   }
 
   return (
@@ -120,17 +138,13 @@ function App() {
         {notification.message && <div className={`notification ${notification.type}`}>{notification.message}</div>}
         
         <div style={headerStyles}>
-          <span style={userEmailStyles}>Welcome, {user.email}</span>
+          <span style={userEmailStyles}>Budget Planner - Google Sheets</span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => window.dispatchEvent(new CustomEvent('openDataViewer'))} style={{ ...logoutButtonStyles, backgroundColor: '#f59e0b' }}>🔍 Data</button>
             <button onClick={() => window.dispatchEvent(new CustomEvent('openBackup'))} style={{ ...logoutButtonStyles, backgroundColor: '#28a745' }}>🛡️ Backup</button>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('openProfile'))} style={{ ...logoutButtonStyles, backgroundColor: '#667eea' }}>👤 Profile</button>
             <button onClick={handleLogout} style={logoutButtonStyles}>Logout</button>
           </div>
         </div>
-
-        <BackupManager userId={user.uid} repository={budgetRepo} />
-        <FirebaseDataViewer />
 
         <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="loading-spinner"></div></div>}>
           <EnvelopeBudget />
@@ -140,4 +154,4 @@ function App() {
   );
 }
 
-export default App;
+

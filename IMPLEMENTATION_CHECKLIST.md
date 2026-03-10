@@ -3,7 +3,7 @@
 ## Pre-Implementation
 
 ### 1. Backup Current Data
-- [ ] Export Firebase data for all users
+- [ ] Backup existing Google Sheets data
 - [ ] Document current `customPaymentMethods` structure
 - [ ] Take screenshots of current UI
 - [ ] Note any custom payment methods users have created
@@ -21,6 +21,8 @@
 - [ ] Create `src/components/PaymentMethodsManager.jsx`
 - [ ] Create `src/components/PaymentMethodsManager.css`
 - [ ] Create `src/hooks/usePaymentMethods.js`
+- [ ] Create `src/utils/googleSheetsAPI.js` (Google Sheets API utilities)
+- [ ] Create `.env` file for Google Sheets credentials
 - [ ] Verify files are in correct locations
 - [ ] Check for syntax errors
 
@@ -32,18 +34,28 @@
 - [ ] Update `src/components/EnvelopeBudget.jsx`
   - [ ] Import PaymentMethodsManager
   - [ ] Add showPaymentMethodsManager state
-  - [ ] Change Firebase path to `paymentMethods`
+  - [ ] Replace Firebase calls with Google Sheets API
   - [ ] Add default payment methods initialization
   - [ ] Add Manage button in Payment Modes section
   - [ ] Add PaymentMethodsManager modal
   - [ ] Update addCustomPaymentMethod function
   - [ ] Update deletePaymentMethod function
 
-### Phase 3: Test Locally
-- [ ] Run `npm install` (if any new dependencies)
+### Phase 3: Setup Google Sheets
+- [ ] Create Google Cloud Project
+- [ ] Enable Google Sheets API
+- [ ] Create service account credentials
+- [ ] Download credentials JSON file
+- [ ] Create Google Sheet for payment methods
+- [ ] Share sheet with service account email
+- [ ] Set up environment variables
+
+### Phase 4: Test Locally
+- [ ] Run `npm install googleapis` (Google Sheets API)
 - [ ] Run `npm start`
 - [ ] Check for console errors
 - [ ] Verify app loads correctly
+- [ ] Test Google Sheets connection
 
 ## Testing Checklist
 
@@ -109,14 +121,15 @@
 - [ ] Add payment method in one month
 - [ ] Verify available in other months
 
-### Firebase Persistence
-- [ ] Payment methods saved to Firebase
-- [ ] Check Firebase path: `users/{userId}/paymentMethods`
-- [ ] Data structure is array of strings
-- [ ] Logout and login
+### Google Sheets Persistence
+- [ ] Payment methods saved to Google Sheets
+- [ ] Check Google Sheet columns: Name, UsageCount
+- [ ] Data syncs in real-time
+- [ ] Restart application
 - [ ] Payment methods still available
-- [ ] Open in different browser/device
-- [ ] Payment methods sync correctly
+- [ ] Can view/edit data directly in Google Sheets
+- [ ] Data persists correctly
+- [ ] Multiple users can access simultaneously
 
 ### UI/UX
 - [ ] Manager modal centered on screen
@@ -138,6 +151,8 @@
 - [ ] Multiple users (data isolation)
 - [ ] Rapid add/delete operations
 - [ ] Network errors handled gracefully
+- [ ] Google Sheets API rate limits
+- [ ] Authentication failures
 
 ### Performance
 - [ ] Manager opens quickly
@@ -151,23 +166,28 @@
 
 ### For Existing Users
 - [ ] Create migration script (if needed)
-- [ ] Copy data from `customPaymentMethods` to `paymentMethods`
+- [ ] Export existing data to Google Sheets
 - [ ] Verify data integrity
 - [ ] Test with sample user data
 - [ ] Plan rollback strategy
 
-### Database Updates
-- [ ] Update Firebase security rules (if needed)
-- [ ] Verify read/write permissions
-- [ ] Test with different user roles
-- [ ] Monitor Firebase usage
+### Google Sheets Setup
+- [ ] Set up Google Cloud Project
+- [ ] Configure API credentials
+- [ ] Create spreadsheet template
+- [ ] Set up sheet headers (Name, UsageCount)
+- [ ] Configure sharing permissions
+- [ ] Test API read/write operations
+- [ ] Set up error handling for API failures
 
 ## Documentation
 
 - [ ] Update README.md
 - [ ] Add user guide section
 - [ ] Add developer notes
-- [ ] Document Firebase structure
+- [ ] Document Google Sheets structure
+- [ ] Document API setup instructions
+- [ ] Document environment variables
 - [ ] Add screenshots
 - [ ] Create video tutorial (optional)
 
@@ -195,8 +215,9 @@
 
 ### Post-Deployment
 - [ ] Verify production deployment
-- [ ] Test with real user account
-- [ ] Monitor Firebase logs
+- [ ] Test with real user data
+- [ ] Verify Google Sheets connection
+- [ ] Monitor API usage and quotas
 - [ ] Monitor error tracking
 - [ ] Check user feedback
 - [ ] Document any issues
@@ -207,7 +228,8 @@
 - [ ] Identify the issue
 - [ ] Determine severity
 - [ ] If critical, rollback to previous version
-- [ ] Restore Firebase data from backup
+- [ ] Restore Google Sheets from backup
+- [ ] Check API credentials and quotas
 - [ ] Notify users if needed
 - [ ] Fix issues in development
 - [ ] Re-test thoroughly

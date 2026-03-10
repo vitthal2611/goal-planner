@@ -1,14 +1,12 @@
 export class BudgetService {
-  constructor(repository) {
-    this.repo = repository;
+  constructor() {}
+
+  async save(data) {
+    return data;
   }
 
-  async save(userId, data) {
-    await this.repo.save(userId, data);
-  }
-
-  async load(userId) {
-    return await this.repo.load(userId);
+  async load() {
+    return null;
   }
 
   allocateBudget(envelopes, category, name, amount, totalIncome) {

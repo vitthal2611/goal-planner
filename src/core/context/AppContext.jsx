@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useReducer, useMemo, useEffect } from 'react';
-import { auth } from '../../config/firebase';
 import { getGlobalEnvelopes } from '../../utils/globalEnvelopes';
 
 const AppContext = createContext();
@@ -171,19 +170,6 @@ const appReducer = (state, action) => {
 
 export const AppProvider = ({ children, services }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  
-  useEffect(() => {
-    if (!state.dataLoaded || !auth.currentUser) return;
-    
-    const saveTimer = setTimeout(() => {
-      const { budgetService } = services;
-      const { currentPeriod, monthlyData } = state;
-      budgetService.save(auth.currentUser.uid, { currentPeriod, monthlyData })
-        .catch(err => console.error('Auto-save failed:', err));
-    }, 1000);
-    
-    return () => clearTimeout(saveTimer);
-  }, [state.monthlyData, state.currentPeriod, state.dataLoaded, services]);
   
   const value = useMemo(() => ({ state, dispatch, services }), [state, services]);
   

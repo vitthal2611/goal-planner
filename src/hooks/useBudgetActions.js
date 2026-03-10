@@ -1,9 +1,16 @@
 import { useCallback } from 'react';
 import { useBudget } from '../contexts/BudgetContext';
-import { BudgetService } from '../services/budgetService';
+import { DataService } from '../services/dataService';
+import { TransactionService } from '../features/transactions/services/transactionService';
+import { EnvelopeService } from '../features/envelopes/services/envelopeService';
+import { BudgetService } from '../features/budget/services/budgetService';
 import { sanitizeInput, validatePaymentMethod } from '../utils/sanitize';
 import { useTransactions } from './useTransactions';
 import { useEnvelopes } from './useEnvelopes';
+
+const dataService = new DataService();
+const transactionService = new TransactionService(new EnvelopeService());
+const budgetService = new BudgetService();
 
 export const useBudgetActions = () => {
   const { state, dispatch } = useBudget();
@@ -18,42 +25,151 @@ export const useBudgetActions = () => {
     setTimeout(() => dispatch({ type: 'SET_NOTIFICATION', payload: { type: '', message: '' } }), 3000);
   }, [dispatch]);
 
-  const addIncome = useCallback(async (incomeData) => {
+  const getCurrentPeriod = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
+  const loadData = async (period = null) => {
     try {
-      const { amount, description, paymentMethod, date } = incomeData;
-
-      if (!amount || parseFloat(amount) <= 0) {
-        throw new Error('Enter valid income amount');
+      dispatch({ type: 'SET_DATA_LOADED', payload: false });
+      const targetPeriod = period || getCurrentPeriod();
+      
+      const result = await dataService.loadData(targetPeriod);
+      if (result.success) {
+        const { currentPeriod, monthlyData } = result.data;
+        dispatch({ type: 'SET_CURRENT_PERIOD', payload: currentPeriod });
+        dispatch({ type: 'SET_MONTHLY_DATA', payload: monthlyData });
+        
+        const currentData = monthlyData[currentPeriod] || { income: 0, envelopes: {}, transactions: [] };
+        dispatch({ type: 'SET_CURRENT_DATA', payload: currentData });
       }
+      
+      dispatch({ type: 'SET_DATA_LOADED', payload: true });
+      return result;
+    } catch (error) {
+      console.error('Load data error:', error);
+      showNotification('error', error.message);
+      dispatch({ type: 'SET_DATA_LOADED', payload: true });
+      return { success: false, error: error.message };
+    }
+  };
 
-      const incomeAmount = parseFloat(amount);
-      const transactionRecord = {
-        id: Date.now() + Math.random(),
-        date,
-        envelope: 'INCOME',
-        amount: incomeAmount,
-        description: sanitizeInput(description || 'Monthly Income'),
-        paymentMethod: sanitizeInput(paymentMethod),
-        type: 'income'
-      };
-
-      dispatch({
-        type: 'UPDATE_PERIOD_DATA',
-        payload: {
-          income: state.currentData.income + incomeAmount,
-          transactions: [...state.currentData.transactions, transactionRecord]
+  const addExpense = async (expenseData) => {
+    try {
+      const transaction = transactionService.createTransaction(
+        expenseData, 
+        state.monthlyData, 
+        state.currentPeriod
+      );
+      
+      const result = await dataService.saveExpense(transaction, state.currentPeriod);
+      if (result.success) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: transaction });
+        
+        // Update envelope spent amount
+        const [category, name] = transaction.envelope.split('.');
+        const updatedEnvelopes = { ...state.currentData.envelopes };
+        if (updatedEnvelopes[category] && updatedEnvelopes[category][name]) {
+          updatedEnvelopes[category][name].spent += transaction.amount;
         }
-      });
-
-      showNotification('success', '✓ Income Added!');
+        dispatch({ type: 'UPDATE_ENVELOPES', payload: updatedEnvelopes });
+        showNotification('success', '✓ Expense Added!');
+      }
+      
+      return result;
     } catch (error) {
       showNotification('error', error.message);
+      return { success: false, error: error.message };
     }
-  }, [state.currentData, dispatch, showNotification]);
+  };
+
+  const addIncome = useCallback(async (incomeData) => {
+    try {
+      const income = transactionService.createIncomeTransaction(incomeData);
+      
+      const result = await dataService.saveIncome(income, state.currentPeriod);
+      if (result.success) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: income });
+        dispatch({ type: 'UPDATE_INCOME', payload: state.currentData.income + income.amount });
+        showNotification('success', '✓ Income Added!');
+      }
+      
+      return result;
+    } catch (error) {
+      showNotification('error', error.message);
+      return { success: false, error: error.message };
+    }
+  }, [state.currentData, state.currentPeriod, dispatch, showNotification]);
+
+  const addTransfer = async (transferData) => {
+    try {
+      const result = await dataService.saveTransfer({
+        from: transferData.from,
+        to: transferData.to,
+        amount: transferData.amount,
+        description: `Transfer from ${transferData.from} to ${transferData.to}`
+      }, state.currentPeriod);
+      
+      if (result.success) {
+        const transfers = transactionService.createTransfer(
+          transferData.from, 
+          transferData.to, 
+          transferData.amount
+        );
+        
+        transfers.forEach(transfer => {
+          dispatch({ type: 'ADD_TRANSACTION', payload: transfer });
+        });
+        showNotification('success', '✓ Transfer Completed!');
+      }
+      
+      return result;
+    } catch (error) {
+      showNotification('error', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const allocateBudget = async (category, envelope, amount) => {
+    try {
+      const updatedEnvelopes = budgetService.allocateBudget(
+        state.currentData.envelopes,
+        category,
+        envelope,
+        amount,
+        state.currentData.income
+      );
+      
+      const result = await dataService.saveBudget({
+        category,
+        envelope,
+        budgeted: amount,
+        spent: updatedEnvelopes[category][envelope].spent || 0
+      }, state.currentPeriod);
+      
+      if (result.success) {
+        dispatch({ type: 'UPDATE_ENVELOPES', payload: updatedEnvelopes });
+        showNotification('success', '✓ Budget Allocated!');
+      }
+      
+      return result;
+    } catch (error) {
+      showNotification('error', error.message);
+      return { success: false, error: error.message };
+    }
+  };
 
   return {
     showNotification,
+    loadData,
     addIncome,
+    addExpense,
+    addTransfer,
+    allocateBudget,
+    getCurrentPeriod,
     addTransaction: async (data) => {
       try {
         await addTransaction(data);
@@ -74,7 +190,7 @@ export const usePaymentMethods = () => {
         const sanitizedMethod = sanitizeInput(method);
         const updatedMethods = [...state.customPaymentMethods, sanitizedMethod];
         
-        await BudgetService.saveCustomPaymentMethods(updatedMethods);
+        // Save to Google Sheets if needed
         dispatch({ type: 'SET_CUSTOM_PAYMENT_METHODS', payload: updatedMethods });
       }
     } catch (error) {

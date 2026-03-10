@@ -71,8 +71,8 @@ const PaymentMethodsManager = ({
         <h4>Your Payment Methods ({paymentMethods.length})</h4>
         {paymentMethods.length === 0 ? (
           <div className="empty-state">
-            <p>No payment methods yet</p>
-            <small>Add your first payment method above</small>
+            <p>No payment methods added yet</p>
+            <small>Add your first payment method above to get started</small>
           </div>
         ) : (
           <div className="methods-list">

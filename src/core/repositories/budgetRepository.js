@@ -1,37 +1,70 @@
-export class BudgetRepository {
-  constructor(firebaseRepo, localStorageRepo) {
-    this.firebase = firebaseRepo;
-    this.localStorage = localStorageRepo;
+import { GoogleSheetsRepository } from './googleSheetsRepository';
+import { LocalStorageRepository } from './localStorageRepository';
+
+export class GoogleSheetsBudgetRepository {
+  constructor() {
+    this.googleSheets = new GoogleSheetsRepository();
+    this.localStorage = new LocalStorageRepository();
   }
 
-  async save(userId, data) {
+  async save(data) {
     this.localStorage.save('budget', data);
-    this.firebase.save(`users/${userId}/budget`, data).catch(err => 
-      console.error('Firebase save failed:', err)
-    );
+    try {
+      await this.googleSheets.saveData('BudgetData', data);
+    } catch (err) {
+      console.error('Google Sheets save failed:', err);
+    }
   }
 
-  async load(userId) {
+  async load() {
     const cached = this.localStorage.load('budget');
     if (cached) {
-      this.firebase.load(`users/${userId}/budget`).then(data => {
-        if (data) this.localStorage.save('budget', data);
-      }).catch(err => console.error('Background sync failed:', err));
+      try {
+        const result = await this.googleSheets.loadData('BudgetData');
+        if (result.success) {
+          this.localStorage.save('budget', result.data);
+          return result.data;
+        }
+      } catch (err) {
+        console.error('Google Sheets load failed:', err);
+      }
       return cached;
     }
-    return await this.firebase.load(`users/${userId}/budget`);
+    
+    try {
+      const result = await this.googleSheets.loadData('BudgetData');
+      if (result.success) {
+        this.localStorage.save('budget', result.data);
+        return result.data;
+      }
+    } catch (err) {
+      console.error('Google Sheets load failed:', err);
+    }
+    return null;
   }
 
-  async savePaymentMethods(userId, methods) {
+  async savePaymentMethods(methods) {
     this.localStorage.save('paymentMethods', methods);
-    this.firebase.save(`users/${userId}/paymentMethods`, methods).catch(err => 
-      console.error('Firebase save failed:', err)
-    );
+    try {
+      await this.googleSheets.saveData('PaymentMethods', methods);
+    } catch (err) {
+      console.error('Google Sheets save failed:', err);
+    }
   }
 
-  async loadPaymentMethods(userId) {
+  async loadPaymentMethods() {
     const cached = this.localStorage.load('paymentMethods');
     if (cached) return cached;
-    return await this.firebase.load(`users/${userId}/paymentMethods`);
+    
+    try {
+      const result = await this.googleSheets.loadData('PaymentMethods');
+      if (result.success) {
+        this.localStorage.save('paymentMethods', result.data);
+        return result.data;
+      }
+    } catch (err) {
+      console.error('Google Sheets load failed:', err);
+    }
+    return null;
   }
 }
