@@ -1,197 +1,198 @@
-# 🚀 Quick Start - See Your New Dashboard!
+# Quick Start Guide
 
-## How to View Your Beautiful New Dashboard
+## 5-Minute Setup
 
-### Step 1: Start the Development Server
+### Step 1: Get Google OAuth Client ID (2 min)
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create new project → "Budget Planner"
+3. Search for "Google Sheets API" → Enable it
+4. Go to "Credentials" → Create OAuth 2.0 Client ID
+5. Choose "Web application"
+6. Add authorized origins:
+   - `http://localhost:5173`
+   - `https://your-firebase-domain.web.app`
+7. Copy the Client ID
+
+### Step 2: Setup Project (2 min)
+
 ```bash
+# Clone and setup
+git clone <repo-url>
+cd goal-planner
+npm install
+
+# Create .env file
+echo "VITE_GOOGLE_OAUTH_CLIENT_ID=your_client_id_here" > .env
+
+# Start development
 npm run dev
 ```
 
-### Step 2: Open in Browser
-Navigate to: `http://localhost:5173` (or the port shown in terminal)
+### Step 3: Test Locally (1 min)
 
-### Step 3: Enjoy! 🎉
+1. Open `http://localhost:5173`
+2. Click "Authorize Google Sheets"
+3. Grant permissions
+4. App creates "Budget Tracker" spreadsheet
+5. Start adding transactions!
 
----
+## First Use
 
-## 🎨 What You'll See
+### 1. Add Payment Methods
+- Click "💳 Payment Methods"
+- Add: HDFC, SBI Credit Card, etc.
 
-### 1. **Stunning Gradient Background**
-- Beautiful animated purple-to-pink gradient
-- Smooth 15-second animation cycle
-- Professional and modern look
+### 2. Allocate Budget
+- Go to "📋 Budget" tab
+- Add: DMART (5000), EMI (85000), etc.
 
-### 2. **Glassmorphic Components**
-- Frosted glass effect on all cards
-- Semi-transparent backgrounds
-- Modern iOS/macOS-inspired design
+### 3. Add Transactions
+- **Income**: "💰 Income" tab
+- **Expense**: "💸 Expense" tab
+- **Transfer**: "🔄 Transfer" tab
 
-### 3. **Smooth Animations**
-- Hover effects on cards and buttons
-- Pulsing Floating Action Button
-- Shimmer effects on progress bars
-- Elegant transitions throughout
+### 4. Monitor Budget
+- View "Budget Status" section
+- See spending vs budget
 
-### 4. **Enhanced Mobile Experience**
-- Touch-friendly interface
-- Optimized for all screen sizes
-- Smooth scrolling and interactions
+## Deploy to Firebase
 
----
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
 
-## 🎯 Key Features to Try
+# Login
+firebase login
 
-### ✨ Interactive Elements
+# Initialize
+firebase init hosting
 
-1. **Hover over cards** - Watch them lift and scale
-2. **Click the FAB** (+ button) - See it rotate and pulse
-3. **Focus on inputs** - Notice the gradient glow effect
-4. **Scroll through transactions** - Smooth hover effects
-5. **Resize your browser** - Fully responsive design
+# Deploy
+npm run build
+firebase deploy
+```
 
-### 📱 Mobile Testing
+## Data Structure
 
-1. Open DevTools (F12)
-2. Toggle device toolbar (Ctrl+Shift+M)
-3. Select a mobile device
-4. Experience the mobile-optimized design
+### Transactions Sheet
+```
+Month | Type | Description | Envelope | Amount | Payment Method
+2026-01 | Expense | Dmart | DMART | 1500 | HDFC
+2026-01 | Income | Salary | | 50000 | HDFC
+```
 
----
+### Budgets Sheet
+```
+Month | Envelope | Budgeted | Spent
+2026-01 | DMART | 5000 | 1500
+2026-01 | EMI | 85000 | 85000
+```
 
-## 🎨 Design Highlights
+### PaymentMethods Sheet
+```
+Name | Type | Active
+HDFC | Bank | TRUE
+SBI Credit Card | Credit Card | TRUE
+```
 
-### Color Palette
-- **Primary Purple:** #667eea
-- **Deep Purple:** #764ba2
-- **Light Pink:** #f093fb
-- **Success Green:** #10b981
-- **Danger Red:** #ef4444
+## Features
 
-### Key Animations
-- **Background:** 15s gradient shift
-- **FAB:** 2s pulse effect
-- **Progress Bars:** 2s shimmer
-- **Hover Effects:** 0.3s smooth transitions
+✅ Add Income, Expense, Transfer  
+✅ Allocate Monthly Budgets  
+✅ Track Spending by Envelope  
+✅ Manage Payment Methods  
+✅ Mobile Responsive  
+✅ Real-time Google Sheets Sync  
+✅ Secure OAuth2  
+✅ No Local Storage  
 
----
+## Troubleshooting
 
-## 📱 Mobile Features
+| Issue | Solution |
+|-------|----------|
+| Authorization fails | Check Client ID in .env |
+| Spreadsheet not found | Refresh page, check internet |
+| Data not syncing | Verify Google Sheets API enabled |
+| Mobile layout broken | Check viewport meta tag |
 
-✅ **Touch-Friendly**
-- Minimum 48px tap targets
-- Smooth touch interactions
-- Optimized button sizes
+## Environment Variables
 
-✅ **Responsive Design**
-- Adapts to all screen sizes
-- Landscape mode support
-- Safe area handling for notched devices
+```env
+# Required
+VITE_GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+```
 
-✅ **Performance**
-- Hardware-accelerated animations
-- Optimized for mobile browsers
-- Smooth 60fps animations
+## Commands
 
----
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm run deploy   # Build and deploy to Firebase
+```
 
-## 🌙 Accessibility Features
+## Browser Support
 
-✅ **Dark Mode Support** - Automatically adapts to system preferences
-✅ **High Contrast Mode** - Enhanced borders and colors
-✅ **Reduced Motion** - Respects user preferences
-✅ **Keyboard Navigation** - Full keyboard support
-✅ **Screen Reader Friendly** - Proper ARIA labels
+- ✅ Chrome/Edge (latest)
+- ✅ Firefox (latest)
+- ✅ Safari (latest)
+- ✅ Mobile browsers
 
----
+## File Structure
 
-## 🎯 Best Viewing Experience
+```
+src/
+├── services/
+│   ├── sheetsAPI.js
+│   └── dataService.js
+├── contexts/
+│   └── BudgetContext.js
+├── components/
+│   ├── Dashboard.jsx
+│   ├── IncomeForm.jsx
+│   ├── ExpenseForm.jsx
+│   ├── TransferForm.jsx
+│   ├── BudgetForm.jsx
+│   ├── TransactionsList.jsx
+│   ├── BudgetSummary.jsx
+│   └── PaymentMethodsModal.jsx
+├── App.jsx
+└── main.jsx
+```
 
-### Recommended Browsers:
-- **Chrome/Edge** 88+ ✅
-- **Firefox** 94+ ✅
-- **Safari** 15+ ✅
-- **Mobile Safari** 15+ ✅
-- **Chrome Android** 88+ ✅
+## Key Features
 
-### Optimal Screen Sizes:
-- **Desktop:** 1920x1080 or higher
-- **Tablet:** 768x1024 or higher
-- **Mobile:** 375x667 or higher
+### Single Authorization
+- One-time OAuth2 setup
+- Automatic token management
+- Secure credential handling
 
----
+### Google Sheets Integration
+- Auto-creates "Budget Tracker" spreadsheet
+- Three sheets: Transactions, Budgets, PaymentMethods
+- Real-time data sync
+- No data loss
 
-## 🎨 Customization Options
+### Mobile Friendly
+- Responsive design
+- Touch-optimized buttons
+- Works on all devices
 
-Want to customize the design? Check these files:
+### Performance
+- Minimal dependencies
+- Fast loading
+- Optimized API calls
+- Efficient rendering
 
-### Colors & Theme:
-- `src/styles/mobile-optimized.css` - CSS variables
-- `src/components/EnhancedDashboard.css` - Dashboard colors
+## Support
 
-### Animations:
-- `src/components/EnhancedDashboard.css` - Animation keyframes
-- `src/components/SimpleEnvelopeCard.css` - Card animations
-
-### Layout:
-- `src/components/EnvelopeGrid.css` - Grid layout
-- `src/components/TransactionsList.css` - Table layout
-
----
-
-## 📚 Documentation
-
-For more details, check out:
-
-1. **UI_TRANSFORMATION_SUMMARY.md** - Quick overview of changes
-2. **MODERN_UI_DESIGN.md** - Detailed design guidelines
-3. **VISUAL_TRANSFORMATION_GUIDE.md** - Before/after comparison
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: Animations not working
-**Solution:** Ensure you're using a modern browser (Chrome 88+, Firefox 94+, Safari 15+)
-
-### Issue: Blur effects not showing
-**Solution:** Check if backdrop-filter is supported in your browser
-
-### Issue: Colors look different
-**Solution:** Make sure your browser supports CSS gradients and animations
-
----
-
-## 💡 Tips for Best Experience
-
-1. **Use a modern browser** for full effect
-2. **Enable hardware acceleration** in browser settings
-3. **Use a high-resolution display** for crisp visuals
-4. **Try both light and dark mode** to see adaptations
-5. **Test on mobile devices** for the full responsive experience
-
----
-
-## 🎉 Enjoy Your Beautiful Dashboard!
-
-Your Goal Planner now has a stunning, modern interface that's:
-- ✨ Beautiful and eye-catching
-- 📱 Mobile-friendly and responsive
-- ⚡ Fast and performant
-- ♿ Accessible to all users
-- 🎨 Professional and polished
-
-**Happy budgeting! 💰**
+For issues:
+1. Check browser console (F12)
+2. Verify Google Sheets API enabled
+3. Check .env configuration
+4. Review README.md
 
 ---
 
-## 📞 Need Help?
-
-If you encounter any issues or have questions:
-1. Check the documentation files
-2. Review the CSS files for customization
-3. Test in different browsers
-4. Check browser console for errors
-
----
-
-**Made with ❤️ by Amazon Q**
+**Ready to use!** 🚀

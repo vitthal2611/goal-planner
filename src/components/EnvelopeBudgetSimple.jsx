@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBudgetActions } from '../hooks/useBudgetActions';
-import { useBudget } from '../contexts/BudgetContext';
+import { useBudget } from '../contexts/BudgetContext.jsx';
 import QuickAdd from './QuickAdd';
 import './EnvelopeBudget.css';
 import './MobileEnhancements.css';

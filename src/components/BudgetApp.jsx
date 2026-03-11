@@ -1,5 +1,5 @@
 import React from 'react';
-import { BudgetProvider } from '../contexts/BudgetContext';
+import { BudgetProvider } from '../contexts/BudgetContext.jsx';
 import ErrorBoundary from './ErrorBoundary';
 import EnvelopeBudget from './EnvelopeBudget';
 

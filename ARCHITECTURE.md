@@ -1,258 +1,368 @@
-# New Architecture Documentation
+# Budget Planner - Architecture & Data Flow
 
-## Overview
-
-The application now follows a **Layered Architecture** pattern with clear separation of concerns.
-
-## Architecture Layers
-
-### 1. Infrastructure Layer (`core/repositories/`)
-**Responsibility**: Data access and persistence
-
-```javascript
-// Example: FirebaseRepository
-class FirebaseRepository {
-  async save(path, data) { /* Firebase logic */ }
-  async load(path) { /* Firebase logic */ }
-}
-```
-
-**Key Files**:
-- `firebaseRepository.js` - Firebase database operations
-- `localStorageRepository.js` - Browser storage operations
-- `budgetRepository.js` - Unified budget data access
-
-### 2. Domain Layer (`features/*/services/`)
-**Responsibility**: Business logic and rules
-
-```javascript
-// Example: BudgetService
-class BudgetService {
-  allocateBudget(envelopes, category, name, amount, totalIncome) {
-    // Validation and business rules
-    if (amount > totalIncome) throw new Error('Insufficient income');
-    // Return updated state
-  }
-}
-```
-
-**Key Services**:
-- `budgetService.js` - Budget allocation logic
-- `envelopeService.js` - Envelope calculations (rollover, balance, status)
-- `transactionService.js` - Transaction creation and validation
-- `paymentMethodService.js` - Payment method management
-
-### 3. Application Layer (`features/*/hooks/`)
-**Responsibility**: Application state and orchestration
-
-```javascript
-// Example: useBudget hook
-export const useBudget = () => {
-  const { state, dispatch, services } = useApp();
-  
-  const allocate = useCallback((category, name, amount) => {
-    const updated = services.budgetService.allocateBudget(...);
-    dispatch({ type: 'BUDGET_ALLOCATED', payload: updated });
-  }, []);
-  
-  return { allocate, income, envelopes };
-};
-```
-
-**Key Hooks**:
-- `useBudget.js` - Budget operations
-- `useEnvelopes.js` - Envelope operations
-- `useTransactions.js` - Transaction operations
-- `usePaymentMethods.js` - Payment method operations
-
-### 4. Presentation Layer (`components/`)
-**Responsibility**: UI rendering only
-
-```javascript
-// Example: Component
-const BudgetView = () => {
-  const { allocate, income } = useBudget();
-  
-  return (
-    <div>
-      <input onChange={(e) => allocate(cat, name, e.target.value)} />
-    </div>
-  );
-};
-```
-
-## Data Flow
+## System Architecture
 
 ```
-User Action (Component)
+┌─────────────────────────────────────────────────────────────┐
+│                     User Browser                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              React Application                        │   │
+│  │                                                        │   │
+│  │  ┌────────────────────────────────────────────────┐  │   │
+│  │  │         Dashboard Component                     │  │   │
+│  │  │  - Summary Cards                               │  │   │
+│  │  │  - Tab Navigation                              │  │   │
+│  │  │  - Month Navigation                            │  │   │
+│  │  └────────────────────────────────────────────────┘  │   │
+│  │                      ↓                                │   │
+│  │  ┌────────────────────────────────────────────────┐  │   │
+│  │  │         Form Components                        │  │   │
+│  │  │  - IncomeForm                                  │  │   │
+│  │  │  - ExpenseForm                                 │  │   │
+│  │  │  - TransferForm                                │  │   │
+│  │  │  - BudgetForm                                  │  │   │
+│  │  │  - PaymentMethodsModal                         │  │   │
+│  │  └────────────────────────────────────────────────┘  │   │
+│  │                      ↓                                │   │
+│  │  ┌────────────────────────────────────────────────┐  │   │
+│  │  │      BudgetContext (State Management)          │  │   │
+│  │  │  - currentMonth                                │  │   │
+│  │  │  - dashboardData                               │  │   │
+│  │  │  - loading, notification                       │  │   │
+│  │  │  - Actions: addIncome, addExpense, etc.        │  │   │
+│  │  └────────────────────────────────────────────────┘  │   │
+│  │                      ↓                                │   │
+│  │  ┌────────────────────────────────────────────────┐  │   │
+│  │  │         dataService (Business Logic)           │  │   │
+│  │  │  - addTransaction()                            │  │   │
+│  │  │  - allocateBudget()                            │  │   │
+│  │  │  - addPaymentMethod()                          │  │   │
+│  │  │  - getDashboardData()                          │  │   │
+│  │  └────────────────────────────────────────────────┘  │   │
+│  │                      ↓                                │   │
+│  │  ┌────────────────────────────────────────────────┐  │   │
+│  │  │         sheetsAPI (API Wrapper)                │  │   │
+│  │  │  - OAuth2 Token Management                     │  │   │
+│  │  │  - Spreadsheet Discovery/Creation              │  │   │
+│  │  │  - CRUD Operations                             │  │   │
+│  │  │  - Sheet Management                            │  │   │
+│  │  └────────────────────────────────────────────────┘  │   │
+│  │                      ↓                                │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+        ┌──────────────────────────────────────┐
+        │   Google OAuth 2.0                   │
+        │   (Authentication)                   │
+        └──────────────────────────────────────┘
+                           ↓
+        ┌──────────────────────────────────────┐
+        │   Google Sheets API                  │
+        │   (Data Storage & Retrieval)         │
+        └──────────────────────────────────────┘
+                           ↓
+        ┌──────────────────────────────────────┐
+        │   Google Sheets                      │
+        │   "Budget Tracker" Spreadsheet       │
+        │                                      │
+        │  - Transactions Sheet                │
+        │  - Budgets Sheet                     │
+        │  - PaymentMethods Sheet              │
+        └──────────────────────────────────────┘
+```
+
+## Data Flow - Add Expense
+
+```
+User fills Expense Form
     ↓
-Hook (useBudget)
+    Amount: 1500
+    Description: "Dmart"
+    Envelope: "DMART"
+    Payment Method: "HDFC"
     ↓
-Service (BudgetService)
+Form Submit → ExpenseForm Component
     ↓
-Repository (BudgetRepository)
+addExpense() → BudgetContext
     ↓
-Data Source (Firebase/LocalStorage)
+dataService.addTransaction(
+    type: "Expense",
+    description: "Dmart",
+    envelope: "DMART",
+    amount: 1500,
+    paymentMethod: "HDFC",
+    month: "2026-01"
+)
+    ↓
+sheetsAPI.appendRow('Transactions', [
+    "2026-01",
+    "Expense",
+    "Dmart",
+    "DMART",
+    1500,
+    "HDFC",
+    "2026-01-15T10:30:00Z",
+    "id123"
+])
+    ↓
+Google Sheets API Call
+    ↓
+Transactions Sheet Updated
+    ↓
+dataService.updateBudgetSpent("DMART", "2026-01")
+    ↓
+Calculate total spent for DMART
+    ↓
+Update Budgets Sheet
+    ↓
+loadDashboard() → Refresh UI
+    ↓
+Display updated summary and transactions
 ```
 
-## State Management
+## Data Flow - Add Budget
 
-### Centralized State (`AppContext`)
-
-```javascript
-const state = {
-  currentPeriod: '2024-01',
-  monthlyData: {
-    '2024-01': {
-      income: 50000,
-      envelopes: { needs: { rent: { budgeted: 15000 } } },
-      transactions: []
-    }
-  },
-  customPaymentMethods: ['Cash', 'UPI'],
-  dataLoaded: true,
-  notification: { type: '', message: '' }
-};
+```
+User fills Budget Form
+    ↓
+    Envelope: "DMART"
+    Amount: 5000
+    ↓
+Form Submit → BudgetForm Component
+    ↓
+allocateBudget() → BudgetContext
+    ↓
+dataService.allocateBudget(
+    envelope: "DMART",
+    budgeted: 5000,
+    month: "2026-01"
+)
+    ↓
+Check if budget exists for DMART in 2026-01
+    ↓
+If exists: Update row with new budgeted amount
+If not: Append new row to Budgets sheet
+    ↓
+Budgets Sheet Updated
+    ↓
+loadDashboard() → Refresh UI
+    ↓
+Display budget with progress bar
 ```
 
-### Actions
+## Component Hierarchy
 
-```javascript
-// Budget actions
-{ type: 'BUDGET_ALLOCATED', payload: updatedEnvelopes }
-{ type: 'INCOME_UPDATED', payload: newIncome }
-
-// Transaction actions
-{ type: 'TRANSACTION_ADDED', payload: transaction }
-{ type: 'TRANSACTION_DELETED', payload: transactionId }
-
-// Envelope actions
-{ type: 'ENVELOPE_CREATED', payload: { category, name } }
-{ type: 'ENVELOPE_DELETED', payload: { category, name } }
-
-// System actions
-{ type: 'SET_CURRENT_PERIOD', payload: '2024-02' }
-{ type: 'SET_MONTHLY_DATA', payload: monthlyData }
-{ type: 'SET_PAYMENT_METHODS', payload: methods }
-{ type: 'SET_NOTIFICATION', payload: { type, message } }
+```
+App
+├── Header
+│   ├── Logo
+│   └── Logout Button
+├── BudgetProvider
+│   └── Dashboard
+│       ├── Month Navigation
+│       ├── Summary Cards
+│       │   ├── Income Card
+│       │   ├── Expenses Card
+│       │   ├── Balance Card
+│       │   └── Payment Methods Button
+│       ├── Tab Navigation
+│       ├── Tab Content
+│       │   ├── Overview Tab
+│       │   │   └── TransactionsList
+│       │   ├── Income Tab
+│       │   │   └── IncomeForm
+│       │   ├── Expense Tab
+│       │   │   └── ExpenseForm
+│       │   ├── Transfer Tab
+│       │   │   └── TransferForm
+│       │   └── Budget Tab
+│       │       └── BudgetForm
+│       ├── Budget Summary Section
+│       │   └── BudgetSummary
+│       └── PaymentMethodsModal
+│           └── Payment Methods List
 ```
 
-## Dependency Injection
+## State Management Flow
 
-Services are injected at the root level:
-
-```javascript
-// App.jsx
-const firebaseRepo = new FirebaseRepository();
-const localStorageRepo = new LocalStorageRepository();
-const budgetRepo = new BudgetRepository(firebaseRepo, localStorageRepo);
-
-const budgetService = new BudgetService(budgetRepo);
-const envelopeService = new EnvelopeService();
-const transactionService = new TransactionService(envelopeService);
-
-const services = { budgetService, envelopeService, transactionService };
-
-<AppProvider services={services}>
-  <App />
-</AppProvider>
+```
+BudgetContext
+├── State
+│   ├── currentMonth: "2026-01"
+│   ├── dashboardData: {
+│   │   month: "2026-01",
+│   │   income: 50000,
+│   │   expenses: 8500,
+│   │   balance: 41500,
+│   │   transactions: [...],
+│   │   budgets: [...],
+│   │   paymentMethods: [...]
+│   │}
+│   ├── loading: false
+│   └── notification: { type: "", message: "" }
+│
+└── Actions
+    ├── loadDashboard(month)
+    ├── addIncome(amount, description, paymentMethod)
+    ├── addExpense(amount, description, envelope, paymentMethod)
+    ├── addTransfer(from, to, amount, description)
+    ├── allocateBudget(envelope, amount)
+    ├── addPaymentMethod(name, type)
+    └── removePaymentMethod(name)
 ```
 
-## Benefits
+## Google Sheets Structure
 
-### 1. Testability
-```javascript
-// Easy to test services in isolation
-const mockRepo = { save: jest.fn(), load: jest.fn() };
-const service = new BudgetService(mockRepo);
-expect(service.allocateBudget(...)).toThrow('Insufficient income');
+```
+Budget Tracker Spreadsheet
+│
+├── Transactions Sheet
+│   ├── Headers: Month | Type | Description | Envelope | Amount | Payment Method | Date | ID
+│   ├── Row 2: 2026-01 | Expense | Dmart | DMART | 1500 | HDFC | 2026-01-15T10:30:00Z | id123
+│   ├── Row 3: 2026-01 | Expense | Pav | DMART | 108 | HDFC | 2026-01-16T09:15:00Z | id124
+│   ├── Row 4: 2026-01 | Income | Salary | | 50000 | HDFC | 2026-01-01T00:00:00Z | id125
+│   └── ...
+│
+├── Budgets Sheet
+│   ├── Headers: Month | Envelope | Budgeted | Spent
+│   ├── Row 2: 2026-01 | DMART | 5000 | 1608
+│   ├── Row 3: 2026-01 | EMI | 85000 | 85000
+│   └── ...
+│
+└── PaymentMethods Sheet
+    ├── Headers: Name | Type | Active
+    ├── Row 2: HDFC | Bank | TRUE
+    ├── Row 3: SBI Credit Card | Credit Card | TRUE
+    └── ...
 ```
 
-### 2. Maintainability
-- Small, focused files (50-200 lines)
-- Single Responsibility Principle
-- Easy to locate and fix bugs
+## API Call Sequence
 
-### 3. Reusability
-```javascript
-// Services can be reused across features
-const envelopeService = new EnvelopeService();
-// Used by both TransactionService and EnvelopeHook
+```
+1. Initialize App
+   └─ sheetsAPI.initialize()
+      ├─ loadGapi()
+      ├─ loadGis()
+      ├─ initializeGapi()
+      └─ initializeGis()
+
+2. User Authorizes
+   └─ sheetsAPI.getAccessToken()
+      └─ tokenClient.requestAccessToken()
+
+3. Find/Create Spreadsheet
+   └─ sheetsAPI.findOrCreateSpreadsheet()
+      ├─ Search for "Budget Tracker"
+      ├─ If found: ensureSheets()
+      └─ If not: create new spreadsheet
+
+4. Initialize Headers
+   └─ sheetsAPI.initializeHeaders()
+      ├─ Check Transactions headers
+      ├─ Check Budgets headers
+      └─ Check PaymentMethods headers
+
+5. Load Dashboard
+   └─ dataService.getDashboardData(month)
+      ├─ getTransactions(month)
+      ├─ getBudgets(month)
+      └─ getPaymentMethods()
+
+6. Add Transaction
+   └─ dataService.addTransaction(...)
+      └─ sheetsAPI.appendRow('Transactions', [...])
+
+7. Update Budget
+   └─ dataService.updateBudgetSpent(envelope, month)
+      └─ sheetsAPI.updateRow('Budgets', rowIndex, [...])
 ```
 
-### 4. Scalability
-```javascript
-// Easy to add new features
-features/
-├── reports/          // New feature
-│   ├── hooks/
-│   ├── services/
-│   └── components/
+## Error Handling Flow
+
+```
+User Action
+    ↓
+Try Block
+    ├─ Execute operation
+    ├─ API call
+    └─ Update state
+    ↓
+Catch Block (if error)
+    ├─ Log error to console
+    ├─ Show notification
+    └─ Return false
+    ↓
+Finally Block
+    └─ Set loading to false
+    ↓
+User sees error message
 ```
 
-### 5. Performance
-```javascript
-// Better memoization
-const value = useMemo(() => ({ state, dispatch, services }), [state, services]);
+## Mobile Responsive Breakpoints
+
+```
+Desktop (>768px)
+├─ Summary Grid: 4 columns
+├─ Forms: Full width
+└─ Tabs: Horizontal scroll
+
+Mobile (<768px)
+├─ Summary Grid: 2 columns
+├─ Forms: Stacked
+└─ Tabs: Horizontal scroll with smaller text
 ```
 
-## Design Patterns Used
+## Performance Optimization
 
-1. **Repository Pattern**: Abstracts data access
-2. **Service Layer Pattern**: Encapsulates business logic
-3. **Facade Pattern**: Hooks provide simple interface to complex services
-4. **Dependency Injection**: Services injected at root
-5. **Observer Pattern**: React Context for state management
-
-## Code Organization
-
-### Feature-Based Structure
 ```
-features/
-├── budget/
-│   ├── components/    # Budget-specific UI
-│   ├── hooks/         # Budget state management
-│   └── services/      # Budget business logic
-├── envelopes/
-├── transactions/
-└── payments/
-```
+Initial Load
+├─ Load Google APIs (parallel)
+├─ Initialize OAuth
+├─ Find/Create Spreadsheet
+├─ Initialize Headers
+└─ Load Dashboard Data
 
-### Shared Resources
-```
-shared/
-├── components/        # Reusable UI components
-├── hooks/            # Reusable hooks
-└── utils/            # Utility functions
+Subsequent Loads
+├─ Use cached token
+├─ Direct API calls
+└─ Faster response
+
+User Actions
+├─ Optimistic UI update
+├─ API call in background
+└─ Refresh on completion
 ```
 
-### Core Infrastructure
+## Security Flow
+
 ```
-core/
-├── repositories/     # Data access layer
-├── context/         # Global state
-└── config/          # Configuration
+User Login
+    ↓
+OAuth2 Authorization
+    ├─ User grants permission
+    ├─ Google returns access token
+    └─ Token stored in memory only
+    ↓
+API Calls
+    ├─ Include access token in header
+    ├─ HTTPS encryption
+    └─ Google validates token
+    ↓
+Data Storage
+    ├─ Stored in user's Google Drive
+    ├─ No server-side storage
+    └─ User has full control
+    ↓
+Logout
+    ├─ Clear access token
+    ├─ Clear state
+    └─ Require re-authorization
 ```
 
-## Best Practices
+---
 
-1. **Components**: Only UI logic, no business logic
-2. **Hooks**: Orchestrate services, manage local state
-3. **Services**: Pure functions, no React dependencies
-4. **Repositories**: Only data access, no business logic
-
-## Migration Path
-
-1. ✅ Phase 1: Foundation (Repositories, Context)
-2. ✅ Phase 2: Features (Services, Hooks)
-3. ✅ Phase 3: Components (Refactored UI)
-4. ⏳ Phase 4: Cleanup (Remove old code)
-5. ⏳ Phase 5: Testing (Unit & Integration tests)
-
-## Future Enhancements
-
-1. Add TypeScript for type safety
-2. Implement unit tests for services
-3. Add integration tests for hooks
-4. Create component library
-5. Add E2E tests with Playwright
+**Architecture Version**: 2.0.0  
+**Last Updated**: 2026-01

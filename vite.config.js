@@ -3,25 +3,25 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  esbuild: {
-    loader: 'jsx',
-    include: /src.*\.[tj]sx?$/,
-    exclude: []
-  },
   build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          'firebase': ['firebase/app', 'firebase/auth', 'firebase/database'],
-          'react-vendor': ['react', 'react-dom']
-        }
-      }
+          vendor: ['react', 'react-dom'],
+        },
+      },
     },
-    chunkSizeWarningLimit: 1000
   },
   server: {
-    warmup: {
-      clientFiles: ['./src/App.jsx', './src/components/EnvelopeBudget.jsx']
-    }
-  }
+    port: 5173,
+    strictPort: false,
+  },
 })

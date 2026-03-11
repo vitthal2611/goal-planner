@@ -1,136 +1,130 @@
-import React, { memo, useMemo } from 'react';
+import React from 'react';
 
-const BudgetSummary = memo(({ income, totalBudgeted, totalSpent, paymentBalances, onTransferClick }) => {
-    const remaining = useMemo(() => income - totalSpent, [income, totalSpent]);
-    const hasPaymentBalances = useMemo(() => Object.keys(paymentBalances).length > 0, [paymentBalances]);
-    const spentPercentage = useMemo(() => income > 0 ? (totalSpent / income) * 100 : 0, [totalSpent, income]);
-    const budgetedPercentage = useMemo(() => income > 0 ? (totalBudgeted / income) * 100 : 0, [totalBudgeted, income]);
-    
-    return (
-        <>
-            <div className="summary-grid">
-                <div className="summary-card">
-                    <div className="summary-value">₹{income.toLocaleString()}</div>
-                    <div className="summary-label">Monthly Income</div>
-                    <div style={{
-                        width: '100%',
-                        height: '4px',
-                        background: 'var(--gray-200)',
-                        borderRadius: '2px',
-                        marginTop: '8px',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: '100%',
-                            height: '100%',
-                            background: 'linear-gradient(90deg, var(--success), var(--primary))',
-                            borderRadius: '2px'
-                        }} />
-                    </div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value">₹{totalBudgeted.toLocaleString()}</div>
-                    <div className="summary-label">Total Budgeted</div>
-                    <div style={{
-                        width: '100%',
-                        height: '4px',
-                        background: 'var(--gray-200)',
-                        borderRadius: '2px',
-                        marginTop: '8px',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: `${Math.min(budgetedPercentage, 100)}%`,
-                            height: '100%',
-                            background: budgetedPercentage > 100 ? 'var(--danger)' : 'var(--info)',
-                            borderRadius: '2px',
-                            transition: 'width 0.3s ease'
-                        }} />
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--gray-500)', marginTop: '4px' }}>
-                        {budgetedPercentage.toFixed(1)}% of income
-                    </div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value" style={{
-                        color: spentPercentage > 90 ? 'var(--danger)' : spentPercentage > 70 ? 'var(--warning)' : 'var(--success)'
-                    }}>₹{totalSpent.toLocaleString()}</div>
-                    <div className="summary-label">Total Spent</div>
-                    <div style={{
-                        width: '100%',
-                        height: '4px',
-                        background: 'var(--gray-200)',
-                        borderRadius: '2px',
-                        marginTop: '8px',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: `${Math.min(spentPercentage, 100)}%`,
-                            height: '100%',
-                            background: spentPercentage > 90 ? 'var(--danger)' : spentPercentage > 70 ? 'var(--warning)' : 'var(--success)',
-                            borderRadius: '2px',
-                            transition: 'width 0.3s ease'
-                        }} />
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--gray-500)', marginTop: '4px' }}>
-                        {spentPercentage.toFixed(1)}% of income
-                    </div>
-                </div>
-                <div className="summary-card">
-                    <div className="summary-value" style={{
-                        color: remaining < 0 ? 'var(--danger)' : 'var(--success)'
-                    }}>₹{remaining.toLocaleString()}</div>
-                    <div className="summary-label">Remaining</div>
-                    <div style={{
-                        width: '100%',
-                        height: '4px',
-                        background: 'var(--gray-200)',
-                        borderRadius: '2px',
-                        marginTop: '8px',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: `${Math.max(0, Math.min((remaining / income) * 100, 100))}%`,
-                            height: '100%',
-                            background: remaining < 0 ? 'var(--danger)' : 'var(--success)',
-                            borderRadius: '2px',
-                            transition: 'width 0.3s ease'
-                        }} />
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--gray-500)', marginTop: '4px' }}>
-                        {remaining < 0 ? 'Over budget!' : 'Available'}
-                    </div>
-                </div>
+const BudgetSummary = ({ budgets }) => {
+  if (budgets.length === 0) {
+    return <div style={styles.empty}>No budgets allocated</div>;
+  }
+
+  const totalBudgeted = budgets.reduce((sum, b) => sum + b.budgeted, 0);
+  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+  const totalRemaining = totalBudgeted - totalSpent;
+
+  return (
+    <div>
+      <div style={styles.overallStats}>
+        <div style={styles.statCard}>
+          <div style={styles.statLabel}>Total Budgeted</div>
+          <div style={styles.statValue}>₹{totalBudgeted.toLocaleString()}</div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statLabel}>Total Spent</div>
+          <div style={styles.statValue}>₹{totalSpent.toLocaleString()}</div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statLabel}>Total Remaining</div>
+          <div style={{ ...styles.statValue, color: totalRemaining >= 0 ? '#28a745' : '#dc3545' }}>
+            ₹{totalRemaining.toLocaleString()}
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.budgetsList}>
+        {budgets.map((budget, idx) => (
+          <div key={idx} style={styles.budgetCard}>
+            <div style={styles.budgetHeader}>
+              <span style={styles.budgetName}>{budget.envelope}</span>
+              <span style={styles.budgetAmount}>₹{budget.budgeted.toLocaleString()}</span>
             </div>
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  ...styles.progressFill,
+                  width: `${Math.min((budget.spent / budget.budgeted) * 100, 100)}%`,
+                  backgroundColor: budget.spent > budget.budgeted ? '#dc3545' : '#28a745',
+                }}
+              />
+            </div>
+            <div style={styles.budgetFooter}>
+              <span>Spent: ₹{budget.spent.toLocaleString()}</span>
+              <span style={{ color: budget.remaining >= 0 ? '#28a745' : '#dc3545' }}>
+                {budget.remaining >= 0 ? '✓' : '✗'} ₹{Math.abs(budget.remaining).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
-            {/* Payment Method Overview */}
-            {hasPaymentBalances && (
-                <div className="card">
-                    <div className="card-header">
-                        <h3>💳 Payment Method Overview</h3>
-                        <button 
-                            className="btn btn-primary touch-feedback"
-                            onClick={onTransferClick}
-                        >
-                            🔄 Transfer
-                        </button>
-                    </div>
-                    <div className="card-content">
-                        <div className="summary-grid">
-                            {Object.entries(paymentBalances).map(([method, amount]) => (
-                                <div key={method} className="summary-card">
-                                    <div className="summary-value">₹{amount.toLocaleString()}</div>
-                                    <div className="summary-label">{method}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
-});
-
-BudgetSummary.displayName = 'BudgetSummary';
+const styles = {
+  empty: {
+    textAlign: 'center',
+    padding: '20px',
+    color: '#666',
+  },
+  overallStats: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '12px',
+    marginBottom: '24px',
+  },
+  statCard: {
+    backgroundColor: '#f8f9fa',
+    padding: '16px',
+    borderRadius: '8px',
+    textAlign: 'center',
+  },
+  statLabel: {
+    fontSize: '12px',
+    color: '#666',
+    marginBottom: '8px',
+  },
+  statValue: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  budgetsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  budgetCard: {
+    backgroundColor: '#f8f9fa',
+    padding: '16px',
+    borderRadius: '8px',
+  },
+  budgetHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '8px',
+  },
+  budgetName: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  budgetAmount: {
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
+  progressBar: {
+    height: '8px',
+    backgroundColor: '#e9ecef',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    marginBottom: '8px',
+  },
+  progressFill: {
+    height: '100%',
+    transition: 'width 0.3s',
+  },
+  budgetFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '12px',
+    color: '#666',
+  },
+};
 
 export default BudgetSummary;

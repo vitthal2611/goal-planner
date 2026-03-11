@@ -1,32 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#3b82f6" />
-  <meta name="description" content="Mobile-first envelope budget tracker" />
-  
-  <link rel="preconnect" href="https://goal-planner-b604e-default-rtdb.firebaseio.com" crossorigin />
-  <link rel="preconnect" href="https://goal-planner-b604e.firebaseapp.com" crossorigin />
-  
-  <title>Budget Tracker</title>
-  <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    #root { min-height: 100vh; }
-  </style>
-  <script>
-    // Prevent onboarding.js errors from browser extensions
-    window.addEventListener('error', function(e) {
-      if (e.filename && e.filename.includes('onboarding.js')) {
-        e.preventDefault();
-        return false;
-      }
-    });
-  </script>
-</head>
-<body>
-  <div id="root"></div>
-  <script async defer src="https://accounts.google.com/gsi/client"></script>
-  <script type="module" src="/src/index.jsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#007bff" />
+    <meta name="description" content="Budget Planner - Manage your budget with Google Sheets" />
+    <title>Budget Planner</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
