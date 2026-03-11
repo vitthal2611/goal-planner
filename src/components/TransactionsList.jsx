@@ -1,81 +1,86 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { BudgetContext } from '../contexts/BudgetContext.jsx';
+import './TransactionsList.css';
 
-const TransactionsList = ({ transactions }) => {
+const TransactionsList = () => {
+  const { transactions } = useContext(BudgetContext);
+
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Income':
+        return '#28a745';
+      case 'Expense':
+        return '#dc3545';
+      case 'Transfer-In':
+        return '#17a2b8';
+      case 'Transfer-Out':
+        return '#ffc107';
+      default:
+        return '#6c757d';
+    }
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'Income':
+        return '💰';
+      case 'Expense':
+        return '💸';
+      case 'Transfer-In':
+        return '📥';
+      case 'Transfer-Out':
+        return '📤';
+      default:
+        return '📝';
+    }
+  };
+
   if (transactions.length === 0) {
     return (
-      <div style={styles.emptyState}>
-        <div style={styles.emptyIcon}>📭</div>
-        <div style={styles.emptyText}>No transactions yet</div>
+      <div className="transactions-container">
+        <h3>Recent Transactions</h3>
+        <div className="empty-state">No transactions yet</div>
       </div>
     );
   }
 
   return (
-    <div style={styles.list}>
-      {transactions.map((transaction, idx) => (
-        <div key={idx} style={styles.item}>
-          <div style={styles.itemLeft}>
-            <div style={styles.description}>{transaction.description}</div>
-            <div style={styles.meta}>
-              {transaction.type} • {transaction.paymentMethod}
-              {transaction.envelope && ` • ${transaction.envelope}`}
+    <div className="transactions-container">
+      <h3>Recent Transactions</h3>
+      <div className="transactions-list">
+        {transactions.map((txn, idx) => (
+          <div key={txn.id || idx} className="transaction-item">
+            <div className="transaction-icon" style={{ color: getTypeColor(txn.type) }}>
+              {getTypeIcon(txn.type)}
+            </div>
+            <div className="transaction-details">
+              <div className="transaction-description">{txn.description}</div>
+              <div className="transaction-meta">
+                {txn.envelope && <span className="envelope-badge">{txn.envelope}</span>}
+                <span className="payment-method">{txn.paymentMethod}</span>
+                <span className="date">{formatDate(txn.date)}</span>
+              </div>
+            </div>
+            <div className="transaction-amount" style={{ color: getTypeColor(txn.type) }}>
+              {txn.type === 'Income' || txn.type === 'Transfer-In' ? '+' : '-'}₹{txn.amount.toFixed(2)}
             </div>
           </div>
-          <div style={{
-            ...styles.amount,
-            color: transaction.type === 'Income' || transaction.type === 'Transfer-In' ? '#28a745' : '#dc3545',
-          }}>
-            {transaction.type === 'Income' || transaction.type === 'Transfer-In' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  emptyState: {
-    textAlign: 'center',
-    padding: '40px 20px',
-    color: '#666',
-  },
-  emptyIcon: {
-    fontSize: '48px',
-    marginBottom: '16px',
-  },
-  emptyText: {
-    fontSize: '14px',
-  },
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  item: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-  },
-  itemLeft: {
-    flex: 1,
-  },
-  description: {
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: '4px',
-  },
-  meta: {
-    fontSize: '12px',
-    color: '#666',
-  },
-  amount: {
-    fontWeight: 'bold',
-    fontSize: '14px',
-    marginLeft: '12px',
-  },
 };
 
 export default TransactionsList;

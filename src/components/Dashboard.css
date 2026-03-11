@@ -1,0 +1,160 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-error {
+  padding: 12px;
+  background-color: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-selector label {
+  font-weight: 500;
+  color: #333;
+}
+
+.month-selector select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #eee;
+}
+
+.tabs.mobile {
+  justify-content: space-around;
+}
+
+.tabs.desktop {
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #333;
+  border-bottom-color: #ddd;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+/* Tab Content */
+.tab-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .dashboard {
+    gap: 16px;
+  }
+
+  .dashboard-header {
+    gap: 12px;
+  }
+
+  .month-selector {
+    width: 100%;
+  }
+
+  .month-selector select {
+    flex: 1;
+  }
+
+  .tabs {
+    gap: 4px;
+  }
+
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .tab-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    gap: 12px;
+  }
+
+  .dashboard-header {
+    gap: 8px;
+  }
+
+  .month-selector label {
+    font-size: 13px;
+  }
+
+  .month-selector select {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .tabs {
+    gap: 2px;
+  }
+
+  .tab-button {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .tab-content {
+    padding: 12px;
+  }
+}

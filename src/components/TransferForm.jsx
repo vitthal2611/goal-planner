@@ -1,132 +1,113 @@
-import React, { useState } from 'react';
-import { useBudget } from '../contexts/BudgetContext.jsx';
+import React, { useContext, useState } from 'react';
+import { BudgetContext } from '../contexts/BudgetContext.jsx';
+import './Forms.css';
 
-const TransferForm = ({ paymentMethods }) => {
-  const { addTransfer } = useBudget();
-  const [form, setForm] = useState({
-    from: paymentMethods[0]?.name || '',
-    to: paymentMethods[1]?.name || '',
+const TransferForm = () => {
+  const { addTransaction, paymentMethods } = useContext(BudgetContext);
+  const [formData, setFormData] = useState({
+    fromMethod: paymentMethods[0]?.name || '',
+    toMethod: paymentMethods[1]?.name || '',
     amount: '',
-    description: '',
+    description: ''
   });
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.from || !form.to || !form.amount) return;
-    if (form.from === form.to) {
-      alert('Cannot transfer to same account');
+    if (!formData.fromMethod || !formData.toMethod || !formData.amount) {
+      setMessage('Please fill all fields');
       return;
     }
 
-    setSubmitting(true);
-    const success = await addTransfer(form.from, form.to, form.amount, form.description);
-    setSubmitting(false);
+    if (formData.fromMethod === formData.toMethod) {
+      setMessage('From and To methods must be different');
+      return;
+    }
 
-    if (success) {
-      setForm({
-        from: paymentMethods[0]?.name || '',
-        to: paymentMethods[1]?.name || '',
+    try {
+      setLoading(true);
+      const desc = formData.description || `Transfer from ${formData.fromMethod} to ${formData.toMethod}`;
+      
+      await Promise.all([
+        addTransaction('Transfer-Out', desc, '', parseFloat(formData.amount), formData.fromMethod),
+        addTransaction('Transfer-In', desc, '', parseFloat(formData.amount), formData.toMethod)
+      ]);
+
+      setFormData({
+        fromMethod: paymentMethods[0]?.name || '',
+        toMethod: paymentMethods[1]?.name || '',
         amount: '',
-        description: '',
+        description: ''
       });
+      setMessage('Transfer completed successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
-      <div style={styles.formGroup}>
-        <label style={styles.label}>From Account</label>
-        <select
-          value={form.from}
-          onChange={(e) => setForm({ ...form, from: e.target.value })}
-          style={styles.input}
-          required
-        >
+    <form onSubmit={handleSubmit} className="form">
+      <h2>🔄 Transfer Funds</h2>
+
+      <div className="form-group">
+        <label>From Payment Method</label>
+        <select name="fromMethod" value={formData.fromMethod} onChange={handleChange} required>
           {paymentMethods.map(method => (
             <option key={method.name} value={method.name}>{method.name}</option>
           ))}
         </select>
       </div>
 
-      <div style={styles.formGroup}>
-        <label style={styles.label}>To Account</label>
-        <select
-          value={form.to}
-          onChange={(e) => setForm({ ...form, to: e.target.value })}
-          style={styles.input}
-          required
-        >
-          {paymentMethods.filter(m => m.name !== form.from).map(method => (
+      <div className="form-group">
+        <label>To Payment Method</label>
+        <select name="toMethod" value={formData.toMethod} onChange={handleChange} required>
+          {paymentMethods.map(method => (
             <option key={method.name} value={method.name}>{method.name}</option>
           ))}
         </select>
       </div>
 
-      <div style={styles.formGroup}>
-        <label style={styles.label}>Amount</label>
+      <div className="form-group">
+        <label>Amount</label>
         <input
           type="number"
-          placeholder="Enter amount"
-          value={form.amount}
-          onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          style={styles.input}
+          name="amount"
+          value={formData.amount}
+          onChange={handleChange}
+          placeholder="0.00"
+          step="0.01"
+          min="0"
           required
         />
       </div>
 
-      <div style={styles.formGroup}>
-        <label style={styles.label}>Description (Optional)</label>
+      <div className="form-group">
+        <label>Description (Optional)</label>
         <input
           type="text"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
           placeholder="e.g., Monthly transfer"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          style={styles.input}
         />
       </div>
 
-      <button type="submit" disabled={submitting} style={styles.submitButton}>
-        {submitting ? 'Transferring...' : 'Transfer Funds'}
+      {message && <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>{message}</div>}
+
+      <button type="submit" disabled={loading} className="submit-button">
+        {loading ? 'Processing...' : 'Transfer Funds'}
       </button>
     </form>
   );
-};
-
-const styles = {
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  label: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#333',
-  },
-  input: {
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-  },
-  submitButton: {
-    padding: '12px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '16px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
 };
 
 export default TransferForm;

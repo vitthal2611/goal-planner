@@ -1,218 +1,267 @@
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+import { googleAuth } from './googleAuth.js';
+
+const BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 const SPREADSHEET_NAME = 'Budget Tracker';
 
-class SheetsAPI {
+class GoogleSheetsAPI {
   constructor() {
-    this.tokenClient = null;
-    this.accessToken = null;
     this.spreadsheetId = null;
-    this.gapiInited = false;
-    this.gisInited = false;
+    this.cache = new Map();
+    this.CACHE_TTL = 30000;
+    
+    this.SHEETS = {
+      TRANSACTIONS: 'Transactions',
+      BUDGETS: 'Budgets',
+      ENVELOPES: 'Envelopes',
+      PAYMENT_METHODS: 'PaymentMethods'
+    };
   }
 
   async initialize() {
-    await this.loadGapi();
-    await this.loadGis();
-    await this.initializeGapi();
-    this.initializeGis();
-  }
-
-  loadGapi() {
-    return new Promise((resolve, reject) => {
-      if (window.gapi) {
-        resolve();
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
-      script.async = true;
-      script.defer = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-
-  loadGis() {
-    return new Promise((resolve, reject) => {
-      if (window.google?.accounts?.oauth2) {
-        resolve();
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-
-  async initializeGapi() {
-    await new Promise((resolve) => window.gapi.load('client', resolve));
-    await window.gapi.client.init({
-      discoveryDocs: [DISCOVERY_DOC],
-    });
-    this.gapiInited = true;
-  }
-
-  initializeGis() {
-    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: '',
-    });
-    this.gisInited = true;
-  }
-
-  async getAccessToken() {
-    if (this.accessToken) return this.accessToken;
-
-    return new Promise((resolve, reject) => {
-      this.tokenClient.callback = (response) => {
-        if (response.error) {
-          reject(new Error(response.error));
-        } else {
-          this.accessToken = response.access_token;
-          window.gapi.client.setToken({ access_token: this.accessToken });
-          resolve(this.accessToken);
-        }
-      };
-      this.tokenClient.requestAccessToken({ prompt: '' });
-    });
+    await googleAuth.initialize();
+    this.spreadsheetId = await this.findOrCreateSpreadsheet();
+    await this.ensureSheets();
   }
 
   async findOrCreateSpreadsheet() {
-    if (this.spreadsheetId) return this.spreadsheetId;
-
-    try {
-      const response = await window.gapi.client.request({
-        path: 'https://www.googleapis.com/drive/v3/files',
-        params: {
-          q: `name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`,
-          fields: 'files(id, name)',
-          pageSize: 1,
-        },
-      });
-
-      if (response.result.files?.length > 0) {
-        this.spreadsheetId = response.result.files[0].id;
-        await this.ensureSheets();
-        return this.spreadsheetId;
+    const token = await googleAuth.getAccessToken();
+    
+    // Search for existing spreadsheet
+    const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='${SPREADSHEET_NAME}' and trashed=false&spaces=drive&pageSize=1`;
+    const searchRes = await fetch(searchUrl, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (searchRes.ok) {
+      const data = await searchRes.json();
+      if (data.files?.length > 0) {
+        return data.files[0].id;
       }
-
-      const createResponse = await window.gapi.client.sheets.spreadsheets.create({
-        properties: { title: SPREADSHEET_NAME },
-        sheets: [
-          { properties: { title: 'Transactions' } },
-          { properties: { title: 'Budgets' } },
-          { properties: { title: 'PaymentMethods' } },
-        ],
-      });
-
-      this.spreadsheetId = createResponse.result.spreadsheetId;
-      await this.initializeHeaders();
-      return this.spreadsheetId;
-    } catch (error) {
-      console.error('Error finding/creating spreadsheet:', error);
-      throw error;
     }
+
+    // Create new spreadsheet
+    const createRes = await fetch(BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        properties: { title: SPREADSHEET_NAME }
+      })
+    });
+
+    if (!createRes.ok) throw new Error('Failed to create spreadsheet');
+    const data = await createRes.json();
+    return data.spreadsheetId;
   }
 
   async ensureSheets() {
-    const response = await window.gapi.client.sheets.spreadsheets.get({
-      spreadsheetId: this.spreadsheetId,
+    const token = await googleAuth.getAccessToken();
+    const res = await fetch(`${BASE_URL}/${this.spreadsheetId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
 
-    const existingSheets = response.result.sheets.map(s => s.properties.title);
-    const requiredSheets = ['Transactions', 'Budgets', 'PaymentMethods'];
+    if (!res.ok) throw new Error('Failed to get spreadsheet');
+    const data = await res.json();
+    const existingSheets = data.sheets.map(s => s.properties.title);
 
-    for (const sheetName of requiredSheets) {
+    for (const [key, sheetName] of Object.entries(this.SHEETS)) {
       if (!existingSheets.includes(sheetName)) {
-        await window.gapi.client.sheets.spreadsheets.batchUpdate({
-          spreadsheetId: this.spreadsheetId,
-          resource: {
-            requests: [{ addSheet: { properties: { title: sheetName } } }],
-          },
-        });
+        await this.createSheet(sheetName);
+        await this.initializeHeaders(sheetName);
       }
     }
-
-    await this.initializeHeaders();
   }
 
-  async initializeHeaders() {
+  async createSheet(title) {
+    const token = await googleAuth.getAccessToken();
+    await fetch(`${BASE_URL}/${this.spreadsheetId}:batchUpdate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        requests: [{ addSheet: { properties: { title } } }]
+      })
+    });
+  }
+
+  async initializeHeaders(sheetName) {
     const headers = {
-      Transactions: ['Month', 'Type', 'Description', 'Envelope', 'Amount', 'Payment Method', 'Date', 'ID'],
-      Budgets: ['Month', 'Envelope', 'Budgeted', 'Spent'],
-      PaymentMethods: ['Name', 'Type', 'Active'],
+      [this.SHEETS.TRANSACTIONS]: ['Month', 'Type', 'Description', 'Envelope', 'Amount', 'Payment Method', 'Date', 'ID'],
+      [this.SHEETS.BUDGETS]: ['Month', 'Envelope', 'Budgeted', 'Spent'],
+      [this.SHEETS.ENVELOPES]: ['Name', 'Active'],
+      [this.SHEETS.PAYMENT_METHODS]: ['Name', 'Type', 'Active']
     };
 
-    for (const [sheetName, headerRow] of Object.entries(headers)) {
-      try {
-        const checkResponse = await window.gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: this.spreadsheetId,
-          range: `${sheetName}!A1:H1`,
-        });
-
-        if (!checkResponse.result.values?.length) {
-          await window.gapi.client.sheets.spreadsheets.values.update({
-            spreadsheetId: this.spreadsheetId,
-            range: `${sheetName}!A1`,
-            valueInputOption: 'RAW',
-            resource: { values: [headerRow] },
-          });
-        }
-      } catch (error) {
-        console.error(`Error initializing headers for ${sheetName}:`, error);
-      }
+    if (headers[sheetName]) {
+      await this.writeRange(sheetName, 'A1', [headers[sheetName]]);
     }
+  }
+
+  async writeRange(sheetName, range, values) {
+    const token = await googleAuth.getAccessToken();
+    const fullRange = `${sheetName}!${range}`;
+
+    const res = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${fullRange}?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ values })
+    });
+
+    if (!res.ok) throw new Error(`Failed to write to ${sheetName}`);
+    this.clearCache();
   }
 
   async appendRow(sheetName, values) {
-    await window.gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: this.spreadsheetId,
-      range: `${sheetName}!A:H`,
-      valueInputOption: 'RAW',
-      resource: { values: [values] },
+    const token = await googleAuth.getAccessToken();
+
+    const res = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${sheetName}:append?valueInputOption=RAW`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ values: [values] })
     });
+
+    if (!res.ok) throw new Error(`Failed to append to ${sheetName}`);
+    this.clearCache();
   }
 
-  async getSheetData(sheetName, range = 'A:H') {
-    const response = await window.gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: this.spreadsheetId,
-      range: `${sheetName}!${range}`,
+  async readSheet(sheetName, range = 'A:Z') {
+    const cacheKey = `${sheetName}_${range}`;
+    const cached = this.cache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.data;
+    }
+
+    const token = await googleAuth.getAccessToken();
+    const res = await fetch(`${BASE_URL}/${this.spreadsheetId}/values/${sheetName}!${range}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-    return response.result.values || [];
+
+    if (!res.ok) throw new Error(`Failed to read from ${sheetName}`);
+    const data = await res.json();
+    const values = data.values || [];
+
+    this.cache.set(cacheKey, { data: values, timestamp: Date.now() });
+    return values;
   }
 
-  async updateRow(sheetName, rowIndex, values) {
-    await window.gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: this.spreadsheetId,
-      range: `${sheetName}!A${rowIndex}`,
-      valueInputOption: 'RAW',
-      resource: { values: [values] },
-    });
+  // Transaction operations
+  async addTransaction(month, type, description, envelope, amount, paymentMethod) {
+    const row = [
+      month,
+      type,
+      description,
+      envelope,
+      amount,
+      paymentMethod,
+      new Date().toISOString(),
+      this.generateId()
+    ];
+    await this.appendRow(this.SHEETS.TRANSACTIONS, row);
   }
 
+  async getTransactions(month) {
+    const rows = await this.readSheet(this.SHEETS.TRANSACTIONS);
+    if (rows.length <= 1) return [];
+
+    return rows.slice(1)
+      .filter(row => row[0] === month)
+      .map(row => ({
+        month: row[0],
+        type: row[1],
+        description: row[2],
+        envelope: row[3],
+        amount: parseFloat(row[4]) || 0,
+        paymentMethod: row[5],
+        date: row[6],
+        id: row[7]
+      }));
+  }
+
+  // Budget operations
+  async setBudget(month, envelope, budgeted) {
+    const rows = await this.readSheet(this.SHEETS.BUDGETS);
+    const existingIndex = rows.findIndex(row => row[0] === month && row[1] === envelope);
+
+    if (existingIndex >= 0) {
+      const rowNum = existingIndex + 1;
+      await this.writeRange(this.SHEETS.BUDGETS, `A${rowNum}:D${rowNum}`, [[month, envelope, budgeted, 0]]);
+    } else {
+      await this.appendRow(this.SHEETS.BUDGETS, [month, envelope, budgeted, 0]);
+    }
+  }
+
+  async getBudgets(month) {
+    const rows = await this.readSheet(this.SHEETS.BUDGETS);
+    if (rows.length <= 1) return [];
+
+    return rows.slice(1)
+      .filter(row => row[0] === month)
+      .map(row => ({
+        month: row[0],
+        envelope: row[1],
+        budgeted: parseFloat(row[2]) || 0,
+        spent: parseFloat(row[3]) || 0
+      }));
+  }
+
+  // Envelope operations
+  async addEnvelope(name) {
+    const rows = await this.readSheet(this.SHEETS.ENVELOPES);
+    if (!rows.slice(1).find(row => row[0] === name)) {
+      await this.appendRow(this.SHEETS.ENVELOPES, [name, true]);
+    }
+  }
+
+  async getEnvelopes() {
+    const rows = await this.readSheet(this.SHEETS.ENVELOPES);
+    if (rows.length <= 1) return [];
+
+    return rows.slice(1)
+      .filter(row => row[1] !== 'false')
+      .map(row => row[0]);
+  }
+
+  // Payment method operations
+  async addPaymentMethod(name, type = 'Bank') {
+    const rows = await this.readSheet(this.SHEETS.PAYMENT_METHODS);
+    if (!rows.slice(1).find(row => row[0] === name)) {
+      await this.appendRow(this.SHEETS.PAYMENT_METHODS, [name, type, true]);
+    }
+  }
+
+  async getPaymentMethods() {
+    const rows = await this.readSheet(this.SHEETS.PAYMENT_METHODS);
+    if (rows.length <= 1) return [];
+
+    return rows.slice(1)
+      .filter(row => row[2] !== 'false')
+      .map(row => ({ name: row[0], type: row[1] }));
+  }
+
+  // Utility
   generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
-  getCurrentMonth() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  clearCache() {
+    this.cache.clear();
   }
 
   logout() {
-    this.accessToken = null;
-    if (window.gapi?.client?.setToken) {
-      window.gapi.client.setToken(null);
-    }
+    googleAuth.logout();
+    this.clearCache();
   }
 }
 
-export const sheetsAPI = new SheetsAPI();
+export const sheetsAPI = new GoogleSheetsAPI();

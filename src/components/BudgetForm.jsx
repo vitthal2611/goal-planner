@@ -1,168 +1,93 @@
-import React, { useState } from 'react';
-import { useBudget } from '../contexts/BudgetContext.jsx';
+import React, { useContext, useState } from 'react';
+import { BudgetContext } from '../contexts/BudgetContext.jsx';
+import './Forms.css';
 
-const BudgetForm = ({ budgets }) => {
-  const { allocateBudget } = useBudget();
-  const [form, setForm] = useState({ envelope: '', amount: '' });
-  const [submitting, setSubmitting] = useState(false);
+const BudgetForm = () => {
+  const { setBudgetAmount, envelopes, budgets } = useContext(BudgetContext);
+  const [formData, setFormData] = useState({
+    envelope: envelopes[0] || '',
+    budgeted: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.envelope || !form.amount) return;
+    if (!formData.envelope || !formData.budgeted) {
+      setMessage('Please fill all fields');
+      return;
+    }
 
-    setSubmitting(true);
-    const success = await allocateBudget(form.envelope, form.amount);
-    setSubmitting(false);
-
-    if (success) {
-      setForm({ envelope: '', amount: '' });
+    try {
+      setLoading(true);
+      await setBudgetAmount(formData.envelope, parseFloat(formData.budgeted));
+      setFormData({ envelope: envelopes[0] || '', budgeted: '' });
+      setMessage('Budget allocated successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Envelope (Category)</label>
-          <input
-            type="text"
-            placeholder="e.g., DMART, EMI, EATOUT"
-            value={form.envelope}
-            onChange={(e) => setForm({ ...form, envelope: e.target.value })}
-            style={styles.input}
-            required
-          />
+    <div className="budget-form-container">
+      <form onSubmit={handleSubmit} className="form">
+        <h2>📋 Allocate Budget</h2>
+
+        <div className="form-group">
+          <label>Category (Envelope)</label>
+          <select name="envelope" value={formData.envelope} onChange={handleChange} required>
+            {envelopes.map(env => (
+              <option key={env} value={env}>{env}</option>
+            ))}
+          </select>
         </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Budget Amount</label>
+        <div className="form-group">
+          <label>Budget Amount</label>
           <input
             type="number"
-            placeholder="Enter budget amount"
-            value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            style={styles.input}
+            name="budgeted"
+            value={formData.budgeted}
+            onChange={handleChange}
+            placeholder="0.00"
+            step="0.01"
+            min="0"
             required
           />
         </div>
 
-        <button type="submit" disabled={submitting} style={styles.submitButton}>
-          {submitting ? 'Allocating...' : 'Allocate Budget'}
+        {message && <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>{message}</div>}
+
+        <button type="submit" disabled={loading} className="submit-button">
+          {loading ? 'Allocating...' : 'Allocate Budget'}
         </button>
       </form>
 
-      {budgets.length > 0 && (
-        <div style={styles.budgetsList}>
-          <h4 style={styles.listTitle}>Current Budgets</h4>
-          {budgets.map((budget, idx) => (
-            <div key={idx} style={styles.budgetItem}>
-              <div style={styles.budgetHeader}>
-                <span style={styles.budgetName}>{budget.envelope}</span>
-                <span style={styles.budgetAmount}>₹{budget.budgeted.toLocaleString()}</span>
+      <div className="budget-list">
+        <h3>Current Budgets</h3>
+        {budgets.length === 0 ? (
+          <p className="empty-state">No budgets allocated yet</p>
+        ) : (
+          <div className="budget-items">
+            {budgets.map(budget => (
+              <div key={budget.envelope} className="budget-item">
+                <div className="budget-name">{budget.envelope}</div>
+                <div className="budget-amount">₹{budget.budgeted.toFixed(2)}</div>
               </div>
-              <div style={styles.budgetBar}>
-                <div
-                  style={{
-                    ...styles.budgetProgress,
-                    width: `${Math.min((budget.spent / budget.budgeted) * 100, 100)}%`,
-                    backgroundColor: budget.spent > budget.budgeted ? '#dc3545' : '#28a745',
-                  }}
-                />
-              </div>
-              <div style={styles.budgetStats}>
-                <span>Spent: ₹{budget.spent.toLocaleString()}</span>
-                <span style={{ color: budget.remaining >= 0 ? '#28a745' : '#dc3545' }}>
-                  Remaining: ₹{budget.remaining.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  label: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#333',
-  },
-  input: {
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-  },
-  submitButton: {
-    padding: '12px',
-    backgroundColor: '#6f42c1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '16px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
-  budgetsList: {
-    marginTop: '24px',
-  },
-  listTitle: {
-    margin: '0 0 16px 0',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  budgetItem: {
-    padding: '16px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    marginBottom: '12px',
-  },
-  budgetHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
-  },
-  budgetName: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  budgetAmount: {
-    fontWeight: 'bold',
-    color: '#007bff',
-  },
-  budgetBar: {
-    height: '8px',
-    backgroundColor: '#e9ecef',
-    borderRadius: '4px',
-    overflow: 'hidden',
-    marginBottom: '8px',
-  },
-  budgetProgress: {
-    height: '100%',
-    transition: 'width 0.3s',
-  },
-  budgetStats: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '12px',
-    color: '#666',
-  },
 };
 
 export default BudgetForm;

@@ -1,130 +1,98 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { BudgetContext } from '../contexts/BudgetContext.jsx';
+import './BudgetSummary.css';
 
-const BudgetSummary = ({ budgets }) => {
-  if (budgets.length === 0) {
-    return <div style={styles.empty}>No budgets allocated</div>;
-  }
+const BudgetSummary = () => {
+  const { budgets, transactions, envelopes, calculateSpent } = useContext(BudgetContext);
 
-  const totalBudgeted = budgets.reduce((sum, b) => sum + b.budgeted, 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
-  const totalRemaining = totalBudgeted - totalSpent;
+  const getTotalIncome = () => {
+    return transactions
+      .filter(t => t.type === 'Income')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getTotalExpense = () => {
+    return transactions
+      .filter(t => t.type === 'Expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getTotalBudgeted = () => {
+    return budgets.reduce((sum, b) => sum + b.budgeted, 0);
+  };
+
+  const getEnvelopeStatus = (envelope) => {
+    const budget = budgets.find(b => b.envelope === envelope);
+    const spent = calculateSpent(envelope);
+    const budgeted = budget?.budgeted || 0;
+    const remaining = budgeted - spent;
+    const percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0;
+
+    return { spent, budgeted, remaining, percentage };
+  };
+
+  const totalIncome = getTotalIncome();
+  const totalExpense = getTotalExpense();
+  const totalBudgeted = getTotalBudgeted();
+  const balance = totalIncome - totalExpense;
 
   return (
-    <div>
-      <div style={styles.overallStats}>
-        <div style={styles.statCard}>
-          <div style={styles.statLabel}>Total Budgeted</div>
-          <div style={styles.statValue}>₹{totalBudgeted.toLocaleString()}</div>
+    <div className="budget-summary">
+      <div className="summary-cards">
+        <div className="summary-card income">
+          <div className="card-label">Total Income</div>
+          <div className="card-amount">₹{totalIncome.toFixed(2)}</div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statLabel}>Total Spent</div>
-          <div style={styles.statValue}>₹{totalSpent.toLocaleString()}</div>
+        <div className="summary-card expense">
+          <div className="card-label">Total Expense</div>
+          <div className="card-amount">₹{totalExpense.toFixed(2)}</div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statLabel}>Total Remaining</div>
-          <div style={{ ...styles.statValue, color: totalRemaining >= 0 ? '#28a745' : '#dc3545' }}>
-            ₹{totalRemaining.toLocaleString()}
-          </div>
+        <div className="summary-card budget">
+          <div className="card-label">Total Budgeted</div>
+          <div className="card-amount">₹{totalBudgeted.toFixed(2)}</div>
+        </div>
+        <div className={`summary-card balance ${balance >= 0 ? 'positive' : 'negative'}`}>
+          <div className="card-label">Balance</div>
+          <div className="card-amount">₹{balance.toFixed(2)}</div>
         </div>
       </div>
 
-      <div style={styles.budgetsList}>
-        {budgets.map((budget, idx) => (
-          <div key={idx} style={styles.budgetCard}>
-            <div style={styles.budgetHeader}>
-              <span style={styles.budgetName}>{budget.envelope}</span>
-              <span style={styles.budgetAmount}>₹{budget.budgeted.toLocaleString()}</span>
-            </div>
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  ...styles.progressFill,
-                  width: `${Math.min((budget.spent / budget.budgeted) * 100, 100)}%`,
-                  backgroundColor: budget.spent > budget.budgeted ? '#dc3545' : '#28a745',
-                }}
-              />
-            </div>
-            <div style={styles.budgetFooter}>
-              <span>Spent: ₹{budget.spent.toLocaleString()}</span>
-              <span style={{ color: budget.remaining >= 0 ? '#28a745' : '#dc3545' }}>
-                {budget.remaining >= 0 ? '✓' : '✗'} ₹{Math.abs(budget.remaining).toLocaleString()}
-              </span>
-            </div>
+      {envelopes.length > 0 && (
+        <div className="envelope-status">
+          <h3>Envelope Status</h3>
+          <div className="envelope-list">
+            {envelopes.map(envelope => {
+              const status = getEnvelopeStatus(envelope);
+              const isOverBudget = status.spent > status.budgeted;
+
+              return (
+                <div key={envelope} className="envelope-item">
+                  <div className="envelope-header">
+                    <div className="envelope-name">{envelope}</div>
+                    <div className={`envelope-amount ${isOverBudget ? 'over-budget' : ''}`}>
+                      ₹{status.spent.toFixed(2)} / ₹{status.budgeted.toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="progress-bar">
+                    <div
+                      className={`progress-fill ${isOverBudget ? 'over' : ''}`}
+                      style={{ width: `${Math.min(status.percentage, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="envelope-footer">
+                    <span className={`remaining ${isOverBudget ? 'over' : ''}`}>
+                      {isOverBudget ? `Over by ₹${Math.abs(status.remaining).toFixed(2)}` : `₹${status.remaining.toFixed(2)} left`}
+                    </span>
+                    <span className="percentage">{status.percentage.toFixed(0)}%</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
-};
-
-const styles = {
-  empty: {
-    textAlign: 'center',
-    padding: '20px',
-    color: '#666',
-  },
-  overallStats: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '12px',
-    marginBottom: '24px',
-  },
-  statCard: {
-    backgroundColor: '#f8f9fa',
-    padding: '16px',
-    borderRadius: '8px',
-    textAlign: 'center',
-  },
-  statLabel: {
-    fontSize: '12px',
-    color: '#666',
-    marginBottom: '8px',
-  },
-  statValue: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  budgetsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  budgetCard: {
-    backgroundColor: '#f8f9fa',
-    padding: '16px',
-    borderRadius: '8px',
-  },
-  budgetHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
-  },
-  budgetName: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  budgetAmount: {
-    fontWeight: 'bold',
-    color: '#007bff',
-  },
-  progressBar: {
-    height: '8px',
-    backgroundColor: '#e9ecef',
-    borderRadius: '4px',
-    overflow: 'hidden',
-    marginBottom: '8px',
-  },
-  progressFill: {
-    height: '100%',
-    transition: 'width 0.3s',
-  },
-  budgetFooter: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '12px',
-    color: '#666',
-  },
 };
 
 export default BudgetSummary;

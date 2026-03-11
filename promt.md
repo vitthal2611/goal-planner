@@ -13,7 +13,7 @@ Month	Type	Description	Envelope	Amount	Payment Method
 
 Here month is 2026-01,2026-02 and so on
 
-Type is Income, Expense, Transfer-in, Transfer-Out
+Type is Income, Expense and Transfer
 
 Description is paud for like tea, Milk etc
 
@@ -29,8 +29,9 @@ Once Authentication done, no verification of google sheet required. maintain two
 
 The payment method is configure in profile section, in Budget is allocated each month so Envelope (Category) should be Dropdown and also have month field which ia gain dropdown
 
+The Envelope (Category) is global and it is configured in profile section.
 
-The Envelope (Category) is global and it is configured in profile section
+In expense entry allow user to select Enevelope from dropdown, For Income the default envelope dropdown values is Income, for transfer envelope dropdown it is transfer  
 
 SAMAPLE dATA:
 

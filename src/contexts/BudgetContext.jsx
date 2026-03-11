@@ -1,129 +1,108 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { sheetsAPI } from '../services/sheetsAPI.js';
-import { dataService } from '../services/dataService.js';
 
-const BudgetContext = createContext();
+export const BudgetContext = createContext();
 
 export const BudgetProvider = ({ children }) => {
-  const [currentMonth, setCurrentMonth] = useState(dataService.getCurrentMonth());
-  const [dashboardData, setDashboardData] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  const [transactions, setTransactions] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [envelopes, setEnvelopes] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({ type: '', message: '' });
+  const [error, setError] = useState(null);
 
-  const showNotification = useCallback((type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification({ type: '', message: '' }), 3000);
-  }, []);
-
-  const loadDashboard = useCallback(async (month = currentMonth) => {
-    setLoading(true);
+  const loadData = useCallback(async () => {
     try {
-      const data = await dataService.getDashboardData(month);
-      setDashboardData(data);
-      setCurrentMonth(month);
-    } catch (error) {
-      showNotification('error', 'Failed to load data');
-      console.error(error);
+      setLoading(true);
+      setError(null);
+      const [txns, budg, envs, methods] = await Promise.all([
+        sheetsAPI.getTransactions(currentMonth),
+        sheetsAPI.getBudgets(currentMonth),
+        sheetsAPI.getEnvelopes(),
+        sheetsAPI.getPaymentMethods()
+      ]);
+      setTransactions(txns);
+      setBudgets(budg);
+      setEnvelopes(envs);
+      setPaymentMethods(methods);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [currentMonth, showNotification]);
+  }, [currentMonth]);
 
-  const addIncome = useCallback(async (amount, description, paymentMethod) => {
-    try {
-      await dataService.addTransaction('Income', description, '', amount, paymentMethod, currentMonth);
-      await loadDashboard();
-      showNotification('success', 'Income added');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to add income');
-      return false;
-    }
-  }, [currentMonth, loadDashboard, showNotification]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const addExpense = useCallback(async (amount, description, envelope, paymentMethod) => {
+  const addTransaction = useCallback(async (type, description, envelope, amount, paymentMethod) => {
     try {
-      await dataService.addTransaction('Expense', description, envelope, amount, paymentMethod, currentMonth);
-      await dataService.updateBudgetSpent(envelope, currentMonth);
-      await loadDashboard();
-      showNotification('success', 'Expense added');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to add expense');
-      return false;
+      await sheetsAPI.addTransaction(currentMonth, type, description, envelope, amount, paymentMethod);
+      await loadData();
+    } catch (err) {
+      setError(err.message);
     }
-  }, [currentMonth, loadDashboard, showNotification]);
+  }, [currentMonth, loadData]);
 
-  const addTransfer = useCallback(async (from, to, amount, description) => {
+  const setBudgetAmount = useCallback(async (envelope, budgeted) => {
     try {
-      const desc = description || `Transfer from ${from} to ${to}`;
-      await dataService.addTransaction('Transfer-Out', desc, '', amount, from, currentMonth);
-      await dataService.addTransaction('Transfer-In', desc, '', amount, to, currentMonth);
-      await loadDashboard();
-      showNotification('success', 'Transfer completed');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to transfer');
-      return false;
+      await sheetsAPI.setBudget(currentMonth, envelope, budgeted);
+      await loadData();
+    } catch (err) {
+      setError(err.message);
     }
-  }, [currentMonth, loadDashboard, showNotification]);
+  }, [currentMonth, loadData]);
 
-  const allocateBudget = useCallback(async (envelope, amount) => {
+  const addNewEnvelope = useCallback(async (name) => {
     try {
-      await dataService.allocateBudget(envelope, amount, currentMonth);
-      await loadDashboard();
-      showNotification('success', 'Budget allocated');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to allocate budget');
-      return false;
+      await sheetsAPI.addEnvelope(name);
+      await loadData();
+    } catch (err) {
+      setError(err.message);
     }
-  }, [currentMonth, loadDashboard, showNotification]);
+  }, [loadData]);
 
-  const addPaymentMethod = useCallback(async (name, type) => {
+  const addNewPaymentMethod = useCallback(async (name, type) => {
     try {
-      await dataService.addPaymentMethod(name, type);
-      await loadDashboard();
-      showNotification('success', 'Payment method added');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to add payment method');
-      return false;
+      await sheetsAPI.addPaymentMethod(name, type);
+      await loadData();
+    } catch (err) {
+      setError(err.message);
     }
-  }, [loadDashboard, showNotification]);
+  }, [loadData]);
 
-  const removePaymentMethod = useCallback(async (name) => {
-    try {
-      await dataService.removePaymentMethod(name);
-      await loadDashboard();
-      showNotification('success', 'Payment method removed');
-      return true;
-    } catch (error) {
-      showNotification('error', 'Failed to remove payment method');
-      return false;
-    }
-  }, [loadDashboard, showNotification]);
+  const calculateSpent = useCallback((envelope) => {
+    return transactions
+      .filter(t => t.envelope === envelope && t.type === 'Expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
 
   const value = {
     currentMonth,
     setCurrentMonth,
-    dashboardData,
+    transactions,
+    budgets,
+    envelopes,
+    paymentMethods,
     loading,
-    notification,
-    loadDashboard,
-    addIncome,
-    addExpense,
-    addTransfer,
-    allocateBudget,
-    addPaymentMethod,
-    removePaymentMethod,
+    error,
+    addTransaction,
+    setBudgetAmount,
+    addNewEnvelope,
+    addNewPaymentMethod,
+    calculateSpent,
+    refresh: loadData
   };
 
-  return <BudgetContext.Provider value={value}>{children}</BudgetContext.Provider>;
-};
-
-export const useBudget = () => {
-  const context = useContext(BudgetContext);
-  if (!context) throw new Error('useBudget must be used within BudgetProvider');
-  return context;
+  return (
+    <BudgetContext.Provider value={value}>
+      {children}
+    </BudgetContext.Provider>
+  );
 };
