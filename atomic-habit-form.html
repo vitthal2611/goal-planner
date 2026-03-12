@@ -88,6 +88,27 @@
       </div>
     </div>
 
+    <!-- Progressions Section -->
+    <div class="habit-section">
+      <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 12px; background: #f3f4f6; border-radius: 12px; margin-bottom: 12px;">
+        <span style="font-weight: 700; color: #1f2937;">Progressions</span>
+        <span class="section-toggle" style="font-size: 20px; transition: transform 0.3s;">▼</span>
+      </div>
+      <div class="section-content" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px; font-weight: 600;">Plan how to increase difficulty over time</div>
+        <div id="progressionList" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="progression-item" style="display: flex; gap: 8px; align-items: center; padding: 12px; background: #fef3c7; border-radius: 12px; border: 2px solid #f59e0b;">
+            <span style="font-size: 16px; font-weight: 600; color: #92400e;">Day</span>
+            <input type="number" class="progression-days" placeholder="30" min="1" value="30" style="width: 60px; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+            <span style="font-size: 16px; font-weight: 600; color: #92400e;">-</span>
+            <input type="text" class="progression-text" placeholder="increase to 45 minutes" style="flex: 1; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; background: white;" />
+            <button type="button" class="remove-progression" onclick="removeProgression(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+          </div>
+        </div>
+        <button type="button" id="addProgressionBtn" onclick="addProgressionField()" style="width: 100%; padding: 12px; border: 2px dashed #f59e0b; background: transparent; color: #f59e0b; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px;">📊 Add Progression</button>
+      </div>
+    </div>
+
     <button type="submit" id="submitHabitBtn" style="width: 100%; padding: 16px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); margin-top: 12px;">Create Atomic Habit</button>
   </form>
 </div>

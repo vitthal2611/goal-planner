@@ -1,47 +1,12 @@
 const SPREADSHEET_NAME = 'Budget Tracker';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-let tokenClient;
-let accessToken = null;
 let spreadsheetId = null;
-
-export const initGoogleAuth = (clientId) => {
-  return new Promise((resolve) => {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: SCOPES,
-      callback: (response) => {
-        if (response.access_token) {
-          accessToken = response.access_token;
-          resolve(true);
-        }
-      },
-    });
-    resolve(false);
-  });
-};
-
-export const authorize = () => {
-  return new Promise((resolve) => {
-    tokenClient.callback = (response) => {
-      if (response.access_token) {
-        accessToken = response.access_token;
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    };
-    tokenClient.requestAccessToken({ prompt: '' });
-  });
-};
-
-export const isAuthorized = () => !!accessToken;
 
 const apiCall = async (url, options = {}) => {
   const response = await fetch(url, {
     ...options,
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       ...options.headers,
     },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './QuickTrackUI.css';
 
 const QuickTrackUI = () => {
+  // Finance states
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [activeType, setActiveType] = useState('expense');
@@ -31,6 +32,26 @@ const QuickTrackUI = () => {
   const [defaultBudgets, setDefaultBudgets] = useState({});
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
+
+  // Habit tracking states
+  const [mainTab, setMainTab] = useState('finance');
+  const [habitTab, setHabitTab] = useState('view');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [habits, setHabits] = useState([]);
+  const [habitCheckins, setHabitCheckins] = useState([]);
+  const [groupByIdentity, setGroupByIdentity] = useState(false);
+  const [editingHabitId, setEditingHabitId] = useState(null);
+  
+  // Habit form states
+  const [habitIdentity, setHabitIdentity] = useState('');
+  const [habitTriggerCue, setHabitTriggerCue] = useState('');
+  const [habitTriggerTime, setHabitTriggerTime] = useState('');
+  const [habitRoutineAction, setHabitRoutineAction] = useState('');
+  const [habitRoutineLocation, setHabitRoutineLocation] = useState('');
+  const [habitImmediateReward, setHabitImmediateReward] = useState('');
+  const [habitMilestones, setHabitMilestones] = useState([]);
+  const [habitProgressions, setHabitProgressions] = useState([]);
+  const [collapsedSections, setCollapsedSections] = useState({});
 
   // Generate months dynamically based on current date
   const generateMonths = () => {
@@ -62,6 +83,304 @@ const QuickTrackUI = () => {
 
   const years = generateYears();
 
+  // Habit tracking functions
+  const getToday = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const formatDateDisplay = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date(getToday() + 'T00:00:00');
+    const diff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+    
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    if (diff === -1) return 'Tomorrow';
+    if (diff > 1 && diff <= 7) return `${diff} days ago`;
+    if (diff < -1 && diff >= -7) return `In ${Math.abs(diff)} days`;
+    
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  const getStreak = (habitId, upToDate = null) => {
+    const endDate = upToDate || getToday();
+    let streak = 0;
+    let checkDate = new Date(endDate + 'T00:00:00');
+    
+    while (true) {
+      const dateStr = checkDate.toISOString().split('T')[0];
+      const checked = habitCheckins.some(c => c.habitId === habitId && c.date === dateStr);
+      if (!checked) break;
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    return streak;
+  };
+
+  const isCheckedOnDate = (habitId, date) => {
+    return habitCheckins.some(c => c.habitId === habitId && c.date === date);
+  };
+
+  const toggleHabitCheckIn = (habitId, date) => {
+    const index = habitCheckins.findIndex(c => c.habitId === habitId && c.date === date);
+    
+    if (index > -1) {
+      setHabitCheckins(habitCheckins.filter((_, i) => i !== index));
+    } else {
+      setHabitCheckins([...habitCheckins, { habitId, date }]);
+    }
+  };
+
+  const deleteHabit = (habitId) => {
+    if (window.confirm('Delete this habit?')) {
+      setHabits(habits.filter(h => h.id !== habitId));
+      setHabitCheckins(habitCheckins.filter(c => c.habitId !== habitId));
+      showToast('Habit deleted', 'error');
+    }
+  };
+
+  const editHabit = (habitId) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    setEditingHabitId(habitId);
+    setHabitIdentity(habit.identity ? habit.identity.replace('I am ', '') : '');
+    setHabitTriggerCue(habit.triggerCue || '');
+    setHabitTriggerTime(habit.triggerTime || '');
+    setHabitRoutineAction(habit.routineAction || '');
+    setHabitRoutineLocation(habit.routineLocation || '');
+    setHabitImmediateReward(habit.immediateReward || '');
+    setHabitMilestones(habit.milestones || []);
+    setHabitProgressions(habit.progressions || []);
+    setHabitTab('create');
+  };
+
+  const handlePrevDay = () => {
+    const date = new Date(selectedDate + 'T00:00:00');
+    date.setDate(date.getDate() - 1);
+    setSelectedDate(date.toISOString().split('T')[0]);
+  };
+
+  const handleNextDay = () => {
+    const date = new Date(selectedDate + 'T00:00:00');
+    date.setDate(date.getDate() + 1);
+    setSelectedDate(date.toISOString().split('T')[0]);
+  };
+
+  const toggleSection = (sectionName) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }));
+  };
+
+  const addMilestone = () => {
+    setHabitMilestones([...habitMilestones, { days: '', milestone: '' }]);
+  };
+
+  const removeMilestone = (index) => {
+    setHabitMilestones(habitMilestones.filter((_, i) => i !== index));
+  };
+
+  const updateMilestone = (index, field, value) => {
+    const updated = [...habitMilestones];
+    updated[index][field] = value;
+    setHabitMilestones(updated);
+  };
+
+  const addProgression = () => {
+    setHabitProgressions([...habitProgressions, { days: '', progression: '' }]);
+  };
+
+  const removeProgression = (index) => {
+    setHabitProgressions(habitProgressions.filter((_, i) => i !== index));
+  };
+
+  const updateProgression = (index, field, value) => {
+    const updated = [...habitProgressions];
+    updated[index][field] = value;
+    setHabitProgressions(updated);
+  };
+
+  const resetHabitForm = () => {
+    setHabitIdentity('');
+    setHabitTriggerCue('');
+    setHabitTriggerTime('');
+    setHabitRoutineAction('');
+    setHabitRoutineLocation('');
+    setHabitImmediateReward('');
+    setHabitMilestones([]);
+    setHabitProgressions([]);
+    setEditingHabitId(null);
+    setCollapsedSections({});
+  };
+
+  const handleHabitSubmit = (e) => {
+    e.preventDefault();
+
+    const identity = 'I am ' + habitIdentity.trim();
+    const triggerCue = habitTriggerCue.trim();
+    const routineAction = habitRoutineAction.trim();
+    const routineLocation = habitRoutineLocation.trim();
+    const immediateReward = habitImmediateReward.trim();
+
+    if (!habitIdentity || !triggerCue || !routineAction || !routineLocation || !immediateReward) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+
+    const validMilestones = habitMilestones
+      .filter(m => m.days && m.milestone)
+      .map(m => ({ days: parseInt(m.days), milestone: m.milestone }))
+      .sort((a, b) => a.days - b.days);
+
+    const validProgressions = habitProgressions
+      .filter(p => p.days && p.progression)
+      .map(p => ({ days: parseInt(p.days), progression: p.progression }))
+      .sort((a, b) => a.days - b.days);
+
+    if (editingHabitId) {
+      const updatedHabits = habits.map(h => 
+        h.id === editingHabitId
+          ? {
+              ...h,
+              identity,
+              triggerCue,
+              triggerTime: habitTriggerTime,
+              routineAction,
+              routineLocation,
+              immediateReward,
+              milestones: validMilestones,
+              progressions: validProgressions
+            }
+          : h
+      );
+      setHabits(updatedHabits);
+      showToast(`Habit updated: ${identity}`, 'success');
+    } else {
+      const newHabit = {
+        id: Date.now().toString(),
+        identity,
+        triggerCue,
+        triggerTime: habitTriggerTime,
+        routineAction,
+        routineLocation,
+        immediateReward,
+        milestones: validMilestones,
+        progressions: validProgressions,
+        createdAt: new Date().toISOString()
+      };
+      setHabits([...habits, newHabit]);
+      showToast(`Atomic habit created: ${identity}`, 'success');
+    }
+
+    resetHabitForm();
+    setHabitTab('view');
+  };
+
+  const getHabitStats = () => {
+    const completedCount = habits.filter(h => isCheckedOnDate(h.id, selectedDate)).length;
+    return { completed: completedCount, total: habits.length };
+  };
+
+  const renderHabitsList = () => {
+    if (habits.length === 0) {
+      return (
+        <div style={{padding: '32px 16px', textAlign: 'center', color: '#9ca3af', fontSize: '15px'}}>
+          ✨ No habits yet. Create one to get started!
+        </div>
+      );
+    }
+
+    const sortedHabits = [...habits].sort((a, b) => {
+      const timeA = a.triggerTime || '23:59';
+      const timeB = b.triggerTime || '23:59';
+      return timeA.localeCompare(timeB);
+    });
+
+    if (groupByIdentity) {
+      const habitsByIdentity = {};
+      sortedHabits.forEach(habit => {
+        const identity = habit.identity || 'No Identity';
+        if (!habitsByIdentity[identity]) {
+          habitsByIdentity[identity] = [];
+        }
+        habitsByIdentity[identity].push(habit);
+      });
+
+      return Object.entries(habitsByIdentity).map(([identity, groupHabits]) => {
+        const identityName = identity.replace('I am ', '');
+        return (
+          <div key={identity} className="identity-group">
+            <div className="identity-header">✨ {identityName}</div>
+            <div className="identity-habits">
+              {groupHabits.map(habit => renderHabitCard(habit))}
+            </div>
+          </div>
+        );
+      });
+    }
+
+    return sortedHabits.map(habit => renderHabitCard(habit, true));
+  };
+
+  const renderHabitCard = (habit, showIdentity = false) => {
+    const checked = isCheckedOnDate(habit.id, selectedDate);
+    const streak = getStreak(habit.id, selectedDate);
+    const timeDisplay = habit.triggerTime ? ` at ${habit.triggerTime}` : '';
+    const nextMilestone = habit.milestones?.find(m => m.days > streak);
+
+    return (
+      <div key={habit.id} className={`habit-card ${checked ? 'completed' : ''}`}>
+        <div className="habit-card-main">
+          <button 
+            className={`check-btn ${checked ? 'checked' : ''}`}
+            onClick={() => toggleHabitCheckIn(habit.id, selectedDate)}
+          >
+            {checked ? '✓' : ''}
+          </button>
+          <div className="habit-info">
+            {showIdentity && habit.identity && (
+              <div className="identity-badge">
+                ✨ {habit.identity.replace('I am ', '')}
+              </div>
+            )}
+            <div className="habit-title">{habit.routineAction}</div>
+            <div className="habit-cue">
+              <span>🔔 After I {habit.triggerCue}{timeDisplay}</span>
+              {habit.routineLocation && <span>📍 {habit.routineLocation}</span>}
+            </div>
+          </div>
+          <div className="habit-streak">
+            <div className="streak-number">{streak}</div>
+            <div className="streak-label">🔥 Streak</div>
+          </div>
+        </div>
+        <div className="habit-card-footer">
+          {habit.immediateReward && (
+            <div className="habit-reward">🎁 {habit.immediateReward}</div>
+          )}
+          {nextMilestone && (
+            <div className="habit-milestone">
+              📈 Day {nextMilestone.days}: {nextMilestone.milestone}
+            </div>
+          )}
+          <button className="habit-action-btn edit-habit-btn" onClick={() => editHabit(habit.id)}>
+            ✏️ Edit
+          </button>
+          <button className="habit-action-btn delete-habit-btn" onClick={() => deleteHabit(habit.id)}>
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Load data from localStorage on mount
   useEffect(() => {
     const savedPaymentMethods = JSON.parse(localStorage.getItem('paymentMethods')) || [];
@@ -69,12 +388,16 @@ const QuickTrackUI = () => {
     const savedDefaultBudgets = JSON.parse(localStorage.getItem('defaultBudgets')) || {};
     const savedBudgets = JSON.parse(localStorage.getItem('budgets')) || [];
     const savedTransactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    const savedHabits = JSON.parse(localStorage.getItem('habits')) || [];
+    const savedHabitCheckins = JSON.parse(localStorage.getItem('habitCheckins')) || [];
 
     setPaymentMethods(savedPaymentMethods);
     setEnvelopes(savedEnvelopes);
     setDefaultBudgets(savedDefaultBudgets);
     setBudgets(savedBudgets);
     setTransactions(savedTransactions);
+    setHabits(savedHabits);
+    setHabitCheckins(savedHabitCheckins);
   }, []);
 
   // Save to localStorage whenever data changes
@@ -97,6 +420,14 @@ const QuickTrackUI = () => {
   useEffect(() => {
     localStorage.setItem('transactions', JSON.stringify(transactions));
   }, [transactions]);
+
+  useEffect(() => {
+    localStorage.setItem('habits', JSON.stringify(habits));
+  }, [habits]);
+
+  useEffect(() => {
+    localStorage.setItem('habitCheckins', JSON.stringify(habitCheckins));
+  }, [habitCheckins]);
 
   // Toast functionality
   const showToast = (message, type = 'success') => {

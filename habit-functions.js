@@ -18,6 +18,26 @@ function removeMilestone(btn) {
   btn.parentElement.remove();
 }
 
+// Progression management functions
+function addProgressionField() {
+  const progressionList = document.getElementById('progressionList');
+  const newProgression = document.createElement('div');
+  newProgression.className = 'progression-item';
+  newProgression.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #fef3c7; border-radius: 12px; border: 2px solid #f59e0b;';
+  newProgression.innerHTML = `
+    <span style="font-size: 16px; font-weight: 600; color: #92400e;">Day</span>
+    <input type="number" class="progression-days" placeholder="30" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+    <span style="font-size: 16px; font-weight: 600; color: #92400e;">-</span>
+    <input type="text" class="progression-text" placeholder="progression description" style="flex: 1; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; background: white;" />
+    <button type="button" class="remove-progression" onclick="removeProgression(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+  `;
+  progressionList.appendChild(newProgression);
+}
+
+function removeProgression(btn) {
+  btn.parentElement.remove();
+}
+
 // Updated habit form submission aligned with James Clear's Atomic Habits
 function submitAtomicHabit(e) {
   e.preventDefault();
@@ -43,6 +63,15 @@ function submitAtomicHabit(e) {
     }
   });
 
+  const progressions = [];
+  document.querySelectorAll('.progression-item').forEach(item => {
+    const days = item.querySelector('.progression-days').value;
+    const progression = item.querySelector('.progression-text').value.trim();
+    if (days && progression) {
+      progressions.push({ days: parseInt(days), progression });
+    }
+  });
+
   const habit = {
     id: Date.now().toString(),
     identity,
@@ -52,7 +81,7 @@ function submitAtomicHabit(e) {
     routineLocation,
     immediateReward,
     milestones: milestones.sort((a, b) => a.days - b.days),
-    progressions: [],
+    progressions: progressions.sort((a, b) => a.days - b.days),
     createdAt: new Date().toISOString()
   };
 
