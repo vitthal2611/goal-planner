@@ -2610,11 +2610,15 @@
 <script>
     let habits = JSON.parse(localStorage.getItem('habits')) || [];
     let habitCheckins = JSON.parse(localStorage.getItem('habitCheckins')) || [];
+    let milestones = JSON.parse(localStorage.getItem('milestones')) || [];
+    let progressions = JSON.parse(localStorage.getItem('progressions')) || [];
     let selectedDate = new Date().toISOString().split('T')[0];
 
     function saveHabits() {
       localStorage.setItem('habits', JSON.stringify(habits));
       localStorage.setItem('habitCheckins', JSON.stringify(habitCheckins));
+      localStorage.setItem('milestones', JSON.stringify(milestones));
+      localStorage.setItem('progressions', JSON.stringify(progressions));
     }
 
     function getToday() {
@@ -2762,7 +2766,11 @@
       // Clear and repopulate milestones
       const milestonesList = document.getElementById('milestonesList');
       milestonesList.innerHTML = '';
+      const milestonesContent = document.querySelector('#milestonesList').closest('.section-content');
       if (habit.milestones && habit.milestones.length > 0) {
+        milestonesContent.style.display = 'flex';
+        const milestonesToggle = milestonesContent.previousElementSibling.querySelector('.section-toggle');
+        if (milestonesToggle) milestonesToggle.style.transform = 'rotate(0deg)';
         habit.milestones.forEach(m => {
           const div = document.createElement('div');
           div.className = 'milestone-item';
@@ -2776,12 +2784,20 @@
           `;
           milestonesList.appendChild(div);
         });
+      } else {
+        milestonesContent.style.display = 'none';
+        const milestonesToggle = milestonesContent.previousElementSibling.querySelector('.section-toggle');
+        if (milestonesToggle) milestonesToggle.style.transform = 'rotate(-90deg)';
       }
 
       // Clear and repopulate progressions
       const progressionList = document.getElementById('progressionList');
       progressionList.innerHTML = '';
+      const progressionContent = document.querySelector('#progressionList').closest('.section-content');
       if (habit.progressions && habit.progressions.length > 0) {
+        progressionContent.style.display = 'flex';
+        const progressionToggle = progressionContent.previousElementSibling.querySelector('.section-toggle');
+        if (progressionToggle) progressionToggle.style.transform = 'rotate(0deg)';
         habit.progressions.forEach(p => {
           const div = document.createElement('div');
           div.className = 'progression-item';
@@ -2795,6 +2811,10 @@
           `;
           progressionList.appendChild(div);
         });
+      } else {
+        progressionContent.style.display = 'none';
+        const progressionToggle = progressionContent.previousElementSibling.querySelector('.section-toggle');
+        if (progressionToggle) progressionToggle.style.transform = 'rotate(-90deg)';
       }
 
       // Update submit button
@@ -3103,8 +3123,8 @@
           routineAction,
           routineLocation,
           immediateReward,
-          milestones: milestones.sort((a, b) => a.days - b.days),
-          progressions: progressions.sort((a, b) => a.days - b.days),
+          milestones: milestones.length > 0 ? milestones.sort((a, b) => a.days - b.days) : [],
+          progressions: progressions.length > 0 ? progressions.sort((a, b) => a.days - b.days) : [],
           createdAt: new Date().toISOString()
         };
         habits.push(habit);
@@ -3115,6 +3135,8 @@
 
       // Reset form and UI
       atomicHabitForm.reset();
+      document.getElementById('milestonesList').innerHTML = '';
+      document.getElementById('progressionList').innerHTML = '';
       document.getElementById('submitHabitBtn').textContent = '🚀 Create Atomic Habit';
       document.getElementById('submitHabitBtn').style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
       document.getElementById('createHabitSection').style.display = 'none';

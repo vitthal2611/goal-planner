@@ -52,6 +52,7 @@ function submitAtomicHabit(e) {
     routineLocation,
     immediateReward,
     milestones: milestones.sort((a, b) => a.days - b.days),
+    progressions: [],
     createdAt: new Date().toISOString()
   };
 
