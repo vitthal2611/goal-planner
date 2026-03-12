@@ -1,145 +1,91 @@
-.transactions-container {
-  margin-top: 20px;
+.transactions-list h3 {
+  margin-bottom: 20px;
+  color: #1f2937;
 }
 
-.transactions-container h3 {
-  font-size: 18px;
-  margin-bottom: 16px;
-  color: #333;
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
 }
 
-.transactions-list {
+.transactions-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.transaction-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.transaction-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.transaction-card.income {
+  border-left: 4px solid #10b981;
+}
+
+.transaction-card.expense {
+  border-left: 4px solid #ef4444;
+}
+
+.transaction-card.transfer {
+  border-left: 4px solid #3b82f6;
+}
+
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.transaction-type {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.transaction-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.transaction-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #ddd;
-  transition: background-color 0.2s;
-}
-
-.transaction-item:hover {
-  background-color: #f0f1f3;
-}
-
-.transaction-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.transaction-details {
-  flex: 1;
-  min-width: 0;
+.transaction-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
 .transaction-description {
-  font-weight: 500;
-  color: #333;
+  color: #4b5563;
   font-size: 14px;
-  margin-bottom: 4px;
 }
 
-.transaction-meta {
+.transaction-details {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
   font-size: 12px;
-  color: #666;
 }
 
-.envelope-badge {
-  background-color: #e7f3ff;
-  color: #0066cc;
-  padding: 2px 8px;
+.transaction-envelope,
+.transaction-method {
+  background: #f3f4f6;
+  padding: 4px 8px;
   border-radius: 4px;
-  font-weight: 500;
+  color: #6b7280;
 }
 
-.payment-method {
-  background-color: #f0f0f0;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.date {
-  color: #999;
-}
-
-.transaction-amount {
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
-  min-width: 80px;
-  text-align: right;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #999;
-  font-size: 14px;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .transaction-item {
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .transaction-icon {
-    font-size: 18px;
-  }
-
-  .transaction-description {
-    font-size: 13px;
-  }
-
-  .transaction-meta {
-    font-size: 11px;
-    gap: 6px;
-  }
-
-  .transaction-amount {
-    font-size: 13px;
-    min-width: 70px;
-  }
-}
-
-@media (max-width: 480px) {
-  .transaction-item {
-    gap: 8px;
-    padding: 8px;
-  }
-
-  .transaction-icon {
-    font-size: 16px;
-  }
-
-  .transaction-description {
-    font-size: 12px;
-  }
-
-  .transaction-meta {
-    font-size: 10px;
-    gap: 4px;
-  }
-
-  .envelope-badge,
-  .payment-method {
-    padding: 2px 6px;
-    font-size: 10px;
-  }
-
-  .transaction-amount {
-    font-size: 12px;
-    min-width: 60px;
+@media (min-width: 768px) {
+  .transactions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }

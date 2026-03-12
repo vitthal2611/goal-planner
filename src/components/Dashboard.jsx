@@ -1,85 +1,133 @@
-import React, { useContext, useState } from 'react';
-import { BudgetContext } from '../contexts/BudgetContext.jsx';
-import IncomeForm from './IncomeForm.jsx';
-import ExpenseForm from './ExpenseForm.jsx';
-import TransferForm from './TransferForm.jsx';
-import BudgetForm from './BudgetForm.jsx';
-import TransactionsList from './TransactionsList.jsx';
-import BudgetSummary from './BudgetSummary.jsx';
-import ProfileSettings from './ProfileSettings.jsx';
+import React, { useState } from 'react';
+import { useBudget } from '../contexts/BudgetContext.jsx';
+import BudgetSummary from './BudgetSummary';
+import ProfileModal from './ProfileModal';
+import YearInsights from './YearInsights';
+import TransactionForm from './TransactionForm';
+import EnhancedTransactionsList from './EnhancedTransactionsList';
+import QuickAddFAB from './QuickAddFAB';
+import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { currentMonth, setCurrentMonth, loading, error } = useContext(BudgetContext);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { currentMonth, setCurrentMonth, loading, budgetValidation } = useBudget();
+  const [activeTab, setActiveTab] = useState('income');
+  const [showProfile, setShowProfile] = useState(false);
 
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    { key: '1', callback: () => setActiveTab('income') },
+    { key: '2', callback: () => setActiveTab('expense') },
+    { key: '3', callback: () => setActiveTab('transfer') },
+    { key: '4', callback: () => setActiveTab('budget') },
+    { key: 's', ctrlKey: true, callback: () => setShowProfile(true) },
+  ]);
 
-  const getMonthOptions = () => {
-    const months = [];
-    const now = new Date();
-    for (let i = -12; i <= 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      months.push(month);
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear - 1; year <= currentYear + 1; year++) {
+      for (let month = 1; month <= 12; month++) {
+        options.push(`${year}-${String(month).padStart(2, '0')}`);
+      }
     }
-    return months;
+    return options;
   };
-
-  const tabs = [
-    { id: 'overview', label: '📊 Overview', icon: '📊' },
-    { id: 'income', label: '💰 Income', icon: '💰' },
-    { id: 'expense', label: '💸 Expense', icon: '💸' },
-    { id: 'transfer', label: '🔄 Transfer', icon: '🔄' },
-    { id: 'budget', label: '📋 Budget', icon: '📋' },
-    { id: 'profile', label: '⚙️ Profile', icon: '⚙️' }
-  ];
 
   return (
     <div className="dashboard">
-      {error && <div className="dashboard-error">{error}</div>}
-
-      <div className="dashboard-header">
-        <div className="month-selector">
-          <label>Month:</label>
-          <select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)}>
-            {getMonthOptions().map(month => (
-              <option key={month} value={month}>{month}</option>
+      <header className="dashboard-header">
+        <h1>💰 Budget Planner</h1>
+        <div className="header-controls">
+          <YearInsights currentMonth={currentMonth} />
+          <select 
+            value={currentMonth} 
+            onChange={(e) => setCurrentMonth(e.target.value)}
+            className="month-selector"
+          >
+            {generateMonthOptions().map(m => (
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
-        </div>
-      </div>
-
-      <div className={`tabs ${isMobile ? 'mobile' : 'desktop'}`}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            title={tab.label}
-          >
-            {isMobile ? tab.icon : tab.label}
+          <button onClick={() => setShowProfile(true)} className="btn-icon" title="Settings">
+            ⚙️
           </button>
-        ))}
+        </div>
+      </header>
+
+      {budgetValidation && (
+        <div className="budget-status">
+          <div className="status-item">
+            <span className="status-label">Income</span>
+            <span className="status-value">₹{budgetValidation.income.toLocaleString()}</span>
+          </div>
+          <div className="status-item">
+            <span className="status-label">Allocated</span>
+            <span className="status-value">₹{budgetValidation.allocated.toLocaleString()}</span>
+          </div>
+          <div className={`status-item ${budgetValidation.isValid ? 'valid' : 'invalid'}`}>
+            <span className="status-label">Unallocated</span>
+            <span className="status-value">
+              {budgetValidation.difference === 0 ? (
+                <span>₹0</span>
+              ) : budgetValidation.difference > 0 ? (
+                <span>₹{budgetValidation.difference.toLocaleString()}</span>
+              ) : (
+                <span>-₹{Math.abs(budgetValidation.difference).toLocaleString()}</span>
+              )}
+            </span>
+          </div>
+          <div className={`status-item ${budgetValidation.isValid ? 'valid' : 'invalid'}`}>
+            <span className="status-label">Status</span>
+            <span className="status-value">{budgetValidation.isValid ? '✅ Balanced' : '⚠️ Unbalanced'}</span>
+          </div>
+        </div>
+      )}
+      
+      <BudgetSummary />
+
+      <div className="tabs">
+        <button 
+          className={activeTab === 'income' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('income')}
+        >
+          💰 Income
+        </button>
+        <button 
+          className={activeTab === 'expense' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('expense')}
+        >
+          💸 Expense
+        </button>
+        <button 
+          className={activeTab === 'transfer' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('transfer')}
+        >
+          🔄 Transfer
+        </button>
+        <button 
+          className={activeTab === 'budget' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('budget')}
+        >
+          📋 Budget
+        </button>
       </div>
 
-      <div className="tab-content">
-        {loading && <div className="loading">Loading...</div>}
-
-        {!loading && activeTab === 'overview' && <BudgetSummary />}
-        {!loading && activeTab === 'income' && <IncomeForm />}
-        {!loading && activeTab === 'expense' && <ExpenseForm />}
-        {!loading && activeTab === 'transfer' && <TransferForm />}
-        {!loading && activeTab === 'budget' && <BudgetForm />}
-        {!loading && activeTab === 'profile' && <ProfileSettings />}
+      <div className="content">
+        {loading ? (
+          <div className="loading">Loading...</div>
+        ) : (
+          <>
+            <TransactionForm type={activeTab} />
+            <EnhancedTransactionsList />
+          </>
+        )}
       </div>
 
-      {activeTab === 'overview' && !loading && <TransactionsList />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      
+      {/* Quick Add FAB for fast expense entry */}
+      <QuickAddFAB />
     </div>
   );
 };

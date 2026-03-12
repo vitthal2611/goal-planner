@@ -1,0 +1,96 @@
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.validation-alert {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  color: #92400e;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.error-alert {
+  background: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.transaction-form input,
+.transaction-form select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: all 0.2s;
+  background: white;
+}
+
+.transaction-form input:focus,
+.transaction-form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: scale(1.01);
+}
+
+.transaction-form input[type="number"] {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.transaction-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.transaction-form button:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.transaction-form .btn-primary {
+  font-size: 16px;
+  padding: 14px 24px;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .transaction-form {
+    gap: 10px;
+  }
+  
+  .transaction-form input,
+  .transaction-form select {
+    padding: 13px 14px;
+    font-size: 16px;
+  }
+  
+  .transaction-form input[type="number"] {
+    font-size: 17px;
+  }
+  
+  .transaction-form .btn-primary {
+    padding: 13px 20px;
+    font-size: 15px;
+  }
+  
+  .validation-alert,
+  .error-alert {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}

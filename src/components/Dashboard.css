@@ -1,160 +1,207 @@
 .dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.dashboard-error {
-  padding: 12px;
-  background-color: #fee;
-  color: #c33;
-  border: 1px solid #fcc;
-  border-radius: 8px;
-  font-size: 14px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f9fafb 0%, #ffffff 100%);
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  color: #1f2937;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .month-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.month-selector label {
-  font-weight: 500;
-  color: #333;
-}
-
-.month-selector select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: white;
-  cursor: pointer;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #eee;
-}
-
-.tabs.mobile {
-  justify-content: space-around;
-}
-
-.tabs.desktop {
-  flex-wrap: wrap;
-}
-
-.tab-button {
   padding: 10px 16px;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: #666;
-  font-size: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
   font-weight: 500;
+  transition: all 0.2s;
+}
+
+.month-selector:hover {
+  border-color: #3b82f6;
+}
+
+.month-selector:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.budget-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.status-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.status-item.valid .status-value {
+  color: #10b981;
+}
+
+.status-item.invalid .status-value {
+  color: #f59e0b;
+}
+
+.status-item .status-value span {
+  display: inline-block;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 6px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  padding: 12px 8px;
+  border-radius: 8px;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  font-weight: 500;
+  color: #6b7280;
 }
 
-.tab-button:hover {
-  color: #333;
-  border-bottom-color: #ddd;
+.tab:hover {
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
-.tab-button.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
+.tab.active {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Tab Content */
-.tab-content {
+.content {
   background: white;
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
 .loading {
   text-align: center;
-  padding: 40px 20px;
-  color: #666;
+  padding: 40px;
+  color: #6b7280;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .dashboard {
-    gap: 16px;
+    padding: 10px;
   }
 
   .dashboard-header {
-    gap: 12px;
+    padding: 12px 14px;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
-  .month-selector {
+  .dashboard-header h1 {
+    font-size: 1.3rem;
     width: 100%;
   }
 
-  .month-selector select {
+  .header-controls {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .month-selector {
     flex: 1;
+    min-width: 110px;
+    padding: 9px 12px;
+    font-size: 15px;
   }
 
-  .tabs {
-    gap: 4px;
+  .budget-status {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
   }
 
-  .tab-button {
-    padding: 8px 12px;
+  .status-label {
     font-size: 12px;
   }
 
-  .tab-content {
-    padding: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard {
-    gap: 12px;
-  }
-
-  .dashboard-header {
-    gap: 8px;
-  }
-
-  .month-selector label {
-    font-size: 13px;
-  }
-
-  .month-selector select {
-    font-size: 13px;
-    padding: 6px 10px;
+  .status-value {
+    font-size: 16px;
   }
 
   .tabs {
-    gap: 2px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 4px;
+    margin-bottom: 12px;
   }
 
-  .tab-button {
-    padding: 6px 8px;
-    font-size: 11px;
+  .tab {
+    padding: 10px 6px;
+    font-size: 13px;
   }
 
-  .tab-content {
-    padding: 12px;
+  .content {
+    padding: 14px;
   }
 }

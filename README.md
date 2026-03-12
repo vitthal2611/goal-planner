@@ -1,74 +1,66 @@
 # Budget Planner - Google Sheets Dashboard
 
-A modern, mobile-friendly budget planner that uses Google Sheets as the backend storage. Track income, expenses, transfers, and budget allocations seamlessly.
+A clean, mobile-friendly budget planner using Google Sheets as the single source of truth. Track income, expenses, transfers, and budget allocations seamlessly.
 
 ## Features
 
-- 💰 **Income Tracking** - Record income from various sources
+- 💰 **Income Tracking** - Record income with payment methods
 - 💸 **Expense Management** - Track expenses by envelope/category
 - 🔄 **Fund Transfers** - Transfer money between payment methods
-- 📋 **Budget Allocation** - Set and monitor budget limits for envelopes
-- 💳 **Payment Methods** - Configure and manage payment methods
+- 📋 **Budget Allocation** - Set and monitor budget limits per envelope per month
+- 💳 **Payment Methods** - Configure payment methods in settings
 - 📱 **Mobile Friendly** - Fully responsive design
-- 🔐 **Secure OAuth2** - Google OAuth2 authentication
-- ☁️ **Cloud Storage** - Data stored in Google Sheets
-- ⚡ **Real-time Sync** - Changes sync instantly
+- 🔐 **OAuth2** - Simple Google authentication
+- ☁️ **Google Sheets** - All data stored in Google Sheets
+- ⚡ **Optimized** - Minimal dependencies, fast performance
 
-## Architecture
+## Google Sheets Structure
 
-### Google Sheets Structure
+The app creates a "Budget Tracker" spreadsheet with 3 sheets:
 
-**Transactions Sheet**
-- Month: 2026-01, 2026-02, etc.
-- Type: Income, Expense, Transfer-In, Transfer-Out
-- Description: Transaction description
-- Envelope: Category/Envelope name
-- Amount: Transaction amount
-- Payment Method: Payment method used
-- Date: Transaction date
-- ID: Unique transaction ID
+### Transactions Sheet
+| Month | Type | Description | Envelope | Amount | Payment Method |
+|-------|------|-------------|----------|--------|----------------|
+| 2026-01 | Income | Salary | Income | 50000 | HDFC Bank |
+| 2026-01 | Expense | Groceries | Food | 5000 | Cash |
+| 2026-01 | Transfer | - | Transfer | 10000 | HDFC → SBI |
 
-**Budgets Sheet**
-- Month: Budget month
-- Envelope: Envelope/Category name
-- Budgeted: Allocated budget amount
-- Spent: Amount spent (auto-calculated)
+### Envelopes Sheet
+| Name | Month | Budget |
+|------|-------|--------|
+| EMI | 2026-01 | 85000 |
+| Food | 2026-01 | 15000 |
 
-**PaymentMethods Sheet**
-- Name: Payment method name
-- Type: Bank, Credit Card, Debit Card, Wallet, Cash
-- Active: TRUE/FALSE
+### PaymentMethods Sheet
+| Name | Type |
+|------|------|
+| HDFC Bank | Bank |
+| SBI Bank | Bank |
+| Cash | Cash |
 
-## Setup Instructions
+## Setup
 
-### 1. Google Cloud Console Setup
+### 1. Google Cloud Console
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project
-3. Enable Google Sheets API
+3. Enable **Google Sheets API** and **Google Drive API**
 4. Create OAuth2 credentials (Web application)
 5. Add authorized origins:
    - `http://localhost:5173` (development)
-   - `https://your-firebase-domain.web.app` (production)
+   - `https://your-app.web.app` (production)
 6. Copy the Client ID
 
-### 2. Local Setup
+### 2. Local Development
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd goal-planner
-
 # Install dependencies
 npm install
 
 # Create .env file
-cp .env.example .env
+echo VITE_GOOGLE_OAUTH_CLIENT_ID=your_client_id_here > .env
 
-# Update .env with your Google OAuth Client ID
-VITE_GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
-
-# Start development server
+# Start dev server
 npm run dev
 ```
 
@@ -78,10 +70,10 @@ npm run dev
 # Install Firebase CLI
 npm install -g firebase-tools
 
-# Login to Firebase
+# Login
 firebase login
 
-# Initialize Firebase
+# Initialize (select Hosting)
 firebase init hosting
 
 # Build and deploy
@@ -89,143 +81,93 @@ npm run build
 firebase deploy
 ```
 
-## Usage Guide
+Update Firebase authorized origin in Google Cloud Console.
 
-### First Time Setup
+## Usage
 
-1. Click "Authorize Google Sheets"
-2. Grant permissions to access Google Sheets
-3. App automatically creates "Budget Tracker" spreadsheet
-4. Add payment methods
-5. Allocate monthly budgets
-6. Start tracking transactions
+### First Time
+1. Click "Sign in with Google"
+2. Grant permissions
+3. App creates "Budget Tracker" spreadsheet automatically
+4. Go to Settings (⚙️) to add payment methods
+5. Start tracking!
 
 ### Adding Transactions
 
-#### Income
-1. Go to "💰 Income" tab
-2. Enter amount, description, payment method
-3. Click "Add Income"
+**Income**: Amount → Description → Payment Method → Add
 
-#### Expense
-1. Go to "💸 Expense" tab
-2. Enter amount, description, envelope, payment method
-3. Click "Add Expense"
+**Expense**: Amount → Description → Envelope → Payment Method → Add
 
-#### Transfer
-1. Go to "🔄 Transfer" tab
-2. Select from/to accounts
-3. Enter amount and optional description
-4. Click "Transfer Funds"
+**Transfer**: Amount → From → To → Add
 
-### Budget Management
+**Budget**: Envelope Name → Budget Amount → Allocate
 
-1. Go to "📋 Budget" tab
-2. Enter envelope name and budget amount
-3. Click "Allocate Budget"
-4. View budget status with progress bars
+### Settings
+- **Payment Methods**: Add/remove payment methods
+- **Envelopes**: View all envelopes (created when allocating budgets)
 
-### Payment Methods
-
-1. Click "💳 Payment Methods" button
-2. Add new payment method with name and type
-3. Remove methods as needed
-
-## Mobile Optimization
-
-- Touch-friendly interface
-- Responsive grid layouts
-- Optimized form inputs
-- Fast loading times
-- Works on all screen sizes
-
-## Performance Optimizations
-
-- Minimal dependencies (React + React-DOM only)
-- Lazy loading of components
-- Efficient Google Sheets API calls
-- Optimized bundle size
-- No localStorage or Firebase
-
-## Data Safety
-
-- All data stored in Google Sheets
-- OAuth2 authentication
-- No server-side processing
-- No data stored locally
-- Automatic backup in Google Drive
-
-## Troubleshooting
-
-### Authorization Failed
-- Verify Client ID in .env
-- Check authorized origins in Google Cloud Console
-- Clear browser cache
-- Try incognito mode
-
-### Spreadsheet Not Found
-- Check internet connection
-- Refresh the page
-- Verify Google Sheets API is enabled
-- Check Google account permissions
-
-### Data Not Syncing
-- Check internet connection
-- Refresh the page
-- Verify Google Sheets API permissions
-- Check browser console for errors
-
-## Development
-
-### Project Structure
+## Architecture
 
 ```
 src/
 ├── services/
-│   ├── sheetsAPI.js          # Google Sheets API wrapper
+│   ├── googleSheets.js      # Google Sheets API + OAuth
 │   └── dataService.js        # Business logic
 ├── contexts/
-│   └── BudgetContext.js      # React context
+│   └── BudgetContext.jsx     # State management
 ├── components/
 │   ├── Dashboard.jsx         # Main dashboard
-│   ├── IncomeForm.jsx        # Income form
-│   ├── ExpenseForm.jsx       # Expense form
-│   ├── TransferForm.jsx      # Transfer form
-│   ├── BudgetForm.jsx        # Budget form
-│   ├── TransactionsList.jsx  # Transactions list
-│   ├── BudgetSummary.jsx     # Budget summary
-│   └── PaymentMethodsModal.jsx
-├── App.jsx                   # Main app
+│   ├── TransactionForm.jsx   # Add transactions/budgets
+│   ├── TransactionsList.jsx  # Display transactions
+│   ├── BudgetSummary.jsx     # Budget overview
+│   └── ProfileModal.jsx      # Settings
+├── App.jsx                   # Auth wrapper
 └── main.jsx                  # Entry point
 ```
 
-### Building
+## Key Features
 
-```bash
-npm run build
-```
+### Single Authorization
+- One-time Google sign-in
+- No repeated authorization prompts
+- Automatic spreadsheet creation/detection
 
-Output: `dist/` directory
+### Normalized Data
+- No duplicate entries
+- Envelopes created from budget allocations
+- Payment methods configured once
+
+### Mobile Optimized
+- Touch-friendly interface
+- Responsive grid layouts
+- Optimized forms
+- Fast loading
+
+### Performance
+- Minimal dependencies (React + React-DOM only)
+- Optimized API calls
+- Efficient state management
+- No localStorage or Firebase
 
 ## Browser Support
 
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
+- Mobile browsers
+
+## Troubleshooting
+
+**Authorization Failed**
+- Verify Client ID in .env
+- Check authorized origins in Google Cloud Console
+- Clear browser cache
+
+**Spreadsheet Not Found**
+- Refresh the page
+- Check Google Sheets API is enabled
+- Verify permissions
 
 ## License
 
 MIT License
-
-## Support
-
-For issues and questions:
-1. Check troubleshooting section
-2. Review Google Sheets data
-3. Check browser console for errors
-4. Create an issue with details
-
----
-
-**Note**: This app requires internet connection for Google Sheets access. All data is stored in your personal Google Sheets.

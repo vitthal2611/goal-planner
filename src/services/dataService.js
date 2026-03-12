@@ -1,185 +1,126 @@
-import { sheetsAPI } from './sheetsAPI.js';
+import { getSheetData, appendRow, updateRow, deleteRow } from './googleSheets';
+import { withCache, cache } from './cacheService';
 
-class DataService {
-  // Transaction Operations
-  async addTransaction(type, description, envelope, amount, paymentMethod, month) {
-    const id = sheetsAPI.generateId();
-    const row = [
-      month,
-      type,
-      description,
-      envelope || '',
-      parseFloat(amount),
-      paymentMethod,
-      new Date().toISOString(),
-      id,
-    ];
-
-    await sheetsAPI.appendRow('Transactions', row);
-    return { id, month, type, description, envelope, amount: parseFloat(amount), paymentMethod };
-  }
-
-  async getTransactions(month = null) {
-    const rows = await sheetsAPI.getSheetData('Transactions');
-    if (rows.length <= 1) return [];
-
-    return rows
-      .slice(1)
-      .filter(row => !month || row[0] === month)
-      .map(row => ({
-        month: row[0],
-        type: row[1],
-        description: row[2],
-        envelope: row[3] || '',
-        amount: parseFloat(row[4]) || 0,
-        paymentMethod: row[5],
-        date: row[6],
-        id: row[7],
-      }));
-  }
-
-  // Budget Operations
-  async allocateBudget(envelope, budgeted, month) {
-    const rows = await sheetsAPI.getSheetData('Budgets');
-    const existingIndex = rows.findIndex(
-      (row, idx) => idx > 0 && row[0] === month && row[1] === envelope
-    );
-
-    if (existingIndex > 0) {
-      const spent = parseFloat(rows[existingIndex][3]) || 0;
-      await sheetsAPI.updateRow('Budgets', existingIndex + 1, [
-        month,
-        envelope,
-        parseFloat(budgeted),
-        spent,
-      ]);
-    } else {
-      await sheetsAPI.appendRow('Budgets', [month, envelope, parseFloat(budgeted), 0]);
-    }
-
-    return { month, envelope, budgeted: parseFloat(budgeted) };
-  }
-
-  async getBudgets(month = null) {
-    const rows = await sheetsAPI.getSheetData('Budgets');
-    if (rows.length <= 1) return [];
-
-    return rows
-      .slice(1)
-      .filter(row => !month || row[0] === month)
-      .map(row => ({
-        month: row[0],
-        envelope: row[1],
-        budgeted: parseFloat(row[2]) || 0,
-        spent: parseFloat(row[3]) || 0,
-      }));
-  }
-
-  async updateBudgetSpent(envelope, month) {
-    const transactions = await this.getTransactions(month);
-    const spent = transactions
-      .filter(t => t.type === 'Expense' && t.envelope === envelope)
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const rows = await sheetsAPI.getSheetData('Budgets');
-    const budgetIndex = rows.findIndex(
-      (row, idx) => idx > 0 && row[0] === month && row[1] === envelope
-    );
-
-    if (budgetIndex > 0) {
-      const budgeted = parseFloat(rows[budgetIndex][2]) || 0;
-      await sheetsAPI.updateRow('Budgets', budgetIndex + 1, [
-        month,
-        envelope,
-        budgeted,
-        spent,
-      ]);
-    }
-  }
-
-  // Payment Method Operations
-  async addPaymentMethod(name, type = 'Bank') {
-    const rows = await sheetsAPI.getSheetData('PaymentMethods');
-    const exists = rows.some((row, idx) => idx > 0 && row[0] === name);
-
-    if (!exists) {
-      await sheetsAPI.appendRow('PaymentMethods', [name, type, 'TRUE']);
-    }
-
-    return { name, type, active: true };
-  }
-
-  async getPaymentMethods() {
-    const rows = await sheetsAPI.getSheetData('PaymentMethods');
-    if (rows.length <= 1) return [];
-
-    return rows
-      .slice(1)
-      .filter(row => row[2] === 'TRUE')
-      .map(row => ({
-        name: row[0],
-        type: row[1] || 'Bank',
-        active: true,
-      }));
-  }
-
-  async removePaymentMethod(name) {
-    const rows = await sheetsAPI.getSheetData('PaymentMethods');
-    const methodIndex = rows.findIndex((row, idx) => idx > 0 && row[0] === name);
-
-    if (methodIndex > 0) {
-      await sheetsAPI.updateRow('PaymentMethods', methodIndex + 1, [
-        name,
-        rows[methodIndex][1],
-        'FALSE',
-      ]);
-    }
-  }
-
-  // Dashboard Data
-  async getDashboardData(month) {
-    const [transactions, budgets, paymentMethods] = await Promise.all([
-      this.getTransactions(month),
-      this.getBudgets(month),
-      this.getPaymentMethods(),
-    ]);
-
-    const income = transactions
-      .filter(t => t.type === 'Income')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const expenses = transactions
-      .filter(t => t.type === 'Expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const envelopeSpending = {};
-    transactions
-      .filter(t => t.type === 'Expense' && t.envelope)
-      .forEach(t => {
-        envelopeSpending[t.envelope] = (envelopeSpending[t.envelope] || 0) + t.amount;
-      });
-
-    const budgetSummary = budgets.map(b => ({
-      ...b,
-      spent: envelopeSpending[b.envelope] || 0,
-      remaining: b.budgeted - (envelopeSpending[b.envelope] || 0),
+// Transactions
+export const getTransactions = async (month = null) => {
+  const data = await withCache('transactions', async () => {
+    const sheetData = await getSheetData('Transactions!A2:F');
+    return sheetData.map((row, idx) => ({
+      id: idx + 2,
+      month: row[0],
+      type: row[1],
+      description: row[2],
+      envelope: row[3],
+      amount: parseFloat(row[4]) || 0,
+      paymentMethod: row[5],
     }));
+  });
+  
+  return month ? data.filter(t => t.month === month) : data;
+};
 
+export const addTransaction = async (transaction) => {
+  const { month, type, description, envelope, amount, paymentMethod } = transaction;
+  await appendRow('Transactions', [month, type, description, envelope, amount, paymentMethod]);
+  cache.invalidate('transactions');
+};
+
+export const updateTransaction = async (id, transaction) => {
+  const { month, type, description, envelope, amount, paymentMethod } = transaction;
+  await updateRow(`Transactions!A${id}:F${id}`, [month, type, description, envelope, amount, paymentMethod]);
+  cache.invalidate('transactions');
+};
+
+export const deleteTransaction = async (id) => {
+  await deleteRow('Transactions', id - 1);
+  cache.invalidate('transactions');
+};
+
+// Envelopes
+export const getEnvelopes = async () => {
+  return withCache('envelopes', async () => {
+    const data = await getSheetData('Envelopes!A2:C');
+    return data.map((row, idx) => ({
+      id: idx + 2,
+      name: row[0],
+      month: row[1],
+      budget: parseFloat(row[2]) || 0,
+    }));
+  });
+};
+
+export const addEnvelope = async (envelope) => {
+  const { name, month, budget } = envelope;
+  await appendRow('Envelopes', [name, month, budget]);
+  cache.invalidate('envelopes');
+};
+
+export const updateEnvelope = async (id, envelope) => {
+  const { name, month, budget } = envelope;
+  await updateRow(`Envelopes!A${id}:C${id}`, [name, month, budget]);
+  cache.invalidate('envelopes');
+};
+
+export const deleteEnvelope = async (id) => {
+  await deleteRow('Envelopes', id - 1);
+  cache.invalidate('envelopes');
+};
+
+export const getEnvelopeNames = async () => {
+  const envelopes = await getEnvelopes();
+  return [...new Set(envelopes.map(e => e.name))];
+};
+
+// Payment Methods
+export const getPaymentMethods = async () => {
+  return withCache('paymentMethods', async () => {
+    const data = await getSheetData('PaymentMethods!A2:B');
+    return data.map((row, idx) => ({
+      id: idx + 2,
+      name: row[0],
+      type: row[1],
+    }));
+  }, 60000); // Cache for 60 seconds (changes less frequently)
+};
+
+export const addPaymentMethod = async (method) => {
+  const { name, type } = method;
+  await appendRow('PaymentMethods', [name, type]);
+  cache.invalidate('paymentMethods');
+};
+
+export const deletePaymentMethod = async (id) => {
+  await deleteRow('PaymentMethods', id - 1);
+  cache.invalidate('paymentMethods');
+};
+
+// Budget Summary
+export const getBudgetSummary = async (month) => {
+  const [envelopes, transactions] = await Promise.all([
+    getEnvelopes(),
+    getTransactions(month),
+  ]);
+
+  const monthEnvelopes = envelopes.filter(e => e.month === month);
+  const expenses = transactions.filter(t => t.type === 'Expense');
+
+  return monthEnvelopes.map(env => {
+    const spent = expenses
+      .filter(e => e.envelope === env.name)
+      .reduce((sum, e) => sum + e.amount, 0);
     return {
-      month,
-      income,
-      expenses,
-      balance: income - expenses,
-      transactions: transactions.sort((a, b) => new Date(b.date) - new Date(a.date)),
-      budgets: budgetSummary,
-      paymentMethods,
+      ...env,
+      spent,
+      remaining: env.budget - spent,
+      percentage: env.budget > 0 ? (spent / env.budget) * 100 : 0,
     };
-  }
+  });
+};
 
-  // Utility
-  getCurrentMonth() {
-    return sheetsAPI.getCurrentMonth();
-  }
-}
-
-export const dataService = new DataService();
+// Income Summary
+export const getIncomeSummary = async (month) => {
+  const transactions = await getTransactions(month);
+  return transactions
+    .filter(t => t.type === 'Income')
+    .reduce((sum, t) => sum + t.amount, 0);
+};

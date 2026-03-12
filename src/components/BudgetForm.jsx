@@ -1,15 +1,15 @@
 import React, { useContext, useState } from 'react';
-import { BudgetContext } from '../contexts/BudgetContext.jsx';
-import './Forms.css';
+import { BudgetContext } from '../contexts/AppContext.jsx';
+import './BudgetForm.css';
 
 const BudgetForm = () => {
-  const { setBudgetAmount, envelopes, budgets } = useContext(BudgetContext);
+  const { addBudget, currentMonth, envelopes } = useContext(BudgetContext);
   const [formData, setFormData] = useState({
-    envelope: envelopes[0] || '',
-    budgeted: ''
+    envelope: '',
+    amount: ''
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,75 +18,62 @@ const BudgetForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.envelope || !formData.budgeted) {
-      setMessage('Please fill all fields');
+    if (!formData.envelope || !formData.amount) {
+      setError('Please fill all fields');
       return;
     }
 
     try {
       setLoading(true);
-      await setBudgetAmount(formData.envelope, parseFloat(formData.budgeted));
-      setFormData({ envelope: envelopes[0] || '', budgeted: '' });
-      setMessage('Budget allocated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setError(null);
+      await addBudget(currentMonth, formData.envelope, parseFloat(formData.amount));
+      setFormData({ envelope: '', amount: '' });
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="budget-form-container">
-      <form onSubmit={handleSubmit} className="form">
-        <h2>📋 Allocate Budget</h2>
+    <form className="budget-form" onSubmit={handleSubmit}>
+      <h2>Allocate Budget for {currentMonth}</h2>
 
-        <div className="form-group">
-          <label>Category (Envelope)</label>
-          <select name="envelope" value={formData.envelope} onChange={handleChange} required>
-            {envelopes.map(env => (
-              <option key={env} value={env}>{env}</option>
-            ))}
-          </select>
-        </div>
+      {error && <div className="error-message">{error}</div>}
 
-        <div className="form-group">
-          <label>Budget Amount</label>
-          <input
-            type="number"
-            name="budgeted"
-            value={formData.budgeted}
-            onChange={handleChange}
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-            required
-          />
-        </div>
-
-        {message && <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>{message}</div>}
-
-        <button type="submit" disabled={loading} className="submit-button">
-          {loading ? 'Allocating...' : 'Allocate Budget'}
-        </button>
-      </form>
-
-      <div className="budget-list">
-        <h3>Current Budgets</h3>
-        {budgets.length === 0 ? (
-          <p className="empty-state">No budgets allocated yet</p>
-        ) : (
-          <div className="budget-items">
-            {budgets.map(budget => (
-              <div key={budget.envelope} className="budget-item">
-                <div className="budget-name">{budget.envelope}</div>
-                <div className="budget-amount">₹{budget.budgeted.toFixed(2)}</div>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="form-group">
+        <label>Envelope (Category)</label>
+        <select
+          name="envelope"
+          value={formData.envelope}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select Envelope</option>
+          {envelopes.map(env => (
+            <option key={env.name} value={env.name}>{env.name}</option>
+          ))}
+        </select>
       </div>
-    </div>
+
+      <div className="form-group">
+        <label>Budget Amount</label>
+        <input
+          type="number"
+          name="amount"
+          value={formData.amount}
+          onChange={handleChange}
+          placeholder="0.00"
+          step="0.01"
+          min="0"
+          required
+        />
+      </div>
+
+      <button type="submit" disabled={loading} className="submit-button">
+        {loading ? 'Allocating...' : 'Allocate Budget'}
+      </button>
+    </form>
   );
 };
 

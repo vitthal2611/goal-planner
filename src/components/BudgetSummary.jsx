@@ -1,96 +1,132 @@
-import React, { useContext } from 'react';
-import { BudgetContext } from '../contexts/BudgetContext.jsx';
+import React, { useState } from 'react';
+import { useBudget } from '../contexts/BudgetContext.jsx';
 import './BudgetSummary.css';
 
 const BudgetSummary = () => {
-  const { budgets, transactions, envelopes, calculateSpent } = useContext(BudgetContext);
+  const { budgetSummary, deleteEnvelope, updateEnvelope } = useBudget();
+  const [editingId, setEditingId] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
 
-  const getTotalIncome = () => {
-    return transactions
-      .filter(t => t.type === 'Income')
-      .reduce((sum, t) => sum + t.amount, 0);
+  if (budgetSummary.length === 0) {
+    return null;
+  }
+
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+    setEditAmount(item.budget.toString());
   };
 
-  const getTotalExpense = () => {
-    return transactions
-      .filter(t => t.type === 'Expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+  const handleSave = async (item) => {
+    try {
+      const newBudget = parseFloat(editAmount);
+      if (isNaN(newBudget) || newBudget <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      await updateEnvelope(item.id, { ...item, budget: newBudget });
+      setEditingId(null);
+      setEditAmount('');
+    } catch (error) {
+      alert('Error updating envelope: ' + error.message);
+    }
   };
 
-  const getTotalBudgeted = () => {
-    return budgets.reduce((sum, b) => sum + b.budgeted, 0);
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditAmount('');
   };
 
-  const getEnvelopeStatus = (envelope) => {
-    const budget = budgets.find(b => b.envelope === envelope);
-    const spent = calculateSpent(envelope);
-    const budgeted = budget?.budgeted || 0;
-    const remaining = budgeted - spent;
-    const percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0;
-
-    return { spent, budgeted, remaining, percentage };
+  const handleDelete = async (item) => {
+    if (window.confirm(`Delete "${item.name}" envelope? This cannot be undone.`)) {
+      try {
+        await deleteEnvelope(item.id);
+      } catch (error) {
+        alert('Error deleting envelope: ' + error.message);
+      }
+    }
   };
-
-  const totalIncome = getTotalIncome();
-  const totalExpense = getTotalExpense();
-  const totalBudgeted = getTotalBudgeted();
-  const balance = totalIncome - totalExpense;
 
   return (
     <div className="budget-summary">
-      <div className="summary-cards">
-        <div className="summary-card income">
-          <div className="card-label">Total Income</div>
-          <div className="card-amount">₹{totalIncome.toFixed(2)}</div>
-        </div>
-        <div className="summary-card expense">
-          <div className="card-label">Total Expense</div>
-          <div className="card-amount">₹{totalExpense.toFixed(2)}</div>
-        </div>
-        <div className="summary-card budget">
-          <div className="card-label">Total Budgeted</div>
-          <div className="card-amount">₹{totalBudgeted.toFixed(2)}</div>
-        </div>
-        <div className={`summary-card balance ${balance >= 0 ? 'positive' : 'negative'}`}>
-          <div className="card-label">Balance</div>
-          <div className="card-amount">₹{balance.toFixed(2)}</div>
-        </div>
+      <div className="section-header">
+        <h3>📋 Budget Envelopes</h3>
+        <span className="envelope-count">{budgetSummary.length} active</span>
       </div>
-
-      {envelopes.length > 0 && (
-        <div className="envelope-status">
-          <h3>Envelope Status</h3>
-          <div className="envelope-list">
-            {envelopes.map(envelope => {
-              const status = getEnvelopeStatus(envelope);
-              const isOverBudget = status.spent > status.budgeted;
-
-              return (
-                <div key={envelope} className="envelope-item">
-                  <div className="envelope-header">
-                    <div className="envelope-name">{envelope}</div>
-                    <div className={`envelope-amount ${isOverBudget ? 'over-budget' : ''}`}>
-                      ₹{status.spent.toFixed(2)} / ₹{status.budgeted.toFixed(2)}
-                    </div>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className={`progress-fill ${isOverBudget ? 'over' : ''}`}
-                      style={{ width: `${Math.min(status.percentage, 100)}%` }}
-                    ></div>
-                  </div>
-                  <div className="envelope-footer">
-                    <span className={`remaining ${isOverBudget ? 'over' : ''}`}>
-                      {isOverBudget ? `Over by ₹${Math.abs(status.remaining).toFixed(2)}` : `₹${status.remaining.toFixed(2)} left`}
-                    </span>
-                    <span className="percentage">{status.percentage.toFixed(0)}%</span>
+      <div className="budget-grid">
+        {budgetSummary.map(item => {
+          const statusClass = item.percentage > 100 ? 'over-budget' : item.percentage > 80 ? 'warning' : 'healthy';
+          const isEditing = editingId === item.id;
+          
+          return (
+            <div key={item.id} className={`budget-card ${statusClass}`}>
+              <div className="budget-header">
+                <div className="budget-name">{item.name}</div>
+                <div className="budget-actions">
+                  {!isEditing && (
+                    <>
+                      <button 
+                        className="btn-edit" 
+                        onClick={() => handleEdit(item)}
+                        title="Edit budget"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        className="btn-delete" 
+                        onClick={() => handleDelete(item)}
+                        title="Delete envelope"
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {isEditing ? (
+                <div className="budget-edit-form">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    className="edit-input"
+                    placeholder="Budget amount"
+                    autoFocus
+                  />
+                  <div className="edit-actions">
+                    <button className="btn-save" onClick={() => handleSave(item)}>✓ Save</button>
+                    <button className="btn-cancel" onClick={handleCancel}>✕ Cancel</button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+              ) : (
+                <>
+                  <div className="budget-amounts">
+                    <span className="budget-spent">₹{item.spent.toFixed(0)}</span>
+                    <span className="budget-total">/ ₹{item.budget.toFixed(0)}</span>
+                  </div>
+                  <div className="budget-progress">
+                    <div 
+                      className="budget-progress-bar"
+                      style={{ width: `${Math.min(item.percentage, 100)}%` }}
+                    />
+                  </div>
+                  <div className="budget-footer">
+                    <div className="budget-remaining">
+                      {item.remaining >= 0 ? (
+                        <span className="text-success">₹{item.remaining.toFixed(0)} left</span>
+                      ) : (
+                        <span className="text-danger">₹{Math.abs(item.remaining).toFixed(0)} over</span>
+                      )}
+                    </div>
+                    <div className="budget-percentage">{item.percentage.toFixed(0)}%</div>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

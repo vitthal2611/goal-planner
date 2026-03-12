@@ -1,68 +1,47 @@
 import React, { useState, useEffect } from 'react';
+import { initGoogleAuth, authorize, isAuthorized } from './services/googleSheets';
 import { BudgetProvider } from './contexts/BudgetContext.jsx';
-import { sheetsAPI } from './services/sheetsAPI.js';
-import Dashboard from './components/Dashboard.jsx';
+import Dashboard from './components/Dashboard';
 import './App.css';
 
 const App = () => {
-  const [user, setUser] = useState(null);
+  const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await sheetsAPI.initialize();
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
+    const init = async () => {
+      await initGoogleAuth(import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID);
+      setAuthorized(isAuthorized());
+      setLoading(false);
     };
-    initAuth();
+    init();
   }, []);
 
-  const handleLogin = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      await sheetsAPI.initialize();
-      setUser({ authenticated: true });
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    sheetsAPI.logout();
-    setUser(null);
+  const handleAuthorize = async () => {
+    setLoading(true);
+    const success = await authorize();
+    setAuthorized(success);
+    setLoading(false);
   };
 
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className="loading-screen">
         <div className="spinner"></div>
-        <p>Initializing Budget Planner...</p>
+        <p>Loading...</p>
       </div>
     );
   }
 
-  if (!user) {
+  if (!authorized) {
     return (
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-emoji">💰</div>
-          <h1>Budget Planner</h1>
-          <p>Manage your budget with Google Sheets. Track income, expenses, transfers, and budgets.</p>
-          {error && <div className="error-box">{error}</div>}
-          <button onClick={handleLogin} className="login-button">
-            🔐 Authorize Google Sheets
+      <div className="auth-screen">
+        <div className="auth-card">
+          <h1>💰 Budget Planner</h1>
+          <p>Manage your budget with Google Sheets</p>
+          <button onClick={handleAuthorize} className="btn-primary">
+            Sign in with Google
           </button>
-          <p className="disclaimer">
-            This app uses OAuth 2.0 to securely access your Google Sheets. No data is stored locally.
-          </p>
         </div>
       </div>
     );
@@ -70,19 +49,7 @@ const App = () => {
 
   return (
     <BudgetProvider>
-      <div className="app-container">
-        <header className="app-header">
-          <div className="header-content">
-            <div className="logo">💰 Budget Planner</div>
-            <button onClick={handleLogout} className="logout-button">
-              Logout
-            </button>
-          </div>
-        </header>
-        <main className="app-main">
-          <Dashboard />
-        </main>
-      </div>
+      <Dashboard />
     </BudgetProvider>
   );
 };
