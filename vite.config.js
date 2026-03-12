@@ -1,20 +1,17 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    open: true
-  },
+  root: '.',
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'terser',
     rollupOptions: {
-      output: {
-        manualChunks: undefined
+      input: {
+        main: './quick-track-demo.html'
       }
     }
+  },
+  server: {
+    open: '/quick-track-demo.html',
+    port: 3000
   }
-});
+})

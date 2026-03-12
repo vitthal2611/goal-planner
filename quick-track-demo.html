@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quick Track UI - Mock Demo</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="habit-fab.css">
+    
     <style>
         * {
           margin: 0;
@@ -1462,6 +1468,154 @@
           padding-left: 8px;
         }
 
+        /* Auth Styles */
+        .auth-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          z-index: 9999;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .auth-overlay.show {
+          display: flex;
+        }
+
+        .auth-box {
+          background: white;
+          border-radius: 24px;
+          padding: 40px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-header {
+          text-align: center;
+          margin-bottom: 32px;
+        }
+
+        .auth-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
+        }
+
+        .auth-title {
+          font-size: 28px;
+          font-weight: 800;
+          color: #1f2937;
+          margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+          font-size: 14px;
+          color: #6b7280;
+        }
+
+        .auth-form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .auth-input {
+          width: 100%;
+          padding: 14px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 16px;
+          transition: all 0.2s;
+        }
+
+        .auth-input:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .auth-btn {
+          width: 100%;
+          padding: 16px;
+          border: none;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: 700;
+          color: white;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .auth-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .auth-toggle {
+          text-align: center;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .auth-toggle-text {
+          font-size: 14px;
+          color: #6b7280;
+          margin-bottom: 8px;
+        }
+
+        .auth-toggle-btn {
+          background: none;
+          border: none;
+          color: #667eea;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: underline;
+        }
+
+        .auth-error {
+          padding: 12px;
+          background: #fee2e2;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          color: #dc2626;
+          font-size: 14px;
+          display: none;
+        }
+
+        .auth-error.show {
+          display: block;
+        }
+
+        .logout-btn {
+          padding: 8px 16px;
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+          background: #dc2626;
+        }
+
         @media (max-width: 480px) {
           .app-header {
             font-size: 28px;
@@ -1486,10 +1640,31 @@
     </style>
 </head>
 <body>
-<div class="quick-track">
+<!-- Auth Overlay -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+        <div class="auth-header">
+            <div class="auth-icon">💰</div>
+            <h2 class="auth-title">Life Tracker</h2>
+            <p class="auth-subtitle">Track your finances and habits</p>
+        </div>
+        <form class="auth-form" id="authForm">
+            <input type="email" id="authEmail" class="auth-input" placeholder="Email" required>
+            <input type="password" id="authPassword" class="auth-input" placeholder="Password" required>
+            <div class="auth-error" id="authError"></div>
+            <button type="submit" class="auth-btn" id="authSubmitBtn">Sign In</button>
+        </form>
+        <div class="auth-toggle">
+            <p class="auth-toggle-text" id="authToggleText">Don't have an account?</p>
+            <button type="button" class="auth-toggle-btn" id="authToggleBtn">Create Account</button>
+        </div>
+    </div>
+</div>
+
+<div class="quick-track" id="mainApp" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
         <div class="app-header">Life Tracker</div>
-        <button class="profile-btn" id="profileBtn" style="margin-top: 2px;">⚙️</button>
+        <button class="profile-btn" id="profileBtn" style="margin-top: 0;">⚙️</button>
     </div>
 
     <div class="app-tabs">
@@ -1819,6 +1994,7 @@
             <button class="tab-btn active" id="paymentTab">Payment Methods</button>
             <button class="tab-btn" id="envelopeTab">Envelopes</button>
             <button class="tab-btn" id="budgetTab">Budget</button>
+            <button class="tab-btn" id="accountTab">Account</button>
         </div>
 
         <div class="tab-content active" id="paymentContent">
@@ -1863,6 +2039,17 @@
                 </div>
             </div>
         </div>
+
+        <div class="tab-content" id="accountContent">
+            <div class="modal-section">
+                <div class="section-title">Account Details</div>
+                <div style="padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">Email</div>
+                    <div id="userEmailModal" style="font-size: 16px; font-weight: 600; color: #1f2937;"></div>
+                </div>
+                <button class="logout-btn" id="logoutBtn" style="width: 100%; padding: 14px;">Logout</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1870,7 +2057,181 @@
 
 
 
+<script src="firebase-config.js"></script>
 <script>
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let currentUser = null;
+    let isAuthMode = true; // true = login, false = signup
+
+    // Auth UI Elements
+    const authOverlay = document.getElementById('authOverlay');
+    const mainApp = document.getElementById('mainApp');
+    const authForm = document.getElementById('authForm');
+    const authEmail = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const authError = document.getElementById('authError');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authToggleBtn = document.getElementById('authToggleBtn');
+    const authToggleText = document.getElementById('authToggleText');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userEmailDisplay = document.getElementById('userEmailModal');
+
+    // Show/Hide Auth
+    function showAuth() {
+      authOverlay.classList.add('show');
+      mainApp.style.display = 'none';
+    }
+
+    function hideAuth() {
+      authOverlay.classList.remove('show');
+      mainApp.style.display = 'block';
+    }
+
+    // Toggle between login and signup
+    authToggleBtn.addEventListener('click', () => {
+      isAuthMode = !isAuthMode;
+      if (isAuthMode) {
+        authSubmitBtn.textContent = 'Sign In';
+        authToggleText.textContent = "Don't have an account?";
+        authToggleBtn.textContent = 'Create Account';
+      } else {
+        authSubmitBtn.textContent = 'Create Account';
+        authToggleText.textContent = 'Already have an account?';
+        authToggleBtn.textContent = 'Sign In';
+      }
+      authError.classList.remove('show');
+    });
+
+    // Handle Auth Form Submit
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+
+      authError.classList.remove('show');
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.textContent = isAuthMode ? 'Signing in...' : 'Creating account...';
+
+      try {
+        if (isAuthMode) {
+          await auth.signInWithEmailAndPassword(email, password);
+        } else {
+          await auth.createUserWithEmailAndPassword(email, password);
+        }
+      } catch (error) {
+        const errorMessages = {
+          'auth/email-already-in-use': 'Email already exists',
+          'auth/weak-password': 'Password must be at least 6 characters',
+          'auth/user-not-found': 'No account found with this email',
+          'auth/wrong-password': 'Incorrect password',
+          'auth/invalid-email': 'Invalid email address',
+          'auth/invalid-credential': 'Invalid email or password'
+        };
+        authError.textContent = errorMessages[error.code] || error.message;
+        authError.classList.add('show');
+      } finally {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = isAuthMode ? 'Sign In' : 'Create Account';
+      }
+    });
+
+    // Handle Logout
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+        showToast('Logged out successfully', 'success');
+      } catch (error) {
+        showToast('Error logging out', 'error');
+      }
+    });
+
+    // Auth State Observer
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        userEmailDisplay.textContent = user.email;
+        hideAuth();
+        await loadUserData();
+        showToast('Welcome back!', 'success');
+      } else {
+        currentUser = null;
+        showAuth();
+        // Clear local data
+        paymentMethods = [];
+        envelopes = [];
+        defaultBudgets = {};
+        budgets = [];
+        transactions = [];
+        habits = [];
+        habitCheckins = [];
+        milestones = [];
+        progressions = [];
+      }
+    });
+
+    // Load user data from Firestore
+    async function loadUserData() {
+      if (!currentUser) return;
+
+      try {
+        const docRef = db.collection('users').doc(currentUser.uid);
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+          const data = doc.data();
+          paymentMethods = data.paymentMethods || [];
+          envelopes = data.envelopes || [];
+          defaultBudgets = data.defaultBudgets || {};
+          budgets = data.budgets || [];
+          transactions = data.transactions || [];
+          habits = data.habits || [];
+          habitCheckins = data.habitCheckins || [];
+          milestones = data.milestones || [];
+          progressions = data.progressions || [];
+
+          // Update UI
+          updatePaymentMethodsList();
+          updatePaymentDropdowns();
+          updateEnvelopesList();
+          updateEnvelopeDropdowns();
+          updateBalanceSummary();
+          updateRecentTransactions();
+          updatePaymentBalances();
+          updateEnvelopeBudget();
+          updateTimelineView();
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        showToast('Error loading data', 'error');
+      }
+    }
+
+    // Save user data to Firestore
+    async function saveUserData() {
+      if (!currentUser) return;
+
+      try {
+        const docRef = db.collection('users').doc(currentUser.uid);
+        await docRef.set({
+          paymentMethods,
+          envelopes,
+          defaultBudgets,
+          budgets,
+          transactions,
+          habits,
+          habitCheckins,
+          milestones,
+          progressions,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error saving user data:', error);
+        showToast('Error saving data', 'error');
+      }
+    }
+
     // Toast notification function
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
@@ -1897,13 +2258,19 @@
     // Transactions array - stores all transactions
     let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-    // Save to localStorage
+    // Save to localStorage and Firebase
     function saveToLocalStorage() {
       localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
       localStorage.setItem('envelopes', JSON.stringify(envelopes));
       localStorage.setItem('defaultBudgets', JSON.stringify(defaultBudgets));
       localStorage.setItem('budgets', JSON.stringify(budgets));
       localStorage.setItem('transactions', JSON.stringify(transactions));
+      saveUserData(); // Save to Firebase
+    }
+
+    // Alias for cloud sync
+    function syncToCloud() {
+      saveToLocalStorage();
     }
 
     function deletePaymentMethod(name) {
@@ -1911,7 +2278,7 @@
         paymentMethods = paymentMethods.filter(method => method !== name);
         updatePaymentMethodsList();
         updatePaymentDropdowns();
-        saveToLocalStorage();
+        syncToCloud();
         showToast(`${name} deleted`, 'error');
       }
     }
@@ -1922,7 +2289,7 @@
         delete defaultBudgets[name];
         updateEnvelopesList();
         updateEnvelopeDropdowns();
-        saveToLocalStorage();
+        syncToCloud();
         showToast(`${name} deleted`, 'error');
       }
     }
@@ -1931,7 +2298,7 @@
       if (confirm(`Delete budget for ${envelope} in ${month}?`)) {
         budgets = budgets.filter(b => !(b.envelope === envelope && b.month === month));
         updateBudgetList();
-        saveToLocalStorage();
+        syncToCloud();
         showToast(`Budget deleted`, 'error');
       }
     }
@@ -1955,7 +2322,7 @@
         showToast(`Budget saved: ${envelope}`, 'success');
       }
       updateEnvelopeBudget();
-      saveToLocalStorage();
+      syncToCloud();
     }
 
     function updatePaymentMethodsList() {
@@ -2266,9 +2633,11 @@
     const paymentTab = document.getElementById('paymentTab');
     const envelopeTab = document.getElementById('envelopeTab');
     const budgetTab = document.getElementById('budgetTab');
+    const accountTab = document.getElementById('accountTab');
     const paymentContent = document.getElementById('paymentContent');
     const envelopeContent = document.getElementById('envelopeContent');
     const budgetContent = document.getElementById('budgetContent');
+    const accountContent = document.getElementById('accountContent');
 
     let activeType = 'expense';
 
@@ -2293,27 +2662,44 @@
       paymentTab.classList.add('active');
       envelopeTab.classList.remove('active');
       budgetTab.classList.remove('active');
+      accountTab.classList.remove('active');
       paymentContent.classList.add('active');
       envelopeContent.classList.remove('active');
       budgetContent.classList.remove('active');
+      accountContent.classList.remove('active');
     });
 
     envelopeTab.addEventListener('click', () => {
       envelopeTab.classList.add('active');
       paymentTab.classList.remove('active');
       budgetTab.classList.remove('active');
+      accountTab.classList.remove('active');
       envelopeContent.classList.add('active');
       paymentContent.classList.remove('active');
       budgetContent.classList.remove('active');
+      accountContent.classList.remove('active');
     });
 
     budgetTab.addEventListener('click', () => {
       budgetTab.classList.add('active');
       paymentTab.classList.remove('active');
       envelopeTab.classList.remove('active');
+      accountTab.classList.remove('active');
       budgetContent.classList.add('active');
       paymentContent.classList.remove('active');
       envelopeContent.classList.remove('active');
+      accountContent.classList.remove('active');
+    });
+
+    accountTab.addEventListener('click', () => {
+      accountTab.classList.add('active');
+      paymentTab.classList.remove('active');
+      envelopeTab.classList.remove('active');
+      budgetTab.classList.remove('active');
+      accountContent.classList.add('active');
+      paymentContent.classList.remove('active');
+      envelopeContent.classList.remove('active');
+      budgetContent.classList.remove('active');
     });
 
     // Close modal
@@ -2338,7 +2724,7 @@
           updatePaymentMethodsList();
           updatePaymentDropdowns();
           updatePaymentBalances();
-          saveToLocalStorage();
+          syncToCloud();
           const balanceMsg = balance ? ` with initial balance ₹${balance}` : '';
           showToast(`${methodName}${balanceMsg} added!`, 'success');
           newPaymentMethod.value = '';
@@ -2361,7 +2747,7 @@
           }
           updateEnvelopesList();
           updateEnvelopeDropdowns();
-          saveToLocalStorage();
+          syncToCloud();
           const budgetMsg = budget ? ` with default budget ₹${budget}` : '';
           showToast(`${envelopeName}${budgetMsg} added!`, 'success');
           newEnvelope.value = '';
@@ -2633,6 +3019,7 @@
       localStorage.setItem('habitCheckins', JSON.stringify(habitCheckins));
       localStorage.setItem('milestones', JSON.stringify(milestones));
       localStorage.setItem('progressions', JSON.stringify(progressions));
+      saveUserData(); // Save to Firebase
     }
 
     function getToday() {
