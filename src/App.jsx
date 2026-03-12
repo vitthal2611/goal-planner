@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initGoogleAuth, authorize, isAuthorized } from './services/googleSheets';
-import { BudgetProvider } from './contexts/BudgetContext.jsx';
-import Dashboard from './components/Dashboard';
+import QuickTrackUI from './components/QuickTrackUI';
 import './App.css';
 
 const App = () => {
@@ -47,11 +46,7 @@ const App = () => {
     );
   }
 
-  return (
-    <BudgetProvider>
-      <Dashboard />
-    </BudgetProvider>
-  );
+  return <QuickTrackUI />;
 };
 
 export default App;

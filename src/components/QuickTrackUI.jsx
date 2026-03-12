@@ -1,17 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './QuickTrackUI.css';
 
 const QuickTrackUI = () => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [activeType, setActiveType] = useState('expense');
-  const [currentMonth, setCurrentMonth] = useState('2025-02');
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear().toString());
+  const [envelope, setEnvelope] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('payment');
+  const [newPaymentMethod, setNewPaymentMethod] = useState('');
+  const [initialBalance, setInitialBalance] = useState('');
+  const [newEnvelope, setNewEnvelope] = useState('');
+  const [defaultBudget, setDefaultBudget] = useState('');
+  const [budgetMonth, setBudgetMonth] = useState('');
+  const [paymentBalancesCollapsed, setPaymentBalancesCollapsed] = useState(false);
+  const [balanceSummaryCollapsed, setBalanceSummaryCollapsed] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  const months = [
-    { value: '2025-01', label: 'Jan 2025' },
-    { value: '2025-02', label: 'Feb 2025' },
-    { value: '2025-03', label: 'Mar 2025' },
-  ];
+  // Data states
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [envelopes, setEnvelopes] = useState([]);
+  const [defaultBudgets, setDefaultBudgets] = useState({});
+  const [budgets, setBudgets] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+
+  // Generate months dynamically based on current date
+  const generateMonths = () => {
+    const months = [{ value: 'ALL', label: 'All Months' }];
+    const currentYear = new Date().getFullYear();
+    
+    for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+      for (let month = 1; month <= 12; month++) {
+        const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+        const date = new Date(year, month - 1);
+        const monthName = date.toLocaleString('default', { month: 'short' });
+        months.push({ value: monthStr, label: `${monthName} ${year}` });
+      }
+    }
+    return months;
+  };
+
+  const months = generateMonths();
+
+  // Generate years dynamically
+  const generateYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear - 2; year <= currentYear + 5; year++) {
+      years.push(year.toString());
+    }
+    return years;
+  };
+
+  const years = generateYears();
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedPaymentMethods = JSON.parse(localStorage.getItem('paymentMethods')) || [];
+    const savedEnvelopes = JSON.parse(localStorage.getItem('envelopes')) || [];
+    const savedDefaultBudgets = JSON.parse(localStorage.getItem('defaultBudgets')) || {};
+    const savedBudgets = JSON.parse(localStorage.getItem('budgets')) || [];
+    const savedTransactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+    setPaymentMethods(savedPaymentMethods);
+    setEnvelopes(savedEnvelopes);
+    setDefaultBudgets(savedDefaultBudgets);
+    setBudgets(savedBudgets);
+    setTransactions(savedTransactions);
+  }, []);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
+  }, [paymentMethods]);
+
+  useEffect(() => {
+    localStorage.setItem('envelopes', JSON.stringify(envelopes));
+  }, [envelopes]);
+
+  useEffect(() => {
+    localStorage.setItem('defaultBudgets', JSON.stringify(defaultBudgets));
+  }, [defaultBudgets]);
+
+  useEffect(() => {
+    localStorage.setItem('budgets', JSON.stringify(budgets));
+  }, [budgets]);
+
+  useEffect(() => {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [transactions]);
+
+  // Toast functionality
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   const handlePrevMonth = () => {
     const currentIndex = months.findIndex(m => m.value === currentMonth);
@@ -27,16 +120,296 @@ const QuickTrackUI = () => {
     }
   };
 
+  const handlePrevYear = () => {
+    const currentIndex = years.findIndex(y => y === currentYear);
+    if (currentIndex > 0) {
+      setCurrentYear(years[currentIndex - 1]);
+    }
+  };
+
+  const handleNextYear = () => {
+    const currentIndex = years.findIndex(y => y === currentYear);
+    if (currentIndex < years.length - 1) {
+      setCurrentYear(years[currentIndex + 1]);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log({ type: activeType, amount, description });
-    setAmount('');
-    setDescription('');
+    
+    if (activeType === 'transfer') {
+      if (amount && transferFrom && transferTo) {
+        const transaction = {
+          id: Date.now(),
+          type: 'transfer',
+          amount,
+          description,
+          from: transferFrom,
+          to: transferTo,
+          date: new Date().toISOString()
+        };
+        setTransactions([...transactions, transaction]);
+        showToast(`Transfer: ₹${amount} from ${transferFrom} to ${transferTo}`, 'success');
+        setAmount('');
+        setDescription('');
+        setTransferFrom('');
+        setTransferTo('');
+      } else {
+        showToast('Please fill all required fields', 'error');
+      }
+    } else if (activeType === 'income') {
+      if (amount && description && paymentMethod) {
+        const transaction = {
+          id: Date.now(),
+          type: 'income',
+          amount,
+          description,
+          payment: paymentMethod,
+          date: new Date().toISOString()
+        };
+        setTransactions([...transactions, transaction]);
+        showToast(`Income: ₹${amount} - ${description}`, 'success');
+        setAmount('');
+        setDescription('');
+        setPaymentMethod('');
+      } else {
+        if (!amount) showToast('Please enter amount', 'error');
+        else if (!description) showToast('Please enter description', 'error');
+        else if (!paymentMethod) showToast('Please select payment method', 'error');
+      }
+    } else {
+      if (amount && description && envelope && paymentMethod) {
+        const transaction = {
+          id: Date.now(),
+          type: 'expense',
+          amount,
+          description,
+          envelope,
+          payment: paymentMethod,
+          date: new Date().toISOString()
+        };
+        setTransactions([...transactions, transaction]);
+        showToast(`Expense: ₹${amount} - ${description}`, 'success');
+        setAmount('');
+        setDescription('');
+        setEnvelope('');
+        setPaymentMethod('');
+      } else {
+        if (!amount) showToast('Please enter amount', 'error');
+        else if (!description) showToast('Please enter description', 'error');
+        else if (!envelope) showToast('Please select envelope', 'error');
+        else if (!paymentMethod) showToast('Please select payment method', 'error');
+      }
+    }
+  };
+
+  const addPaymentMethod = () => {
+    const methodName = newPaymentMethod.trim();
+    if (methodName) {
+      if (!paymentMethods.includes(methodName)) {
+        setPaymentMethods([...paymentMethods, methodName]);
+        const balanceMsg = initialBalance ? ` with initial balance ₹${initialBalance}` : '';
+        showToast(`${methodName}${balanceMsg} added!`, 'success');
+        setNewPaymentMethod('');
+        setInitialBalance('');
+      } else {
+        showToast('Payment method already exists!', 'error');
+      }
+    }
+  };
+
+  const deletePaymentMethod = (name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      setPaymentMethods(paymentMethods.filter(method => method !== name));
+      showToast(`${name} deleted`, 'error');
+    }
+  };
+
+  const addEnvelope = () => {
+    const envelopeName = newEnvelope.trim();
+    if (envelopeName) {
+      if (!envelopes.includes(envelopeName)) {
+        setEnvelopes([...envelopes, envelopeName]);
+        if (defaultBudget) {
+          setDefaultBudgets({...defaultBudgets, [envelopeName]: defaultBudget});
+        }
+        const budgetMsg = defaultBudget ? ` with default budget ₹${defaultBudget}` : '';
+        showToast(`${envelopeName}${budgetMsg} added!`, 'success');
+        setNewEnvelope('');
+        setDefaultBudget('');
+      } else {
+        showToast('Envelope already exists!', 'error');
+      }
+    }
+  };
+
+  const deleteEnvelope = (name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      setEnvelopes(envelopes.filter(env => env !== name));
+      const newDefaultBudgets = {...defaultBudgets};
+      delete newDefaultBudgets[name];
+      setDefaultBudgets(newDefaultBudgets);
+      showToast(`${name} deleted`, 'error');
+    }
+  };
+
+  const saveBudget = (envelopeName) => {
+    const input = document.querySelector(`input[data-envelope="${envelopeName}"]`);
+    const budgetAmount = input.value.trim();
+    
+    if (!budgetAmount) {
+      showToast('Please enter a budget amount', 'error');
+      return;
+    }
+    
+    const existingBudget = budgets.find(b => b.envelope === envelopeName && b.month === budgetMonth);
+    if (existingBudget) {
+      const updatedBudgets = budgets.map(b => 
+        b.envelope === envelopeName && b.month === budgetMonth 
+          ? {...b, amount: budgetAmount}
+          : b
+      );
+      setBudgets(updatedBudgets);
+      showToast(`Budget updated: ${envelopeName}`, 'success');
+    } else {
+      setBudgets([...budgets, { envelope: envelopeName, month: budgetMonth, amount: budgetAmount }]);
+      showToast(`Budget saved: ${envelopeName}`, 'success');
+    }
+  };
+
+  // Calculate totals
+  const totalIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  
+  const totalExpense = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+  // Calculate payment balances
+  const getPaymentBalance = (method) => {
+    let balance = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income' && t.payment === method) {
+        balance += parseFloat(t.amount);
+      } else if (t.type === 'expense' && t.payment === method) {
+        balance -= parseFloat(t.amount);
+      } else if (t.type === 'transfer') {
+        if (t.from === method) balance -= parseFloat(t.amount);
+        if (t.to === method) balance += parseFloat(t.amount);
+      }
+    });
+    return balance;
+  };
+
+  // Get recent transactions
+  const getRecentTransactions = () => {
+    return [...transactions]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 10);
+  };
+
+  // Get transaction icon
+  const getTransactionIcon = (type, description) => {
+    if (type === 'income') return '💰';
+    if (type === 'transfer') return '🔄';
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('food') || desc.includes('lunch') || desc.includes('dinner') || desc.includes('breakfast')) return '🍔';
+    if (desc.includes('transport') || desc.includes('uber') || desc.includes('taxi') || desc.includes('bus')) return '🚕';
+    if (desc.includes('shopping') || desc.includes('clothes')) return '🛍️';
+    if (desc.includes('entertainment') || desc.includes('movie')) return '🎬';
+    if (desc.includes('grocery') || desc.includes('groceries')) return '🛒';
+    return '💸';
+  };
+
+  // Get time ago
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 172800) return 'Yesterday';
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
+
+  // Generate month options for budget
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentYear = new Date().getFullYear();
+    
+    for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+      for (let month = 1; month <= 12; month++) {
+        const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+        const date = new Date(year, month - 1);
+        const monthName = date.toLocaleString('default', { month: 'short' });
+        options.push({ value: monthStr, label: `${monthName} ${year}` });
+      }
+    }
+    return options;
+  };
+
+  // Get envelope budget data
+  const getEnvelopeBudgetData = () => {
+    return envelopes.map(envelopeName => {
+      const budget = budgets.find(b => b.envelope === envelopeName && b.month === currentMonth);
+      const budgetAmount = budget ? parseFloat(budget.amount) : 0;
+      
+      let actualSpent = 0;
+      
+      if (currentMonth === 'ALL') {
+        actualSpent = transactions
+          .filter(t => t.type === 'expense' && t.envelope === envelopeName)
+          .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+      } else {
+        actualSpent = transactions
+          .filter(t => {
+            if (t.type !== 'expense' || t.envelope !== envelopeName) return false;
+            if (!t.date) return false;
+            const transactionMonth = t.date.substring(0, 7);
+            return transactionMonth === currentMonth;
+          })
+          .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+      }
+      
+      const percentage = budgetAmount > 0 ? (actualSpent / budgetAmount) * 100 : 0;
+      let color = '#22c55e';
+      if (percentage >= 100) color = '#ef4444';
+      else if (percentage >= 90) color = '#f59e0b';
+      
+      return {
+        name: envelopeName,
+        budgetAmount,
+        actualSpent,
+        percentage: Math.min(percentage, 100),
+        color
+      };
+    });
   };
 
   return (
     <div className="quick-track">
+      <header className="app-header">
+        <h1>💰 Budget Planner</h1>
+      </header>
       <div className="top-bar">
+        <button className="profile-btn" onClick={() => setShowModal(true)}>⚙️</button>
+        <div className="year-selector">
+          <button className="year-nav" onClick={handlePrevYear}>‹</button>
+          <select 
+            value={currentYear} 
+            onChange={(e) => setCurrentYear(e.target.value)}
+            className="year-select"
+          >
+            {years.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          <button className="year-nav" onClick={handleNextYear}>›</button>
+        </div>
         <div className="month-selector">
           <button className="month-nav" onClick={handlePrevMonth}>‹</button>
           <select 
@@ -52,24 +425,48 @@ const QuickTrackUI = () => {
         </div>
       </div>
 
-      <div className="balance-summary">
-        <div className="balance-item income">
-          <div className="balance-label">Income</div>
-          <div className="balance-value">₹85,000</div>
+      <div className="balance-summary-wrapper">
+        <div className="balance-header" onClick={() => setBalanceSummaryCollapsed(!balanceSummaryCollapsed)}>
+          <div className="balance-title">Income & Expense</div>
+          <div className={`toggle-icon ${balanceSummaryCollapsed ? 'collapsed' : ''}`}>▼</div>
         </div>
-        <div className="balance-item expense">
-          <div className="balance-label">Expense</div>
-          <div className="balance-value">₹42,340</div>
-        </div>
-        <div className="balance-item transfer">
-          <div className="balance-label">Transfer</div>
-          <div className="balance-value">₹10,000</div>
-        </div>
-        <div className="balance-item net">
-          <div className="balance-label">Balance</div>
-          <div className="balance-value">₹32,660</div>
+        <div className={`balance-summary ${balanceSummaryCollapsed ? 'collapsed' : ''}`}>
+          <div className="balance-item income">
+            <div className="balance-label">Income</div>
+            <div className="balance-value">₹{totalIncome.toLocaleString('en-IN')}</div>
+          </div>
+          <div className="balance-item expense">
+            <div className="balance-label">Expense</div>
+            <div className="balance-value">₹{totalExpense.toLocaleString('en-IN')}</div>
+          </div>
         </div>
       </div>
+
+      <div className="payment-balances-wrapper">
+        <div className="payment-header" onClick={() => setPaymentBalancesCollapsed(!paymentBalancesCollapsed)}>
+          <div className="payment-title">Payment Methods</div>
+          <div className={`toggle-icon ${paymentBalancesCollapsed ? 'collapsed' : ''}`}>▼</div>
+        </div>
+        <div className={`payment-balances ${paymentBalancesCollapsed ? 'collapsed' : ''}`}>
+          {paymentMethods.length === 0 ? (
+            <div style={{gridColumn: '1/-1', padding: '16px', textAlign: 'center', color: '#6b7280'}}>No payment methods added yet.</div>
+          ) : (
+            paymentMethods.map((method, index) => {
+              const balance = getPaymentBalance(method);
+              const colors = ['hdfc', 'sbi', 'cash', 'transfer'];
+              const colorClass = colors[index % colors.length];
+              
+              return (
+                <div key={method} className={`payment-item ${colorClass}`}>
+                  <div className="payment-label">{method}</div>
+                  <div className="payment-value">₹{balance.toLocaleString('en-IN')}</div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
       <div className="quick-track-header">
         <button 
           className={`type-btn ${activeType === 'income' ? 'active income' : ''}`}
@@ -112,84 +509,277 @@ const QuickTrackUI = () => {
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={activeType === 'transfer' ? 'From → To' : "What's this for?"}
+          placeholder={activeType === 'transfer' ? 'Transfer description (optional)' : "What's this for?"}
           className="description-input"
         />
+
+        {activeType === 'expense' && (
+          <select 
+            value={envelope} 
+            onChange={(e) => setEnvelope(e.target.value)}
+            className="envelope-select"
+          >
+            <option value="">Select Envelope</option>
+            {envelopes.map(env => (
+              <option key={env} value={env}>{env}</option>
+            ))}
+          </select>
+        )}
+
+        {activeType === 'transfer' && (
+          <>
+            <select 
+              value={transferFrom} 
+              onChange={(e) => setTransferFrom(e.target.value)}
+              className="payment-select transfer-from show"
+            >
+              <option value="">From Payment Method</option>
+              {paymentMethods.map(method => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+            <select 
+              value={transferTo} 
+              onChange={(e) => setTransferTo(e.target.value)}
+              className="payment-select transfer-to show"
+            >
+              <option value="">To Payment Method</option>
+              {paymentMethods.map(method => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </>
+        )}
+
+        {(activeType === 'income' || activeType === 'expense') && (
+          <select 
+            value={paymentMethod} 
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className="payment-select"
+          >
+            <option value="">Select Payment Method</option>
+            {paymentMethods.map(method => (
+              <option key={method} value={method}>{method}</option>
+            ))}
+          </select>
+        )}
 
         <button type="submit" className={`submit-btn ${activeType}`}>
           Add {activeType === 'income' ? 'Income' : activeType === 'expense' ? 'Expense' : 'Transfer'}
         </button>
       </form>
 
-      <div className="quick-stats">
-        <div className="stat-card income-card">
-          <div className="stat-label">Today's Income</div>
-          <div className="stat-value">₹12,500</div>
-        </div>
-        <div className="stat-card expense-card">
-          <div className="stat-label">Today's Expense</div>
-          <div className="stat-value">₹3,240</div>
-        </div>
-      </div>
-
       <div className="envelope-budget">
         <h3>Envelope Budget vs Actual</h3>
-        <div className="envelope-item">
-          <div className="envelope-header">
-            <span className="envelope-name">EMI</span>
-            <span className="envelope-amounts">₹85,000 / ₹85,000</span>
-          </div>
-          <div className="envelope-bar">
-            <div className="envelope-progress" style={{width: '100%', backgroundColor: '#ef4444'}}></div>
-          </div>
-        </div>
-        <div className="envelope-item">
-          <div className="envelope-header">
-            <span className="envelope-name">Food</span>
-            <span className="envelope-amounts">₹8,340 / ₹15,000</span>
-          </div>
-          <div className="envelope-bar">
-            <div className="envelope-progress" style={{width: '55.6%', backgroundColor: '#22c55e'}}></div>
-          </div>
-        </div>
-        <div className="envelope-item">
-          <div className="envelope-header">
-            <span className="envelope-name">Transport</span>
-            <span className="envelope-amounts">₹4,500 / ₹5,000</span>
-          </div>
-          <div className="envelope-bar">
-            <div className="envelope-progress" style={{width: '90%', backgroundColor: '#f59e0b'}}></div>
-          </div>
-        </div>
+        {envelopes.length === 0 ? (
+          <div style={{padding: '16px', textAlign: 'center', color: '#6b7280'}}>No envelopes available.</div>
+        ) : (
+          getEnvelopeBudgetData().map(item => (
+            <div key={item.name} className="envelope-item">
+              <div className="envelope-header">
+                <span className="envelope-name">{item.name}</span>
+                <span className="envelope-amounts">₹{item.actualSpent.toLocaleString('en-IN')} / ₹{item.budgetAmount.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="envelope-bar">
+                <div className="envelope-progress" style={{width: `${item.percentage}%`, backgroundColor: item.color}}></div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="recent-transactions">
         <h3>Recent</h3>
-        <div className="transaction-item expense">
-          <div className="transaction-icon">🍔</div>
-          <div className="transaction-details">
-            <div className="transaction-desc">Lunch</div>
-            <div className="transaction-time">2 mins ago</div>
-          </div>
-          <div className="transaction-amount">-₹450</div>
-        </div>
-        <div className="transaction-item expense">
-          <div className="transaction-icon">🚕</div>
-          <div className="transaction-details">
-            <div className="transaction-desc">Uber</div>
-            <div className="transaction-time">1 hour ago</div>
-          </div>
-          <div className="transaction-amount">-₹280</div>
-        </div>
-        <div className="transaction-item income">
-          <div className="transaction-icon">💰</div>
-          <div className="transaction-details">
-            <div className="transaction-desc">Salary</div>
-            <div className="transaction-time">Today</div>
-          </div>
-          <div className="transaction-amount">+₹50,000</div>
-        </div>
+        {transactions.length === 0 ? (
+          <div style={{padding: '16px', textAlign: 'center', color: '#6b7280'}}>No transactions yet.</div>
+        ) : (
+          getRecentTransactions().map(t => {
+            const icon = getTransactionIcon(t.type, t.description || '');
+            const timeAgo = getTimeAgo(t.date);
+            const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
+            const amount = t.type === 'transfer' 
+              ? `${t.from} → ${t.to}` 
+              : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
+            
+            return (
+              <div key={t.id} className={`transaction-item ${t.type}`}>
+                <div className="transaction-icon">{icon}</div>
+                <div className="transaction-details">
+                  <div className="transaction-desc">{t.description || 'Transfer'}</div>
+                  <div className="transaction-time">{timeAgo}</div>
+                </div>
+                <div className="transaction-amount">{amount}</div>
+              </div>
+            );
+          })
+        )}
       </div>
+
+      {/* Settings Modal */}
+      {showModal && (
+        <div className="modal show">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Settings</div>
+              <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
+            </div>
+
+            <div className="modal-tabs">
+              <button 
+                className={`tab-btn ${activeTab === 'payment' ? 'active' : ''}`}
+                onClick={() => setActiveTab('payment')}
+              >
+                Payment Methods
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'envelope' ? 'active' : ''}`}
+                onClick={() => setActiveTab('envelope')}
+              >
+                Envelopes
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
+                onClick={() => setActiveTab('budget')}
+              >
+                Budget
+              </button>
+            </div>
+
+            {activeTab === 'payment' && (
+              <div className="tab-content active">
+                <div className="modal-section">
+                  <div className="section-title">Payment Methods</div>
+                  <div className="payment-method-list">
+                    {paymentMethods.length === 0 ? (
+                      <div style={{padding: '16px', textAlign: 'center', color: '#6b7280'}}>No payment methods added yet.</div>
+                    ) : (
+                      paymentMethods.map(method => (
+                        <div key={method} className="payment-method-item">
+                          <div className="payment-method-name">{method}</div>
+                          <button className="delete-btn" onClick={() => deletePaymentMethod(method)}>Delete</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="add-payment-form">
+                    <input 
+                      type="text" 
+                      value={newPaymentMethod}
+                      onChange={(e) => setNewPaymentMethod(e.target.value)}
+                      className="add-payment-input" 
+                      placeholder="Payment method name"
+                    />
+                    <div className="add-payment-row">
+                      <input 
+                        type="number" 
+                        value={initialBalance}
+                        onChange={(e) => setInitialBalance(e.target.value)}
+                        className="add-payment-input" 
+                        placeholder="Initial balance (optional)" 
+                        inputMode="decimal"
+                      />
+                      <button className="add-btn" onClick={addPaymentMethod}>Add</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'envelope' && (
+              <div className="tab-content active">
+                <div className="modal-section">
+                  <div className="section-title">Envelopes</div>
+                  <div className="payment-method-list">
+                    {envelopes.length === 0 ? (
+                      <div style={{padding: '16px', textAlign: 'center', color: '#6b7280'}}>No envelopes added yet.</div>
+                    ) : (
+                      envelopes.map(env => (
+                        <div key={env} className="payment-method-item">
+                          <div className="payment-method-name">{env}</div>
+                          <button className="delete-btn" onClick={() => deleteEnvelope(env)}>Delete</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="add-payment-form">
+                    <input 
+                      type="text" 
+                      value={newEnvelope}
+                      onChange={(e) => setNewEnvelope(e.target.value)}
+                      className="add-payment-input" 
+                      placeholder="Envelope name"
+                    />
+                    <div className="add-payment-row">
+                      <input 
+                        type="number" 
+                        value={defaultBudget}
+                        onChange={(e) => setDefaultBudget(e.target.value)}
+                        className="add-payment-input" 
+                        placeholder="Default budget (optional)" 
+                        inputMode="decimal"
+                      />
+                      <button className="add-btn" onClick={addEnvelope}>Add</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'budget' && (
+              <div className="tab-content active">
+                <div className="modal-section">
+                  <div className="section-title">Budget Allocation</div>
+                  <div className="add-payment-form" style={{marginBottom: '16px'}}>
+                    <select 
+                      value={budgetMonth}
+                      onChange={(e) => setBudgetMonth(e.target.value)}
+                      className="add-payment-input"
+                    >
+                      <option value="">Select Month</option>
+                      {generateMonthOptions().map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="payment-method-list">
+                    {!budgetMonth ? (
+                      <div></div>
+                    ) : envelopes.length === 0 ? (
+                      <div style={{padding: '16px', textAlign: 'center', color: '#6b7280'}}>No envelopes available. Add envelopes first.</div>
+                    ) : (
+                      envelopes.map(envelopeName => {
+                        const existingBudget = budgets.find(b => b.envelope === envelopeName && b.month === budgetMonth);
+                        const budgetValue = existingBudget ? existingBudget.amount : (defaultBudgets[envelopeName] || '');
+                        return (
+                          <div key={envelopeName} className="budget-envelope-item">
+                            <div className="budget-envelope-name">{envelopeName}</div>
+                            <input 
+                              type="number" 
+                              className="budget-input" 
+                              placeholder="Budget amount" 
+                              defaultValue={budgetValue}
+                              data-envelope={envelopeName}
+                              inputMode="decimal"
+                            />
+                            <button className="save-budget-btn" onClick={() => saveBudget(envelopeName)}>Save</button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast.show && (
+        <div className={`toast show ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };
