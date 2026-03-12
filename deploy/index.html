@@ -1,0 +1,3168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Track UI - Mock Demo</title>
+    <link rel="stylesheet" href="habit-fab.css">
+    <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+          background: #f8f9fa;
+        }
+
+        .quick-track {
+          max-width: 480px;
+          margin: 0 auto;
+          padding: 16px;
+          background: #f8f9fa;
+          min-height: 100vh;
+        }
+
+        .app-header {
+          font-size: 28px;
+          font-weight: 700;
+          color: #1f2937;
+          margin-bottom: 20px;
+          text-align: left;
+          letter-spacing: -0.5px;
+        }
+
+        .app-tabs {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 20px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .app-tab {
+          padding: 12px 16px;
+          border: none;
+          background: transparent;
+          font-size: 16px;
+          font-weight: 600;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.2s;
+          border-bottom: 3px solid transparent;
+          margin-bottom: -2px;
+        }
+
+        .app-tab:hover {
+          color: #3b82f6;
+        }
+
+        .app-tab.active {
+          color: #3b82f6;
+          border-bottom-color: #3b82f6;
+        }
+
+        .tab-content-section {
+          display: none;
+        }
+
+        .tab-content-section.active {
+          display: block;
+        }
+
+        .top-bar {
+          margin-bottom: 16px;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .profile-btn {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          border: none;
+          color: white;
+          font-size: 18px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+          flex-shrink: 0;
+        }
+
+        .profile-btn:hover {
+          transform: scale(1.05);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .profile-btn:active {
+          transform: scale(0.95);
+        }
+
+        .modal {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1000;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal.show {
+          display: flex;
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 20px;
+          padding: 24px;
+          max-width: 480px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-tabs {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 20px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-btn {
+          flex: 1;
+          padding: 12px 16px;
+          border: none;
+          background: transparent;
+          font-size: 15px;
+          font-weight: 600;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.2s;
+          border-bottom: 3px solid transparent;
+          margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+          color: #3b82f6;
+        }
+
+        .tab-btn.active {
+          color: #3b82f6;
+          border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+          display: none;
+        }
+
+        .tab-content.active {
+          display: block;
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .modal-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .close-btn {
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: #f3f4f6;
+          border-radius: 8px;
+          font-size: 20px;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #6b7280;
+        }
+
+        .close-btn:hover {
+          background: #e5e7eb;
+        }
+
+        .modal-section {
+          margin-bottom: 24px;
+        }
+
+        .section-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 12px;
+        }
+
+        .payment-method-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .payment-method-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          background: #f9fafb;
+          border-radius: 12px;
+        }
+
+        .payment-method-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .delete-btn {
+          padding: 6px 12px;
+          border: none;
+          background: #fee2e2;
+          color: #dc2626;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+          background: #fecaca;
+        }
+
+        .add-payment-form {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .add-payment-row {
+          display: flex;
+          gap: 8px;
+        }
+
+        .add-payment-input {
+          flex: 1;
+          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 16px;
+          transition: all 0.2s;
+        }
+
+        .add-payment-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .add-btn {
+          padding: 12px 20px;
+          border: none;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          color: white;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .add-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .add-btn:active {
+          transform: translateY(0);
+        }
+
+        .toast {
+          position: fixed;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%) translateY(100px);
+          background: #1f2937;
+          color: white;
+          padding: 16px 24px;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          z-index: 2000;
+          opacity: 0;
+          transition: all 0.3s ease;
+        }
+
+        .toast.show {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+          background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .toast.error {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .year-selector {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          padding: 12px 16px;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          flex: 0 0 auto;
+        }
+
+        .year-nav {
+          width: 36px;
+          height: 36px;
+          border: none;
+          background: #f3f4f6;
+          border-radius: 8px;
+          font-size: 20px;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #374151;
+          font-weight: bold;
+        }
+
+        .year-nav:hover {
+          background: #e5e7eb;
+        }
+
+        .year-nav:active {
+          transform: scale(0.95);
+        }
+
+        .year-select {
+          border: none;
+          background: transparent;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          text-align: center;
+          cursor: pointer;
+          outline: none;
+          width: 80px;
+        }
+
+        .month-selector {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          padding: 12px 16px;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          flex: 1;
+        }
+
+        .month-nav {
+          width: 36px;
+          height: 36px;
+          border: none;
+          background: #f3f4f6;
+          border-radius: 8px;
+          font-size: 20px;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #374151;
+          font-weight: bold;
+        }
+
+        .month-nav:hover {
+          background: #e5e7eb;
+        }
+
+        .month-nav:active {
+          transform: scale(0.95);
+        }
+
+        .month-select {
+          flex: 1;
+          border: none;
+          background: transparent;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          text-align: center;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .payment-balances-wrapper {
+          background: white;
+          padding: 16px;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          margin-bottom: 12px;
+        }
+
+        .payment-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .payment-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .toggle-icon {
+          font-size: 20px;
+          color: #6b7280;
+          transition: transform 0.3s;
+        }
+
+        .toggle-icon.collapsed {
+          transform: rotate(-90deg);
+        }
+
+        .payment-balances {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+          max-height: 200px;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
+        }
+
+        .payment-balances.collapsed {
+          max-height: 0;
+        }
+
+        .payment-item {
+          padding: 12px;
+          border-radius: 12px;
+          text-align: center;
+        }
+
+        .payment-item.hdfc {
+          background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        }
+
+        .payment-item.sbi {
+          background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+        }
+
+        .payment-item.cash {
+          background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+        }
+
+        .payment-item.transfer {
+          background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        }
+
+        .payment-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .payment-value {
+          font-size: 18px;
+          font-weight: 800;
+          color: #1f2937;
+        }
+
+        .balance-summary-wrapper {
+          background: white;
+          padding: 16px;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          margin-bottom: 16px;
+        }
+
+        .balance-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .balance-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .balance-summary {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          max-height: 200px;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
+        }
+
+        .balance-summary.collapsed {
+          max-height: 0;
+        }
+
+        .balance-item {
+          padding: 12px;
+          border-radius: 12px;
+          text-align: center;
+        }
+
+        .balance-item.income {
+          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        }
+
+        .balance-item.expense {
+          background: linear-gradient(135deg, #fee2e2, #fecaca);
+        }
+
+        .balance-item.net {
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+
+        .balance-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .balance-value {
+          font-size: 20px;
+          font-weight: 800;
+          color: #1f2937;
+        }
+
+        .quick-track-header {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .type-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 16px;
+          background: white;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #6b7280;
+        }
+
+        .type-btn .icon {
+          font-size: 32px;
+          font-weight: bold;
+        }
+
+        .type-btn:active {
+          transform: scale(0.98);
+        }
+
+        .type-btn.active {
+          border-width: 3px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .type-btn.active.income {
+          border-color: #10b981;
+          background: linear-gradient(135deg, #d1fae5, #ffffff);
+          color: #059669;
+        }
+
+        .type-btn.active.expense {
+          border-color: #ef4444;
+          background: linear-gradient(135deg, #fee2e2, #ffffff);
+          color: #dc2626;
+        }
+
+        .type-btn.active.transfer {
+          border-color: #3b82f6;
+          background: linear-gradient(135deg, #dbeafe, #ffffff);
+          color: #2563eb;
+        }
+
+        .quick-form {
+          background: white;
+          border-radius: 20px;
+          padding: 24px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .amount-input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+          padding: 16px 20px;
+          background: #f9fafb;
+          border-radius: 16px;
+          border: 2px solid #e5e7eb;
+        }
+
+        .currency {
+          font-size: 32px;
+          font-weight: 700;
+          color: #6b7280;
+        }
+
+        .amount-input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          font-size: 40px;
+          font-weight: 700;
+          color: #1f2937;
+          outline: none;
+          width: 100%;
+        }
+
+        .amount-input::placeholder {
+          color: #d1d5db;
+        }
+
+        .amount-input::-webkit-inner-spin-button,
+        .amount-input::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .description-input {
+          width: 100%;
+          padding: 16px 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 16px;
+          margin-bottom: 16px;
+          transition: all 0.2s;
+        }
+
+        .description-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .envelope-select {
+          width: 100%;
+          padding: 16px 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 16px;
+          margin-bottom: 16px;
+          transition: all 0.2s;
+          background: white;
+          cursor: pointer;
+        }
+
+        .envelope-select:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .envelope-select.hide {
+          display: none;
+        }
+
+        .payment-select {
+          width: 100%;
+          padding: 16px 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 16px;
+          margin-bottom: 16px;
+          transition: all 0.2s;
+          background: white;
+          cursor: pointer;
+        }
+
+        .payment-select:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .transfer-from {
+          display: none;
+        }
+
+        .transfer-from.show {
+          display: block;
+        }
+
+        .transfer-to {
+          display: none;
+        }
+
+        .transfer-to.show {
+          display: block;
+        }
+
+        .submit-btn {
+          width: 100%;
+          padding: 18px;
+          border: none;
+          border-radius: 12px;
+          font-size: 18px;
+          font-weight: 700;
+          color: white;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .submit-btn:active {
+          transform: scale(0.98);
+        }
+
+        .submit-btn.income {
+          background: linear-gradient(135deg, #10b981, #059669);
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .submit-btn.expense {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .submit-btn.transfer {
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .recent-transactions {
+          background: white;
+          border-radius: 20px;
+          padding: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .recent-transactions h3 {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0 0 16px 0;
+        }
+
+        .transaction-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 12px;
+          margin-bottom: 8px;
+          transition: all 0.2s;
+        }
+
+        .transaction-item:hover {
+          background: #f9fafb;
+        }
+
+        .transaction-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .transaction-icon {
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          border-radius: 12px;
+          background: #f3f4f6;
+        }
+
+        .transaction-item.income .transaction-icon {
+          background: #d1fae5;
+        }
+
+        .transaction-item.expense .transaction-icon {
+          background: #fee2e2;
+        }
+
+        .transaction-details {
+          flex: 1;
+        }
+
+        .transaction-desc {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 4px;
+        }
+
+        .transaction-time {
+          font-size: 13px;
+          color: #9ca3af;
+        }
+
+        .transaction-amount {
+          font-size: 18px;
+          font-weight: 700;
+        }
+
+        .transaction-item.income .transaction-amount {
+          color: #059669;
+        }
+
+        .transaction-item.expense .transaction-amount {
+          color: #dc2626;
+        }
+
+        .save-budget-btn:active {
+          transform: translateY(0);
+        }
+
+        .envelope-budget {
+          background: white;
+          border-radius: 20px;
+          padding: 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .envelope-budget h3 {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0 0 16px 0;
+        }
+
+        .envelope-item {
+          margin-bottom: 16px;
+        }
+
+        .envelope-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .envelope-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .envelope-name {
+          font-size: 15px;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .envelope-amounts {
+          font-size: 14px;
+          font-weight: 700;
+          color: #6b7280;
+        }
+
+        .envelope-bar {
+          height: 8px;
+          background: #f3f4f6;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .envelope-progress {
+          height: 100%;
+          border-radius: 8px;
+          transition: width 0.3s ease;
+        }
+
+        .budget-envelope-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .budget-envelope-name {
+          flex: 0 0 100px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1f2937;
+          word-break: break-word;
+        }
+
+        .budget-input {
+          flex: 1;
+          padding: 10px 14px;
+          border: 2px solid #e5e7eb;
+          border-radius: 10px;
+          font-size: 15px;
+          transition: all 0.2s;
+        }
+
+        .budget-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .save-budget-btn {
+          flex: 0 0 auto;
+          padding: 10px 16px;
+          border: none;
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+          white-space: nowrap;
+        }
+
+        .save-budget-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .save-budget-btn:active {
+          transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+          .quick-track {
+            max-width: 600px;
+            padding: 24px;
+          }
+
+          .payment-value {
+            font-size: 20px;
+          }
+
+          .balance-value {
+            font-size: 22px;
+          }
+
+          .type-btn {
+            padding: 28px;
+          }
+
+          .quick-form {
+            padding: 32px;
+          }
+        }
+
+        .habit-card {
+          background: white;
+          border-radius: 16px;
+          padding: 16px;
+          border-left: 4px solid #3b82f6;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          transition: all 0.2s;
+        }
+
+        .habit-card:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .habit-card.completed {
+          border-left-color: #10b981;
+          background: #f0fdf4;
+        }
+
+        .habit-info {
+          flex: 1;
+        }
+
+        .habit-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 4px;
+        }
+
+        .habit-cue {
+          font-size: 13px;
+          color: #6b7280;
+        }
+
+        .habit-streak {
+          text-align: center;
+          padding: 0 16px;
+        }
+
+        .streak-number {
+          font-size: 24px;
+          font-weight: 800;
+          color: #f59e0b;
+        }
+
+        .streak-label {
+          font-size: 11px;
+          color: #6b7280;
+          text-transform: uppercase;
+        }
+
+        .check-btn {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          border: 2px solid #e5e7eb;
+          background: white;
+          cursor: pointer;
+          font-size: 24px;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .check-btn:hover {
+          border-color: #3b82f6;
+          background: #eff6ff;
+        }
+
+        .check-btn.checked {
+          background: #10b981;
+          border-color: #10b981;
+          color: white;
+        }
+
+        .habit-stack-card {
+          background: linear-gradient(135deg, #f0f9ff, #f3f4f6);
+          border-radius: 14px;
+          padding: 14px;
+          border: 2px solid #e2e8f0;
+          transition: all 0.2s ease;
+        }
+
+        .habit-stack-card:hover {
+          border-color: #3b82f6;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+          transform: translateY(-2px);
+        }
+
+        .stack-cue {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1f2937;
+          margin-bottom: 10px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .stack-habits {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .stack-habit-item {
+          padding: 10px 12px;
+          background: white;
+          border-radius: 10px;
+          font-size: 14px;
+          color: #374151;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .delete-habit-btn {
+          padding: 4px 8px;
+          border: none;
+          background: #fee2e2;
+          color: #dc2626;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-habit-btn:hover {
+          background: #fecaca;
+        }
+
+        .view-btn {
+          transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+          transform: translateY(-1px);
+        }
+
+        .view-btn.active {
+          border-color: #3b82f6 !important;
+          background: #3b82f6 !important;
+          color: white !important;
+        }
+
+        .timeline-hour {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 16px 0;
+          position: relative;
+        }
+
+        .timeline-hour:not(:last-child)::before {
+          content: '';
+          position: absolute;
+          left: 20px;
+          top: 40px;
+          bottom: -16px;
+          width: 2px;
+          background: linear-gradient(to bottom, #e0e7ff 0%, #c7d2fe 50%, transparent 100%);
+        }
+
+        .timeline-time {
+          flex: 0 0 auto;
+          font-size: 11px;
+          font-weight: 800;
+          color: #4f46e5;
+          text-align: center;
+          background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+          padding: 8px 12px;
+          border-radius: 10px;
+          border: 2px solid #c7d2fe;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          min-width: 60px;
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+        }
+
+        .timeline-dot {
+          flex: 0 0 10px;
+          width: 10px;
+          height: 10px;
+          background: linear-gradient(135deg, #4f46e5, #6366f1);
+          border-radius: 50%;
+          margin-top: 8px;
+          box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+          z-index: 1;
+          position: relative;
+        }
+
+        .timeline-habits {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .timeline-habit-card {
+          background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+          border: 2px solid #e0e7ff;
+          border-radius: 14px;
+          padding: 14px 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+        }
+
+        .timeline-habit-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(180deg, #4f46e5 0%, #6366f1 100%);
+          opacity: 0.3;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-habit-card::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.05), transparent 70%);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          pointer-events: none;
+        }
+
+        .timeline-habit-card:hover {
+          transform: translateY(-3px) scale(1.01);
+          box-shadow: 0 8px 24px rgba(79, 70, 229, 0.15);
+          border-color: #c7d2fe;
+        }
+
+        .timeline-habit-card:hover::before {
+          opacity: 1;
+          width: 5px;
+        }
+
+        .timeline-habit-card:hover::after {
+          opacity: 1;
+        }
+
+        .timeline-habit-card.completed {
+          border-color: #86efac;
+          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #d1fae5 100%);
+          box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+        }
+
+        .timeline-habit-card.completed::before {
+          background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+          opacity: 1;
+          width: 5px;
+        }
+
+        .timeline-habit-card.completed::after {
+          background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 70%);
+          opacity: 1;
+        }
+
+        .timeline-habit-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .timeline-habit-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0;
+          line-height: 1.3;
+          letter-spacing: -0.2px;
+        }
+
+        .timeline-habit-cue {
+          font-size: 13px;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 500;
+        }
+
+        .timeline-habit-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 4px;
+        }
+
+        .habit-duration {
+          font-size: 12px;
+          color: #6366f1;
+          background: #eef2ff;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-weight: 600;
+        }
+
+        .habit-location {
+          font-size: 12px;
+          color: #059669;
+          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+          padding: 5px 10px;
+          border-radius: 8px;
+          font-weight: 600;
+          box-shadow: 0 2px 4px rgba(5, 150, 105, 0.1);
+          transition: all 0.2s ease;
+        }
+
+        .timeline-habit-card:hover .habit-location {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 6px rgba(5, 150, 105, 0.15);
+        }
+
+        .habit-streak {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-right: 12px;
+        }
+
+        .streak-badge {
+          background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+          color: white;
+          padding: 5px 10px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+          transition: all 0.2s ease;
+        }
+
+        .timeline-habit-card:hover .streak-badge {
+          transform: scale(1.05);
+          box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+        }
+
+        .timeline-check-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 2px solid #e0e7ff;
+          background: linear-gradient(135deg, #ffffff, #f8fafc);
+          cursor: pointer;
+          font-size: 18px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          box-shadow: 0 2px 6px rgba(79, 70, 229, 0.1);
+          flex-shrink: 0;
+        }
+
+        .timeline-check-btn:hover {
+          border-color: #4f46e5;
+          background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+          transform: scale(1.1);
+          box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+        }
+
+        .timeline-check-btn.checked {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          border-color: #22c55e;
+          color: white;
+          box-shadow: 0 3px 10px rgba(34, 197, 94, 0.3);
+        }
+
+        .timeline-check-btn.checked:hover {
+          transform: scale(1.15);
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        .timeline-check-btn:active {
+          transform: scale(0.95);
+        }
+
+        .anytime-section {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+          border-radius: 16px;
+          padding: 16px;
+          margin-top: 12px;
+          box-shadow: 0 2px 12px rgba(245, 158, 11, 0.1);
+          border: 2px solid #fbbf24;
+        }
+
+        .anytime-section .timeline-time {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          border: none;
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+        }
+
+        .anytime-section .timeline-habit-card {
+          border-color: #fbbf24;
+        }
+
+        .anytime-section .timeline-habit-card:hover {
+          border-color: #f59e0b;
+          box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+        }
+
+        .day-nav-btn {
+          transition: all 0.3s ease;
+        }
+
+        .day-nav-btn:hover {
+          background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+          color: white !important;
+          transform: scale(1.05);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+        }
+
+        .day-nav-btn:active {
+          transform: scale(0.95);
+        }
+
+        .date-display {
+          transition: all 0.2s ease;
+        }
+
+        .date-display:hover {
+          transform: translateY(-1px);
+        }
+
+        .identity-group {
+          margin-bottom: 20px;
+        }
+
+        .identity-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+          border-left: 4px solid #4f46e5;
+          border-radius: 10px;
+          margin-bottom: 12px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #1e40af;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .identity-habits {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding-left: 8px;
+        }
+
+        @media (max-width: 480px) {
+          .app-header {
+            font-size: 28px;
+            margin-bottom: 20px;
+            padding: 12px 8px;
+            letter-spacing: -1px;
+          }
+
+          .payment-balances {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .type-btn {
+            padding: 16px;
+            font-size: 14px;
+          }
+
+          .type-btn .icon {
+            font-size: 28px;
+          }
+        }
+    </style>
+</head>
+<body>
+<div class="quick-track">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div class="app-header">Life Tracker</div>
+        <button class="profile-btn" id="profileBtn" style="margin-top: 2px;">⚙️</button>
+    </div>
+
+    <div class="app-tabs">
+        <button class="app-tab active" id="financeTab">Finance</button>
+        <button class="app-tab" id="habitTab">Habit</button>
+    </div>
+
+    <div class="tab-content-section active" id="financeContent">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="flex: 1; display: flex; gap: 12px;">
+                <div class="year-selector">
+                    <button class="year-nav" id="prevYear">‹</button>
+                    <select id="yearSelect" class="year-select">
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                    </select>
+                    <button class="year-nav" id="nextYear">›</button>
+                </div>
+                <div class="month-selector">
+                    <button class="month-nav" id="prevMonth">‹</button>
+                    <select id="monthSelect" class="month-select">
+                        <option value="ALL">All Months</option>
+                        <option value="2025-01">Jan 2025</option>
+                        <option value="2025-02" selected>Feb 2025</option>
+                        <option value="2025-03">Mar 2025</option>
+                    </select>
+                    <button class="month-nav" id="nextMonth">›</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="balance-summary-wrapper">
+            <div class="balance-header" id="balanceHeader">
+                <div class="balance-title">Income & Expense</div>
+                <div class="toggle-icon" id="balanceToggleIcon">▼</div>
+            </div>
+            <div class="balance-summary" id="balanceSummary">
+                <div class="balance-item income">
+                    <div class="balance-label">Income</div>
+                    <div class="balance-value" id="totalIncome">₹0</div>
+                </div>
+                <div class="balance-item expense">
+                    <div class="balance-label">Expense</div>
+                    <div class="balance-value" id="totalExpense">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-balances-wrapper">
+            <div class="payment-header" id="paymentHeader">
+                <div class="payment-title">Payment Methods</div>
+                <div class="toggle-icon" id="toggleIcon">▼</div>
+            </div>
+            <div class="payment-balances" id="paymentBalances">
+            </div>
+        </div>
+
+        <div class="quick-track-header">
+            <button class="type-btn" id="incomeBtn">
+                <span class="icon">↓</span>
+                <span>Income</span>
+            </button>
+            <button class="type-btn active expense" id="expenseBtn">
+                <span class="icon">↑</span>
+                <span>Expense</span>
+            </button>
+            <button class="type-btn" id="transferBtn">
+                <span class="icon">⇄</span>
+                <span>Transfer</span>
+            </button>
+        </div>
+
+        <form class="quick-form" id="quickForm">
+            <div class="amount-input-wrapper">
+                <span class="currency">₹</span>
+                <input
+                        type="number"
+                        inputmode="decimal"
+                        id="amountInput"
+                        placeholder="0"
+                        class="amount-input"
+                        autofocus
+                />
+            </div>
+
+            <input
+                    type="text"
+                    id="descriptionInput"
+                    placeholder="What's this for?"
+                    class="description-input"
+            />
+
+            <select id="envelopeSelect" class="envelope-select">
+                <option value="">Select Envelope</option>
+            </select>
+
+            <select id="transferFrom" class="payment-select transfer-from">
+                <option value="">From Payment Method</option>
+            </select>
+
+            <select id="transferTo" class="payment-select transfer-to">
+                <option value="">To Payment Method</option>
+            </select>
+
+            <select id="paymentSelect" class="payment-select">
+                <option value="">Select Payment Method</option>
+            </select>
+
+            <button type="submit" class="submit-btn expense" id="submitBtn">
+                Add Expense
+            </button>
+        </form>
+
+        <div class="envelope-budget">
+            <h3>Envelope Budget vs Actual</h3>
+            <div id="envelopeBudgetList">
+                <!-- Dynamic envelope budget items will be inserted here -->
+            </div>
+        </div>
+
+        <div class="recent-transactions">
+            <h3>Recent</h3>
+            <div id="recentTransactionsList">
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content-section" id="habitContent">
+        <div style="padding: 20px 0;">
+            <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 20px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); margin-bottom: 20px; border: 2px solid #e2e8f0;">
+                <button id="prevDay" style="width: 44px; height: 44px; border: none; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.2s; color: #475569; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">‹</button>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <div id="dateLabel" style="font-size: 18px; font-weight: 700; color: #1e293b; text-align: center;">Today</div>
+                    <input type="date" id="habitDate" style="border: none; background: transparent; font-size: 14px; font-weight: 600; color: #64748b; text-align: center; cursor: pointer; width: 140px; outline: none;" />
+                </div>
+                <button id="nextDay" style="width: 44px; height: 44px; border: none; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.2s; color: #475569; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">›</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; align-items: center;">
+                <button class="app-tab active" id="viewHabitsTab" style="padding: 12px 16px; border: none; background: transparent; font-size: 16px; font-weight: 600; color: #3b82f6; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; margin-bottom: -2px;">📋 View Habits</button>
+                <button id="addHabitBtn" style="margin-left: auto; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 24px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; font-weight: bold;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 16px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'">+</button>
+            </div>
+
+            <div id="viewHabitsSection" style="display: block;">
+                <div style="background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0;">Today's Habits</h3>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="font-size: 13px; font-weight: 600; color: #6b7280; background: #f3f4f6; padding: 8px 14px; border-radius: 10px; display: flex; align-items: center; gap: 6px;" id="habitStats"><span style="font-size: 16px;">✓</span> 0/0</div>
+                            <button id="groupByIdentityBtn" onclick="toggleGroupByIdentity()" style="padding: 6px 12px; border: none; background: transparent; color: #6b7280; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; border: 2px solid #e5e7eb;">Group</button>
+                        </div>
+                    </div>
+                    <div id="listView" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="padding: 32px 16px; text-align: center; color: #9ca3af; font-size: 15px;">✨ No habits yet. Create one to get started!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="createHabitSection" style="display: none;">
+                <div style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 24px; padding: 28px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 2px solid #e2e8f0;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 28px;">
+                        <div style="font-size: 32px;">🏃</div>
+                        <div>
+                            <h3 style="font-size: 22px; font-weight: 800; color: #1f2937; margin: 0; letter-spacing: -0.5px;">Build Your Atomic Habit</h3>
+                            <p style="font-size: 13px; color: #6b7280; margin: 4px 0 0 0; font-weight: 500;">Create lasting change through small, consistent actions</p>
+                        </div>
+                    </div>
+
+                    <form id="atomicHabitForm" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Identity Section -->
+                        <div style="background: linear-gradient(135deg, #eef2ff 0%, #f3f4f6 100%); border: 2px solid #c7d2fe; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">✨</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Identity</div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">Who do you want to become?</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #4f46e5;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
+                                    <span style="font-size: 16px; font-weight: 700; color: #4f46e5; min-width: 50px;">I am</span>
+                                    <input type="text" id="identity" placeholder="e.g., someone who exercises daily" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cue Section -->
+                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #f3f4f6 100%); border: 2px solid #fbbf24; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">🔔</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Cue (Trigger)</div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">When & where does it happen?</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #f59e0b;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
+                                    <span style="font-size: 16px; font-weight: 700; color: #f59e0b; min-width: 70px;">After I</span>
+                                    <input type="text" id="triggerCue" placeholder="wake up" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
+                                    <span style="font-size: 16px; font-weight: 700; color: #f59e0b; min-width: 30px;">at</span>
+                                    <input type="time" id="triggerTime" placeholder="Time (optional)" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Routine Section -->
+                        <div style="background: linear-gradient(135deg, #dbeafe 0%, #f3f4f6 100%); border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">⚡</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Routine (Response)</div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">What's the new behavior?</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #3b82f6;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
+                                    <span style="font-size: 16px; font-weight: 700; color: #3b82f6; min-width: 60px;">I will</span>
+                                    <input type="text" id="routineAction" placeholder="go for a morning walk" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
+                                    <span style="font-size: 16px; font-weight: 700; color: #3b82f6; min-width: 30px;">at</span>
+                                    <input type="text" id="routineLocation" placeholder="location (e.g., park)" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reward Section -->
+                        <div style="background: linear-gradient(135deg, #d1fae5 0%, #f3f4f6 100%); border: 2px solid #10b981; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">🎁</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Reward</div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">What's the immediate benefit?</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #10b981;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: flex; flex-direction: column; gap: 12px;">
+                                <input type="text" id="immediateReward" placeholder="e.g., feel energized, enjoy fresh air" style="width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 15px; background: white; outline: none; color: #1f2937; font-weight: 500; transition: all 0.2s;" />
+                            </div>
+                        </div>
+
+                        <!-- Milestones Section -->
+                        <div style="background: linear-gradient(135deg, #fee2e2 0%, #f3f4f6 100%); border: 2px solid #ef4444; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">📈</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Milestones <span style="font-size: 12px; color: #9ca3af; font-weight: 500;">(Optional)</span></div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">Track progress at key intervals</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #ef4444;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: none; flex-direction: column; gap: 12px;">
+                                <div id="milestonesList" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="milestone-item" style="display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #3b82f6;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">Day</span>
+                                        <input type="number" class="milestone-days" placeholder="7" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+                                        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">-</span>
+                                        <input type="text" class="milestone-text" placeholder="milestone description" style="flex: 1; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; background: white;" />
+                                        <button type="button" class="remove-milestone" onclick="removeMilestone(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="addMilestoneBtn" onclick="addMilestoneField()" style="width: 100%; padding: 12px 16px; border: 2px dashed #ef4444; background: white; color: #ef4444; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s; letter-spacing: 0.3px;">+ Add Milestone</button>
+                            </div>
+                        </div>
+
+                        <!-- Progression Section -->
+                        <div style="background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%); border: 2px solid #4f46e5; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">🚀</span>
+                                    <div>
+                                        <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Progression <span style="font-size: 12px; color: #9ca3af; font-weight: 500;">(Optional)</span></div>
+                                        <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">Scale up your habit over time</div>
+                                    </div>
+                                </div>
+                                <span class="section-toggle" style="font-size: 24px; transition: transform 0.3s; color: #4f46e5;">▼</span>
+                            </div>
+                            <div class="section-content" style="display: none; flex-direction: column; gap: 12px;">
+                                <div id="progressionList" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="progression-item" style="display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #4f46e5;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">After</span>
+                                        <input type="number" class="progression-days" placeholder="30" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #4f46e5; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+                                        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">days, I will</span>
+                                        <input type="text" class="progression-text" placeholder="increase to 45 minutes" style="flex: 1; padding: 8px 12px; border: 2px solid #4f46e5; border-radius: 8px; font-size: 14px; background: white;" />
+                                        <button type="button" class="remove-progression" onclick="removeProgression(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="addProgressionBtn" onclick="addProgressionField()" style="width: 100%; padding: 12px 16px; border: 2px dashed #4f46e5; background: white; color: #4f46e5; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s; letter-spacing: 0.3px;">+ Add Progression Step</button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitHabitBtn" style="width: 100%; padding: 18px 24px; border: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3); margin-top: 12px; transition: all 0.3s ease; letter-spacing: 0.3px; text-transform: uppercase;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(16, 185, 129, 0.3)'">🚀 Create Atomic Habit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Settings</div>
+            <button class="close-btn" id="closeModal">×</button>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="tab-btn active" id="paymentTab">Payment Methods</button>
+            <button class="tab-btn" id="envelopeTab">Envelopes</button>
+            <button class="tab-btn" id="budgetTab">Budget</button>
+        </div>
+
+        <div class="tab-content active" id="paymentContent">
+            <div class="modal-section">
+                <div class="section-title">Payment Methods</div>
+                <div class="payment-method-list" id="paymentMethodList">
+                </div>
+                <div class="add-payment-form">
+                    <input type="text" id="newPaymentMethod" class="add-payment-input" placeholder="Payment method name">
+                    <div class="add-payment-row">
+                        <input type="number" id="initialBalance" class="add-payment-input" placeholder="Initial balance" inputmode="decimal">
+                        <button class="add-btn" id="addPaymentBtn">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="envelopeContent">
+            <div class="modal-section">
+                <div class="section-title">Envelopes</div>
+                <div class="payment-method-list" id="envelopeList">
+                </div>
+                <div class="add-payment-form">
+                    <input type="text" id="newEnvelope" class="add-payment-input" placeholder="Envelope name">
+                    <div class="add-payment-row">
+                        <input type="number" id="defaultBudget" class="add-payment-input" placeholder="Default budget (optional)" inputmode="decimal">
+                        <button class="add-btn" id="addEnvelopeBtn">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="budgetContent">
+            <div class="modal-section">
+                <div class="section-title">Budget Allocation</div>
+                <div class="add-payment-form" style="margin-bottom: 16px;">
+                    <select id="budgetMonth" class="add-payment-input">
+                        <option value="">Select Month</option>
+                    </select>
+                </div>
+                <div class="payment-method-list" id="budgetList">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+
+
+<script>
+    // Toast notification function
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Payment methods array
+    let paymentMethods = JSON.parse(localStorage.getItem('paymentMethods')) || [];
+
+    // Envelopes array
+    let envelopes = JSON.parse(localStorage.getItem('envelopes')) || [];
+
+    // Default budgets for envelopes - stores {envelope, defaultBudget}
+    let defaultBudgets = JSON.parse(localStorage.getItem('defaultBudgets')) || {};
+
+    // Budgets array - stores {envelope, month, amount}
+    let budgets = JSON.parse(localStorage.getItem('budgets')) || [];
+
+    // Transactions array - stores all transactions
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+    // Save to localStorage
+    function saveToLocalStorage() {
+      localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
+      localStorage.setItem('envelopes', JSON.stringify(envelopes));
+      localStorage.setItem('defaultBudgets', JSON.stringify(defaultBudgets));
+      localStorage.setItem('budgets', JSON.stringify(budgets));
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+    }
+
+    function deletePaymentMethod(name) {
+      if (confirm(`Delete ${name}?`)) {
+        paymentMethods = paymentMethods.filter(method => method !== name);
+        updatePaymentMethodsList();
+        updatePaymentDropdowns();
+        saveToLocalStorage();
+        showToast(`${name} deleted`, 'error');
+      }
+    }
+
+    function deleteEnvelope(name) {
+      if (confirm(`Delete ${name}?`)) {
+        envelopes = envelopes.filter(env => env !== name);
+        delete defaultBudgets[name];
+        updateEnvelopesList();
+        updateEnvelopeDropdowns();
+        saveToLocalStorage();
+        showToast(`${name} deleted`, 'error');
+      }
+    }
+
+    function deleteBudget(envelope, month) {
+      if (confirm(`Delete budget for ${envelope} in ${month}?`)) {
+        budgets = budgets.filter(b => !(b.envelope === envelope && b.month === month));
+        updateBudgetList();
+        saveToLocalStorage();
+        showToast(`Budget deleted`, 'error');
+      }
+    }
+
+    function saveBudget(envelope) {
+      const selectedMonth = budgetMonth.value;
+      const input = document.querySelector(`input[data-envelope="${envelope}"]`);
+      const amount = input.value.trim();
+      
+      if (!amount) {
+        showToast('Please enter a budget amount', 'error');
+        return;
+      }
+      
+      const existingBudget = budgets.find(b => b.envelope === envelope && b.month === selectedMonth);
+      if (existingBudget) {
+        existingBudget.amount = amount;
+        showToast(`Budget updated: ${envelope}`, 'success');
+      } else {
+        budgets.push({ envelope, month: selectedMonth, amount });
+        showToast(`Budget saved: ${envelope}`, 'success');
+      }
+      updateEnvelopeBudget();
+      saveToLocalStorage();
+    }
+
+    function updatePaymentMethodsList() {
+      const listContainer = document.getElementById('paymentMethodList');
+      if (paymentMethods.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No payment methods added yet.</div>';
+        return;
+      }
+      listContainer.innerHTML = paymentMethods.map(method => `
+        <div class="payment-method-item">
+          <div class="payment-method-name">${method}</div>
+          <button class="delete-btn" onclick="deletePaymentMethod('${method}')">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function updateEnvelopesList() {
+      const listContainer = document.getElementById('envelopeList');
+      if (envelopes.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No envelopes added yet.</div>';
+        return;
+      }
+      listContainer.innerHTML = envelopes.map(env => `
+        <div class="payment-method-item">
+          <div class="payment-method-name">${env}</div>
+          <button class="delete-btn" onclick="deleteEnvelope('${env}')">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function updatePaymentDropdowns() {
+      const paymentSelect = document.getElementById('paymentSelect');
+      const transferFrom = document.getElementById('transferFrom');
+      const transferTo = document.getElementById('transferTo');
+
+      const options = paymentMethods.map(method => 
+        `<option value="${method}">${method}</option>`
+      ).join('');
+
+      paymentSelect.innerHTML = '<option value="">Select Payment Method</option>' + options;
+      transferFrom.innerHTML = '<option value="">From Payment Method</option>' + options;
+      transferTo.innerHTML = '<option value="">To Payment Method</option>' + options;
+    }
+
+    function updateEnvelopeDropdowns() {
+      const envelopeSelect = document.getElementById('envelopeSelect');
+
+      const options = envelopes.map(env => 
+        `<option value="${env}">${env}</option>`
+      ).join('');
+
+      envelopeSelect.innerHTML = '<option value="">Select Envelope</option>' + options;
+    }
+
+    function updateBalanceSummary() {
+      const totalIncomeEl = document.getElementById('totalIncome');
+      const totalExpenseEl = document.getElementById('totalExpense');
+      
+      const income = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const expense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      totalIncomeEl.textContent = `₹${income.toLocaleString('en-IN')}`;
+      totalExpenseEl.textContent = `₹${expense.toLocaleString('en-IN')}`;
+    }
+
+    function updatePaymentBalances() {
+      const container = document.getElementById('paymentBalances');
+      
+      if (paymentMethods.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; padding: 16px; text-align: center; color: #6b7280;">No payment methods added yet.</div>';
+        return;
+      }
+      
+      container.innerHTML = paymentMethods.map((method, index) => {
+        // Calculate balance for this payment method
+        let balance = 0;
+        
+        transactions.forEach(t => {
+          if (t.type === 'income' && t.payment === method) {
+            balance += parseFloat(t.amount);
+          } else if (t.type === 'expense' && t.payment === method) {
+            balance -= parseFloat(t.amount);
+          } else if (t.type === 'transfer') {
+            if (t.from === method) balance -= parseFloat(t.amount);
+            if (t.to === method) balance += parseFloat(t.amount);
+          }
+        });
+        
+        const colors = ['hdfc', 'sbi', 'cash', 'transfer'];
+        const colorClass = colors[index % colors.length];
+        
+        return `
+          <div class="payment-item ${colorClass}">
+            <div class="payment-label">${method}</div>
+            <div class="payment-value">₹${balance.toLocaleString('en-IN')}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getTimeAgo(dateString) {
+      const now = new Date();
+      const date = new Date(dateString);
+      const seconds = Math.floor((now - date) / 1000);
+      
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+      if (seconds < 172800) return 'Yesterday';
+      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function getTransactionIcon(type, description) {
+      if (type === 'income') return '💰';
+      if (type === 'transfer') return '🔄';
+      
+      // Expense icons based on description
+      const desc = description.toLowerCase();
+      if (desc.includes('food') || desc.includes('lunch') || desc.includes('dinner') || desc.includes('breakfast')) return '🍔';
+      if (desc.includes('transport') || desc.includes('uber') || desc.includes('taxi') || desc.includes('bus')) return '🚕';
+      if (desc.includes('shopping') || desc.includes('clothes')) return '🛍️';
+      if (desc.includes('entertainment') || desc.includes('movie')) return '🎬';
+      if (desc.includes('grocery') || desc.includes('groceries')) return '🛒';
+      return '💸';
+    }
+
+    function updateRecentTransactions() {
+      const listContainer = document.getElementById('recentTransactionsList');
+      
+      if (transactions.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No transactions yet.</div>';
+        return;
+      }
+      
+      // Get last 10 transactions, sorted by date (newest first)
+      const recentTransactions = [...transactions]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 10);
+      
+      listContainer.innerHTML = recentTransactions.map(t => {
+        const icon = getTransactionIcon(t.type, t.description || '');
+        const timeAgo = getTimeAgo(t.date);
+        const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
+        const amount = t.type === 'transfer' 
+          ? `${t.from} → ${t.to}` 
+          : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
+        
+        return `
+          <div class="transaction-item ${t.type}">
+            <div class="transaction-icon">${icon}</div>
+            <div class="transaction-details">
+              <div class="transaction-desc">${t.description || 'Transfer'}</div>
+              <div class="transaction-time">${timeAgo}</div>
+            </div>
+            <div class="transaction-amount">${amount}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateEnvelopeBudget() {
+      const container = document.getElementById('envelopeBudgetList');
+      const selectedMonth = monthSelect.value;
+      
+      if (envelopes.length === 0) {
+        container.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No envelopes available.</div>';
+        return;
+      }
+      
+      container.innerHTML = envelopes.map(envelope => {
+        // Get budget for this envelope and month
+        const budget = budgets.find(b => b.envelope === envelope && b.month === selectedMonth);
+        const budgetAmount = budget ? parseFloat(budget.amount) : 0;
+        
+        // Calculate actual spending for this envelope and month
+        let actualSpent = 0;
+        
+        if (selectedMonth === 'ALL') {
+          // Calculate for all months
+          actualSpent = transactions
+            .filter(t => t.type === 'expense' && t.envelope === envelope)
+            .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+        } else {
+          // Calculate for specific month
+          actualSpent = transactions
+            .filter(t => {
+              if (t.type !== 'expense' || t.envelope !== envelope) return false;
+              if (!t.date) return false;
+              
+              // Extract year-month from transaction date
+              const transactionMonth = t.date.substring(0, 7); // Gets "2025-02" from "2025-02-15T..."
+              return transactionMonth === selectedMonth;
+            })
+            .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+        }
+        
+        // Calculate percentage and color
+        const percentage = budgetAmount > 0 ? (actualSpent / budgetAmount) * 100 : 0;
+        let color = '#22c55e'; // Green
+        if (percentage >= 100) color = '#ef4444'; // Red
+        else if (percentage >= 90) color = '#f59e0b'; // Orange
+        
+        return `
+          <div class="envelope-item">
+            <div class="envelope-header">
+              <span class="envelope-name">${envelope}</span>
+              <span class="envelope-amounts">₹${actualSpent.toLocaleString('en-IN')} / ₹${budgetAmount.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="envelope-bar">
+              <div class="envelope-progress" style="width: ${Math.min(percentage, 100)}%; background-color: ${color};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function generateMonthOptions() {
+      const budgetMonth = document.getElementById('budgetMonth');
+      const months = [];
+      const currentYear = 2026;
+      
+      for (let year = currentYear; year <= currentYear + 4; year++) {
+        for (let month = 1; month <= 12; month++) {
+          const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+          const date = new Date(year, month - 1);
+          const monthName = date.toLocaleString('default', { month: 'short' });
+          months.push(`<option value="${monthStr}">${monthName} ${year}</option>`);
+        }
+      }
+
+      budgetMonth.innerHTML = '<option value="">Select Month</option>' + months.join('');
+    }
+
+    function updateBudgetList() {
+      const selectedMonth = budgetMonth.value;
+      const listContainer = document.getElementById('budgetList');
+      
+      if (!selectedMonth) {
+        listContainer.innerHTML = '';
+        return;
+      }
+      
+      if (envelopes.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No envelopes available. Add envelopes first.</div>';
+        return;
+      }
+      
+      listContainer.innerHTML = envelopes.map(envelope => {
+        const existingBudget = budgets.find(b => b.envelope === envelope && b.month === selectedMonth);
+        const budgetValue = existingBudget ? existingBudget.amount : (defaultBudgets[envelope] || '');
+        return `
+          <div class="budget-envelope-item">
+            <div class="budget-envelope-name">${envelope}</div>
+            <input 
+              type="number" 
+              class="budget-input" 
+              placeholder="Budget amount" 
+              value="${budgetValue}"
+              data-envelope="${envelope}"
+              inputmode="decimal"
+            />
+            <button class="save-budget-btn" onclick="saveBudget('${envelope}')">Save</button>
+          </div>
+        `;
+      }).join('');
+    }
+    const incomeBtn = document.getElementById('incomeBtn');
+    const expenseBtn = document.getElementById('expenseBtn');
+    const transferBtn = document.getElementById('transferBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const amountInput = document.getElementById('amountInput');
+    const descriptionInput = document.getElementById('descriptionInput');
+    const envelopeSelect = document.getElementById('envelopeSelect');
+    const paymentSelect = document.getElementById('paymentSelect');
+    const transferFrom = document.getElementById('transferFrom');
+    const transferTo = document.getElementById('transferTo');
+    const quickForm = document.getElementById('quickForm');
+    const monthSelect = document.getElementById('monthSelect');
+    const prevMonth = document.getElementById('prevMonth');
+    const nextMonth = document.getElementById('nextMonth');
+    const yearSelect = document.getElementById('yearSelect');
+    const prevYear = document.getElementById('prevYear');
+    const nextYear = document.getElementById('nextYear');
+    const paymentHeader = document.getElementById('paymentHeader');
+    const paymentBalances = document.getElementById('paymentBalances');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const balanceHeader = document.getElementById('balanceHeader');
+    const balanceSummary = document.getElementById('balanceSummary');
+    const balanceToggleIcon = document.getElementById('balanceToggleIcon');
+    const profileBtn = document.getElementById('profileBtn');
+    const profileModal = document.getElementById('profileModal');
+    const closeModal = document.getElementById('closeModal');
+    const addPaymentBtn = document.getElementById('addPaymentBtn');
+    const newPaymentMethod = document.getElementById('newPaymentMethod');
+    const initialBalance = document.getElementById('initialBalance');
+    const paymentMethodList = document.getElementById('paymentMethodList');
+    const addEnvelopeBtn = document.getElementById('addEnvelopeBtn');
+    const newEnvelope = document.getElementById('newEnvelope');
+    const defaultBudget = document.getElementById('defaultBudget');
+    const envelopeList = document.getElementById('envelopeList');
+    const budgetMonth = document.getElementById('budgetMonth');
+    const budgetList = document.getElementById('budgetList');
+    const paymentTab = document.getElementById('paymentTab');
+    const envelopeTab = document.getElementById('envelopeTab');
+    const budgetTab = document.getElementById('budgetTab');
+    const paymentContent = document.getElementById('paymentContent');
+    const envelopeContent = document.getElementById('envelopeContent');
+    const budgetContent = document.getElementById('budgetContent');
+
+    let activeType = 'expense';
+
+    // Initialize payment methods list and dropdowns
+    updatePaymentMethodsList();
+    updatePaymentDropdowns();
+    updateEnvelopesList();
+    updateEnvelopeDropdowns();
+    generateMonthOptions();
+    updateBalanceSummary();
+    updateRecentTransactions();
+    updatePaymentBalances();
+    updateEnvelopeBudget();
+
+    // Profile button
+    profileBtn.addEventListener('click', () => {
+      profileModal.classList.add('show');
+    });
+
+    // Tab switching
+    paymentTab.addEventListener('click', () => {
+      paymentTab.classList.add('active');
+      envelopeTab.classList.remove('active');
+      budgetTab.classList.remove('active');
+      paymentContent.classList.add('active');
+      envelopeContent.classList.remove('active');
+      budgetContent.classList.remove('active');
+    });
+
+    envelopeTab.addEventListener('click', () => {
+      envelopeTab.classList.add('active');
+      paymentTab.classList.remove('active');
+      budgetTab.classList.remove('active');
+      envelopeContent.classList.add('active');
+      paymentContent.classList.remove('active');
+      budgetContent.classList.remove('active');
+    });
+
+    budgetTab.addEventListener('click', () => {
+      budgetTab.classList.add('active');
+      paymentTab.classList.remove('active');
+      envelopeTab.classList.remove('active');
+      budgetContent.classList.add('active');
+      paymentContent.classList.remove('active');
+      envelopeContent.classList.remove('active');
+    });
+
+    // Close modal
+    closeModal.addEventListener('click', () => {
+      profileModal.classList.remove('show');
+    });
+
+    // Close modal on outside click
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) {
+        profileModal.classList.remove('show');
+      }
+    });
+
+    // Add payment method
+    addPaymentBtn.addEventListener('click', () => {
+      const methodName = newPaymentMethod.value.trim();
+      const balance = initialBalance.value.trim();
+      if (methodName) {
+        if (!paymentMethods.includes(methodName)) {
+          paymentMethods.push(methodName);
+          updatePaymentMethodsList();
+          updatePaymentDropdowns();
+          updatePaymentBalances();
+          saveToLocalStorage();
+          const balanceMsg = balance ? ` with initial balance ₹${balance}` : '';
+          showToast(`${methodName}${balanceMsg} added!`, 'success');
+          newPaymentMethod.value = '';
+          initialBalance.value = '';
+        } else {
+          showToast('Payment method already exists!', 'error');
+        }
+      }
+    });
+
+    // Add envelope
+    addEnvelopeBtn.addEventListener('click', () => {
+      const envelopeName = newEnvelope.value.trim();
+      const budget = defaultBudget.value.trim();
+      if (envelopeName) {
+        if (!envelopes.includes(envelopeName)) {
+          envelopes.push(envelopeName);
+          if (budget) {
+            defaultBudgets[envelopeName] = budget;
+          }
+          updateEnvelopesList();
+          updateEnvelopeDropdowns();
+          saveToLocalStorage();
+          const budgetMsg = budget ? ` with default budget ₹${budget}` : '';
+          showToast(`${envelopeName}${budgetMsg} added!`, 'success');
+          newEnvelope.value = '';
+          defaultBudget.value = '';
+        } else {
+          showToast('Envelope already exists!', 'error');
+        }
+      }
+    });
+
+    // Month selection change
+    budgetMonth.addEventListener('change', () => {
+      updateBudgetList();
+    });
+
+    // Payment balances toggle
+    paymentHeader.addEventListener('click', () => {
+      paymentBalances.classList.toggle('collapsed');
+      toggleIcon.classList.toggle('collapsed');
+    });
+
+    // Balance summary toggle
+    balanceHeader.addEventListener('click', () => {
+      balanceSummary.classList.toggle('collapsed');
+      balanceToggleIcon.classList.toggle('collapsed');
+    });
+
+    // Year navigation
+    prevYear.addEventListener('click', () => {
+      const currentIndex = yearSelect.selectedIndex;
+      if (currentIndex > 0) {
+        yearSelect.selectedIndex = currentIndex - 1;
+      }
+    });
+
+    nextYear.addEventListener('click', () => {
+      const currentIndex = yearSelect.selectedIndex;
+      if (currentIndex < yearSelect.options.length - 1) {
+        yearSelect.selectedIndex = currentIndex + 1;
+      }
+    });
+
+    // Month navigation
+    prevMonth.addEventListener('click', () => {
+      const currentIndex = monthSelect.selectedIndex;
+      if (currentIndex > 0) {
+        monthSelect.selectedIndex = currentIndex - 1;
+        updateEnvelopeBudget();
+      }
+    });
+
+    nextMonth.addEventListener('click', () => {
+      const currentIndex = monthSelect.selectedIndex;
+      if (currentIndex < monthSelect.options.length - 1) {
+        monthSelect.selectedIndex = currentIndex + 1;
+        updateEnvelopeBudget();
+      }
+    });
+
+    // Month select change
+    monthSelect.addEventListener('change', () => {
+      updateEnvelopeBudget();
+    });
+
+    incomeBtn.addEventListener('click', () => {
+      activeType = 'income';
+      incomeBtn.classList.add('active', 'income');
+      expenseBtn.classList.remove('active', 'expense');
+      transferBtn.classList.remove('active', 'transfer');
+      submitBtn.classList.remove('expense', 'transfer');
+      submitBtn.classList.add('income');
+      submitBtn.textContent = 'Add Income';
+      descriptionInput.placeholder = "What's this for?";
+      envelopeSelect.classList.add('hide');
+      paymentSelect.style.display = 'block';
+      transferFrom.classList.remove('show');
+      transferTo.classList.remove('show');
+    });
+
+    expenseBtn.addEventListener('click', () => {
+      activeType = 'expense';
+      expenseBtn.classList.add('active', 'expense');
+      incomeBtn.classList.remove('active', 'income');
+      transferBtn.classList.remove('active', 'transfer');
+      submitBtn.classList.remove('income', 'transfer');
+      submitBtn.classList.add('expense');
+      submitBtn.textContent = 'Add Expense';
+      descriptionInput.placeholder = "What's this for?";
+      envelopeSelect.classList.remove('hide');
+      paymentSelect.style.display = 'block';
+      transferFrom.classList.remove('show');
+      transferTo.classList.remove('show');
+    });
+
+    transferBtn.addEventListener('click', () => {
+      activeType = 'transfer';
+      transferBtn.classList.add('active', 'transfer');
+      incomeBtn.classList.remove('active', 'income');
+      expenseBtn.classList.remove('active', 'expense');
+      submitBtn.classList.remove('income', 'expense');
+      submitBtn.classList.add('transfer');
+      submitBtn.textContent = 'Add Transfer';
+      descriptionInput.placeholder = 'Transfer description (optional)';
+      envelopeSelect.classList.add('hide');
+      paymentSelect.style.display = 'none';
+      transferFrom.classList.add('show');
+      transferTo.classList.add('show');
+    });
+
+    // Main app tab switching
+    const financeTab = document.getElementById('financeTab');
+    const habitTab = document.getElementById('habitTab');
+    const financeContent = document.getElementById('financeContent');
+    const habitContent = document.getElementById('habitContent');
+
+    financeTab.addEventListener('click', () => {
+      financeTab.classList.add('active');
+      habitTab.classList.remove('active');
+      financeContent.classList.add('active');
+      habitContent.classList.remove('active');
+    });
+
+    habitTab.addEventListener('click', () => {
+      habitTab.classList.add('active');
+      financeTab.classList.remove('active');
+      habitContent.classList.add('active');
+      financeContent.classList.remove('active');
+    });
+
+    // Habit tab switching
+    const viewHabitsTab = document.getElementById('viewHabitsTab');
+    const viewHabitsSection = document.getElementById('viewHabitsSection');
+    const createHabitSection = document.getElementById('createHabitSection');
+
+    if (viewHabitsTab) {
+      viewHabitsTab.addEventListener('click', () => {
+        viewHabitsTab.classList.add('active');
+        viewHabitsTab.style.color = '#3b82f6';
+        viewHabitsTab.style.borderBottomColor = '#3b82f6';
+        viewHabitsSection.style.display = 'block';
+        createHabitSection.style.display = 'none';
+      });
+    }
+
+    const addHabitBtn = document.getElementById('addHabitBtn');
+    addHabitBtn.addEventListener('click', () => {
+      createHabitSection.style.display = 'block';
+      viewHabitsSection.style.display = 'none';
+      viewHabitsTab.classList.remove('active');
+      viewHabitsTab.style.color = '#6b7280';
+      viewHabitsTab.style.borderBottomColor = 'transparent';
+      atomicHabitForm.reset();
+      document.getElementById('identity').focus();
+    });
+
+    viewHabitsTab.addEventListener('click', () => {
+      viewHabitsTab.classList.add('active');
+      viewHabitsTab.style.color = '#3b82f6';
+      viewHabitsTab.style.borderBottomColor = '#3b82f6';
+      viewHabitsSection.style.display = 'block';
+      createHabitSection.style.display = 'none';
+    });
+
+    quickForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const amount = amountInput.value;
+      const description = descriptionInput.value;
+      const envelope = envelopeSelect.value;
+      const payment = paymentSelect.value;
+      const fromPayment = transferFrom.value;
+      const toPayment = transferTo.value;
+      
+      if (activeType === 'transfer') {
+        if (amount && fromPayment && toPayment) {
+          const transaction = {
+            id: Date.now(),
+            type: 'transfer',
+            amount,
+            description,
+            from: fromPayment,
+            to: toPayment,
+            date: new Date().toISOString()
+          };
+          transactions.push(transaction);
+          saveToLocalStorage();
+          updateBalanceSummary();
+          updateRecentTransactions();
+          updatePaymentBalances();
+          updateEnvelopeBudget();
+          const message = `Transfer: ₹${amount} from ${fromPayment} to ${toPayment}`;
+          showToast(message, 'success');
+          amountInput.value = '';
+          descriptionInput.value = '';
+          transferFrom.selectedIndex = 0;
+          transferTo.selectedIndex = 0;
+          amountInput.focus();
+        } else {
+          showToast('Please fill all required fields', 'error');
+        }
+      } else if (activeType === 'income') {
+        if (amount && description && payment) {
+          const transaction = {
+            id: Date.now(),
+            type: 'income',
+            amount,
+            description,
+            payment,
+            date: new Date().toISOString()
+          };
+          transactions.push(transaction);
+          saveToLocalStorage();
+          updateBalanceSummary();
+          updateRecentTransactions();
+          updatePaymentBalances();
+          updateEnvelopeBudget();
+          const message = `Income: ₹${amount} - ${description}`;
+          showToast(message, 'success');
+          amountInput.value = '';
+          descriptionInput.value = '';
+          paymentSelect.selectedIndex = 0;
+          amountInput.focus();
+        } else {
+          if (!amount) showToast('Please enter amount', 'error');
+          else if (!description) showToast('Please enter description', 'error');
+          else if (!payment) showToast('Please select payment method', 'error');
+        }
+      } else {
+        if (amount && description && envelope && payment) {
+          const transaction = {
+            id: Date.now(),
+            type: 'expense',
+            amount,
+            description,
+            envelope,
+            payment,
+            date: new Date().toISOString()
+          };
+          transactions.push(transaction);
+          saveToLocalStorage();
+          updateBalanceSummary();
+          updateRecentTransactions();
+          updatePaymentBalances();
+          updateEnvelopeBudget();
+          const message = `Expense: ₹${amount} - ${description}`;
+          showToast(message, 'success');
+          amountInput.value = '';
+          descriptionInput.value = '';
+          envelopeSelect.selectedIndex = 0;
+          paymentSelect.selectedIndex = 0;
+          amountInput.focus();
+        } else {
+          if (!amount) showToast('Please enter amount', 'error');
+          else if (!description) showToast('Please enter description', 'error');
+          else if (!envelope) showToast('Please select envelope', 'error');
+          else if (!payment) showToast('Please select payment method', 'error');
+        }
+      }
+    });
+</script>
+<script>
+    let habits = JSON.parse(localStorage.getItem('habits')) || [];
+    let habitCheckins = JSON.parse(localStorage.getItem('habitCheckins')) || [];
+    let milestones = JSON.parse(localStorage.getItem('milestones')) || [];
+    let progressions = JSON.parse(localStorage.getItem('progressions')) || [];
+    let selectedDate = new Date().toISOString().split('T')[0];
+
+    function saveHabits() {
+      localStorage.setItem('habits', JSON.stringify(habits));
+      localStorage.setItem('habitCheckins', JSON.stringify(habitCheckins));
+      localStorage.setItem('milestones', JSON.stringify(milestones));
+      localStorage.setItem('progressions', JSON.stringify(progressions));
+    }
+
+    function getToday() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function getStreak(habitId, upToDate = null) {
+      const endDate = upToDate || getToday();
+      let streak = 0;
+      let checkDate = new Date(endDate);
+      
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        const checked = habitCheckins.some(c => c.habitId === habitId && c.date === dateStr);
+        if (!checked) break;
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function isCheckedOnDate(habitId, date) {
+      return habitCheckins.some(c => c.habitId === habitId && c.date === date);
+    }
+
+    function toggleHabitCheckIn(habitId, date) {
+      const index = habitCheckins.findIndex(c => c.habitId === habitId && c.date === date);
+      
+      if (index > -1) {
+        habitCheckins.splice(index, 1);
+      } else {
+        habitCheckins.push({ habitId, date });
+      }
+      saveHabits();
+      updateTimelineView();
+    }
+
+    function deleteHabit(habitId) {
+      habits = habits.filter(h => h.id !== habitId);
+      habitCheckins = habitCheckins.filter(c => c.habitId !== habitId);
+      saveHabits();
+      updateTimelineView();
+      showToast('Habit deleted', 'error');
+    }
+
+    function toggleSection(header) {
+      const content = header.nextElementSibling;
+      const toggle = header.querySelector('.section-toggle');
+      content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+      toggle.style.transform = content.style.display === 'none' ? 'rotate(-90deg)' : 'rotate(0deg)';
+    }
+
+    function addRewardField() {
+      const rewardsList = document.getElementById('rewardsList');
+      const newReward = document.createElement('div');
+      newReward.className = 'reward-item';
+      newReward.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #fef3c7; border-radius: 12px; border: 2px solid #f59e0b;';
+      newReward.innerHTML = `
+        <span style="font-size: 16px; font-weight: 600; color: #92400e;">After</span>
+        <input type="number" class="reward-days" placeholder="30" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+        <span style="font-size: 16px; font-weight: 600; color: #92400e;">Streak, I will</span>
+        <input type="text" class="reward-text" placeholder="purchase new shoes" style="flex: 1; padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; background: white;" />
+        <button type="button" class="remove-reward" onclick="removeReward(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+      `;
+      rewardsList.appendChild(newReward);
+    }
+
+    function removeReward(btn) {
+      btn.parentElement.remove();
+    }
+
+    function addProgressionField() {
+      const progressionList = document.getElementById('progressionList');
+      const newProgression = document.createElement('div');
+      newProgression.className = 'progression-item';
+      newProgression.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #3b82f6;';
+      newProgression.innerHTML = `
+        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">After</span>
+        <input type="number" class="progression-days" placeholder="30" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">days, I will</span>
+        <input type="text" class="progression-text" placeholder="increase to 45 minutes" style="flex: 1; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; background: white;" />
+        <button type="button" class="remove-progression" onclick="removeProgression(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+      `;
+      progressionList.appendChild(newProgression);
+    }
+
+    function removeProgression(btn) {
+      btn.parentElement.remove();
+    }
+
+
+
+    function addMilestoneField() {
+      const milestonesList = document.getElementById('milestonesList');
+      const newMilestone = document.createElement('div');
+      newMilestone.className = 'milestone-item';
+      newMilestone.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #3b82f6;';
+      newMilestone.innerHTML = `
+        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">Day</span>
+        <input type="number" class="milestone-days" placeholder="7" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+        <span style="font-size: 16px; font-weight: 600; color: #1e40af;">-</span>
+        <input type="text" class="milestone-text" placeholder="milestone description" style="flex: 1; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; background: white;" />
+        <button type="button" class="remove-milestone" onclick="removeMilestone(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+      `;
+      milestonesList.appendChild(newMilestone);
+    }
+
+    function removeMilestone(btn) {
+      btn.parentElement.remove();
+    }
+
+    let groupByIdentity = false;
+
+    function toggleGroupByIdentity() {
+      groupByIdentity = !groupByIdentity;
+      const btn = document.getElementById('groupByIdentityBtn');
+      if (groupByIdentity) {
+        btn.style.background = 'linear-gradient(135deg, #4f46e5, #6366f1)';
+        btn.style.color = 'white';
+        btn.style.borderColor = '#4f46e5';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#6b7280';
+        btn.style.borderColor = '#e5e7eb';
+      }
+      updateTimelineView();
+    }
+
+    let editingHabitId = null;
+
+    function editHabit(habitId) {
+      const habit = habits.find(h => h.id === habitId);
+      if (!habit) return;
+
+      editingHabitId = habitId;
+      
+      // Clear and prefill form fields
+      document.getElementById('identity').value = habit.identity ? habit.identity.replace('I am ', '') : '';
+      document.getElementById('triggerCue').value = habit.triggerCue || '';
+      document.getElementById('triggerTime').value = habit.triggerTime || '';
+      document.getElementById('routineAction').value = habit.routineAction || '';
+      document.getElementById('routineLocation').value = habit.routineLocation || '';
+      document.getElementById('immediateReward').value = habit.immediateReward || '';
+
+      // Clear and repopulate milestones
+      const milestonesList = document.getElementById('milestonesList');
+      milestonesList.innerHTML = '';
+      const milestonesContent = document.querySelector('#milestonesList').closest('.section-content');
+      if (habit.milestones && habit.milestones.length > 0) {
+        milestonesContent.style.display = 'flex';
+        const milestonesToggle = milestonesContent.previousElementSibling.querySelector('.section-toggle');
+        if (milestonesToggle) milestonesToggle.style.transform = 'rotate(0deg)';
+        habit.milestones.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'milestone-item';
+          div.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #3b82f6;';
+          div.innerHTML = `
+            <span style="font-size: 16px; font-weight: 600; color: #1e40af;">Day</span>
+            <input type="number" class="milestone-days" value="${m.days}" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+            <span style="font-size: 16px; font-weight: 600; color: #1e40af;">-</span>
+            <input type="text" class="milestone-text" value="${m.milestone}" style="flex: 1; padding: 8px 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 14px; background: white;" />
+            <button type="button" class="remove-milestone" onclick="removeMilestone(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+          `;
+          milestonesList.appendChild(div);
+        });
+      } else {
+        milestonesContent.style.display = 'none';
+        const milestonesToggle = milestonesContent.previousElementSibling.querySelector('.section-toggle');
+        if (milestonesToggle) milestonesToggle.style.transform = 'rotate(-90deg)';
+      }
+
+      // Clear and repopulate progressions
+      const progressionList = document.getElementById('progressionList');
+      progressionList.innerHTML = '';
+      const progressionContent = document.querySelector('#progressionList').closest('.section-content');
+      if (habit.progressions && habit.progressions.length > 0) {
+        progressionContent.style.display = 'flex';
+        const progressionToggle = progressionContent.previousElementSibling.querySelector('.section-toggle');
+        if (progressionToggle) progressionToggle.style.transform = 'rotate(0deg)';
+        habit.progressions.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'progression-item';
+          div.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 12px; background: #dbeafe; border-radius: 12px; border: 2px solid #4f46e5;';
+          div.innerHTML = `
+            <span style="font-size: 16px; font-weight: 600; color: #1e40af;">After</span>
+            <input type="number" class="progression-days" value="${p.days}" min="1" style="width: 60px; padding: 8px 12px; border: 2px solid #4f46e5; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: white;" />
+            <span style="font-size: 16px; font-weight: 600; color: #1e40af;">days, I will</span>
+            <input type="text" class="progression-text" value="${p.progression}" style="flex: 1; padding: 8px 12px; border: 2px solid #4f46e5; border-radius: 8px; font-size: 14px; background: white;" />
+            <button type="button" class="remove-progression" onclick="removeProgression(this)" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">×</button>
+          `;
+          progressionList.appendChild(div);
+        });
+      } else {
+        progressionContent.style.display = 'none';
+        const progressionToggle = progressionContent.previousElementSibling.querySelector('.section-toggle');
+        if (progressionToggle) progressionToggle.style.transform = 'rotate(-90deg)';
+      }
+
+      // Update submit button
+      const submitBtn = document.getElementById('submitHabitBtn');
+      submitBtn.textContent = '💾 Update Atomic Habit';
+      submitBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+
+      // Show create habit section
+      document.getElementById('createHabitSection').style.display = 'block';
+      document.getElementById('viewHabitsSection').style.display = 'none';
+      document.getElementById('viewHabitsTab').classList.remove('active');
+      document.getElementById('viewHabitsTab').style.color = '#6b7280';
+      document.getElementById('viewHabitsTab').style.borderBottomColor = 'transparent';
+      
+      // Focus on first field
+      document.getElementById('identity').focus();
+    }
+
+    function formatDateDisplay(dateStr) {
+      const date = new Date(dateStr + 'T00:00:00');
+      const today = new Date(getToday() + 'T00:00:00');
+      const diff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+      
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Yesterday';
+      if (diff === -1) return 'Tomorrow';
+      if (diff > 1 && diff <= 7) return `${diff} days ago`;
+      if (diff < -1 && diff >= -7) return `In ${Math.abs(diff)} days`;
+      
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'short', 
+        day: 'numeric',
+        year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+      });
+    }
+
+    function updateDateLabel() {
+      const dateLabel = document.getElementById('dateLabel');
+      if (dateLabel) {
+        dateLabel.textContent = formatDateDisplay(selectedDate);
+      }
+    }
+
+    function updateTodayHabits() {
+      const container = document.getElementById('todayHabitsList');
+      const dateDisplay = document.getElementById('habitDate');
+      dateDisplay.value = selectedDate;
+      
+      if (habits.length === 0) {
+        container.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No habits yet. Create one to get started!</div>';
+        return;
+      }
+
+      const isToday = selectedDate === getToday();
+      const dateLabel = formatDateDisplay(selectedDate);
+      
+      container.innerHTML = habits.map(habit => {
+        const streak = getStreak(habit.id, selectedDate);
+        const checked = isCheckedOnDate(habit.id, selectedDate);
+        const timeDisplay = habit.triggerTime ? ` at ${habit.triggerTime}` : '';
+        
+        return `
+          <div class="habit-card ${checked ? 'completed' : ''}">
+            <div class="habit-info">
+              <div class="habit-title">${habit.routineAction}</div>
+              <div class="habit-cue">📌 ${habit.triggerCue}${timeDisplay}</div>
+            </div>
+            <div class="habit-streak">
+              <div class="streak-number">${streak}</div>
+              <div class="streak-label">🔥 Streak</div>
+            </div>
+            <button class="check-btn ${checked ? 'checked' : ''}" onclick="toggleHabitCheckIn('${habit.id}', '${selectedDate}')">✓</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateTimelineView() {
+      const container = document.getElementById('timelineView');
+      const listContainer = document.getElementById('listView');
+      const dateDisplay = document.getElementById('habitDate');
+      dateDisplay.value = selectedDate;
+      updateDateLabel();
+      
+      if (habits.length === 0) {
+        container.innerHTML = '<div style="padding: 32px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits yet. Create your first atomic habit to get started!</div>';
+        listContainer.innerHTML = '<div style="padding: 32px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits yet. Create your first atomic habit to get started!</div>';
+        document.getElementById('habitStats').textContent = '0/0';
+        return;
+      }
+
+      // Count completed habits
+      const completedCount = habits.filter(h => isCheckedOnDate(h.id, selectedDate)).length;
+      document.getElementById('habitStats').textContent = `${completedCount}/${habits.length}`;
+      
+      // Update stats color
+      const statsEl = document.getElementById('habitStats');
+      if (completedCount === habits.length && habits.length > 0) {
+        statsEl.style.background = '#d1fae5';
+        statsEl.style.color = '#059669';
+      } else if (completedCount > 0) {
+        statsEl.style.background = '#fef3c7';
+        statsEl.style.color = '#92400e';
+      } else {
+        statsEl.style.background = '#f3f4f6';
+        statsEl.style.color = '#6b7280';
+      }
+
+      // Generate List View - Sort by time
+      const sortedHabits = [...habits].sort((a, b) => {
+        const timeA = a.triggerTime || '23:59';
+        const timeB = b.triggerTime || '23:59';
+        return timeA.localeCompare(timeB);
+      });
+
+      if (groupByIdentity) {
+        // Group by Identity when toggled
+        const habitsByIdentity = {};
+        sortedHabits.forEach(habit => {
+          const identity = habit.identity || 'No Identity';
+          if (!habitsByIdentity[identity]) {
+            habitsByIdentity[identity] = [];
+          }
+          habitsByIdentity[identity].push(habit);
+        });
+
+        const listHTML = Object.entries(habitsByIdentity).map(([identity, groupHabits]) => {
+          const identityName = identity.replace('I am ', '');
+          const habitsHTML = groupHabits.map(habit => {
+          const checked = isCheckedOnDate(habit.id, selectedDate);
+          const streak = getStreak(habit.id, selectedDate);
+          const timeDisplay = habit.triggerTime ? ` at ${habit.triggerTime}` : '';
+          const milestones = habit.milestones || [];
+          const nextMilestone = milestones.length > 0 ? milestones.find(m => m.days > streak) : null;
+          
+          return `
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: ${checked ? '#f0fdf4' : '#ffffff'}; border: 2px solid ${checked ? '#86efac' : '#e5e7eb'}; border-radius: 12px; transition: all 0.2s;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="check-btn ${checked ? 'checked' : ''}" onclick="toggleHabitCheckIn('${habit.id}', '${selectedDate}')" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid ${checked ? '#22c55e' : '#e5e7eb'}; background: ${checked ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'white'}; color: ${checked ? 'white' : '#6b7280'}; cursor: pointer; font-size: 18px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${checked ? '✓' : ''}</button>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">✨ ${habit.identity ? habit.identity.replace('I am ', '') : ''}</div>
+                  <div style="font-size: 15px; font-weight: 700; color: #1f2937; margin-bottom: 4px;">${habit.routineAction}</div>
+                  <div style="font-size: 13px; color: #6b7280; display: flex; align-items: center; gap: 8px;">
+                    <span>🔔 After I ${habit.triggerCue}${timeDisplay}</span>
+                    ${habit.routineLocation ? `<span>📍 ${habit.routineLocation}</span>` : ''}
+                  </div>
+                </div>
+                <div style="text-align: center; padding: 0 12px;">
+                  <div style="font-size: 20px; font-weight: 800; color: #f59e0b;">${streak}</div>
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600;">🔥 Streak</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid ${checked ? '#86efac' : '#e5e7eb'};">
+                ${habit.immediateReward ? `<div style="flex: 1; padding: 6px 10px; background: #fef3c7; border-radius: 8px; font-size: 12px; color: #92400e; font-weight: 600;">🎁 ${habit.immediateReward}</div>` : ''}
+                ${nextMilestone ? `<div style="flex: 1; padding: 6px 10px; background: #dbeafe; border-radius: 8px; font-size: 12px; color: #1e40af; font-weight: 600;">📈 Day ${nextMilestone.days}: ${nextMilestone.milestone}</div>` : ''}
+                <button onclick="editHabit('${habit.id}')" style="padding: 6px 10px; background: #dbeafe; color: #2563eb; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#bfdbfe'" onmouseout="this.style.background='#dbeafe'">✏️ Edit</button>
+                <button onclick="deleteHabit('${habit.id}')" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">🗑️ Delete</button>
+              </div>
+            </div>
+          `;
+          }).join('');
+
+          return `
+            <div class="identity-group">
+              <div class="identity-header">✨ ${identityName}</div>
+              <div class="identity-habits">${habitsHTML}</div>
+            </div>
+          `;
+        }).join('');
+
+        listContainer.innerHTML = listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>';
+      } else {
+        // Default view - no grouping
+        const listHTML = sortedHabits.map(habit => {
+          const checked = isCheckedOnDate(habit.id, selectedDate);
+          const streak = getStreak(habit.id, selectedDate);
+          const timeDisplay = habit.triggerTime ? ` at ${habit.triggerTime}` : '';
+          const milestones = habit.milestones || [];
+          const nextMilestone = milestones.length > 0 ? milestones.find(m => m.days > streak) : null;
+          
+          return `
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: ${checked ? '#f0fdf4' : '#ffffff'}; border: 2px solid ${checked ? '#86efac' : '#e5e7eb'}; border-radius: 12px; transition: all 0.2s;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="check-btn ${checked ? 'checked' : ''}" onclick="toggleHabitCheckIn('${habit.id}', '${selectedDate}')" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid ${checked ? '#22c55e' : '#e5e7eb'}; background: ${checked ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'white'}; color: ${checked ? 'white' : '#6b7280'}; cursor: pointer; font-size: 18px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${checked ? '✓' : ''}</button>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">✨ ${habit.identity ? habit.identity.replace('I am ', '') : ''}</div>
+                  <div style="font-size: 15px; font-weight: 700; color: #1f2937; margin-bottom: 4px;">${habit.routineAction}</div>
+                  <div style="font-size: 13px; color: #6b7280; display: flex; align-items: center; gap: 8px;">
+                    <span>🔔 After I ${habit.triggerCue}${timeDisplay}</span>
+                    ${habit.routineLocation ? `<span>📍 ${habit.routineLocation}</span>` : ''}
+                  </div>
+                </div>
+                <div style="text-align: center; padding: 0 12px;">
+                  <div style="font-size: 20px; font-weight: 800; color: #f59e0b;">${streak}</div>
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600;">🔥 Streak</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid ${checked ? '#86efac' : '#e5e7eb'};">
+                ${habit.immediateReward ? `<div style="flex: 1; padding: 6px 10px; background: #fef3c7; border-radius: 8px; font-size: 12px; color: #92400e; font-weight: 600;">🎁 ${habit.immediateReward}</div>` : ''}
+                ${nextMilestone ? `<div style="flex: 1; padding: 6px 10px; background: #dbeafe; border-radius: 8px; font-size: 12px; color: #1e40af; font-weight: 600;">📈 Day ${nextMilestone.days}: ${nextMilestone.milestone}</div>` : ''}
+                <button onclick="editHabit('${habit.id}')" style="padding: 6px 10px; background: #dbeafe; color: #2563eb; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#bfdbfe'" onmouseout="this.style.background='#dbeafe'">✏️ Edit</button>
+                <button onclick="deleteHabit('${habit.id}')" style="padding: 6px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">🗑️ Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        listContainer.innerHTML = listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>';
+      }
+    }
+
+    function updateHabitStacks() {
+      // Habit stacks functionality removed - now integrated into habit cards
+    }
+
+    const prevDayBtn = document.getElementById('prevDay');
+    const nextDayBtn = document.getElementById('nextDay');
+    const habitDateInput = document.getElementById('habitDate');
+    const listView = document.getElementById('listView');
+
+    // Add CSS classes to navigation buttons
+    prevDayBtn.classList.add('day-nav-btn');
+    nextDayBtn.classList.add('day-nav-btn');
+
+    prevDayBtn.addEventListener('click', () => {
+      const date = new Date(selectedDate);
+      date.setDate(date.getDate() - 1);
+      selectedDate = date.toISOString().split('T')[0];
+      updateTimelineView();
+    });
+
+    nextDayBtn.addEventListener('click', () => {
+      const date = new Date(selectedDate);
+      date.setDate(date.getDate() + 1);
+      selectedDate = date.toISOString().split('T')[0];
+      updateTimelineView();
+    });
+
+    habitDateInput.addEventListener('change', (e) => {
+      selectedDate = e.target.value;
+      updateTimelineView();
+    });
+
+    const atomicHabitForm = document.getElementById('atomicHabitForm');
+    atomicHabitForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const identity = 'I am ' + document.getElementById('identity').value.trim();
+      const triggerCue = document.getElementById('triggerCue').value.trim();
+      const triggerTime = document.getElementById('triggerTime').value;
+      const routineAction = document.getElementById('routineAction').value.trim();
+      const routineLocation = document.getElementById('routineLocation').value.trim();
+      const immediateReward = document.getElementById('immediateReward').value.trim();
+
+      if (!identity || !triggerCue || !routineAction || !routineLocation || !immediateReward) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const milestones = [];
+      document.querySelectorAll('.milestone-item').forEach(item => {
+        const days = item.querySelector('.milestone-days').value;
+        const milestone = item.querySelector('.milestone-text').value.trim();
+        console.log('Milestone:', days, milestone); if (days && milestone) {
+          milestones.push({ days: parseInt(days), milestone });
+        }
+      });
+
+      const progressions = [];
+      document.querySelectorAll('.progression-item').forEach(item => {
+        const days = item.querySelector('.progression-days').value;
+        const progression = item.querySelector('.progression-text').value.trim();
+        console.log('Progression:', days, progression); if (days && progression) {
+          progressions.push({ days: parseInt(days), progression });
+        }
+      });
+
+      if (editingHabitId) {
+        // Update existing habit
+        const habitIndex = habits.findIndex(h => h.id === editingHabitId);
+        if (habitIndex > -1) {
+          habits[habitIndex] = {
+            ...habits[habitIndex],
+            identity,
+            triggerCue,
+            triggerTime,
+            routineAction,
+            routineLocation,
+            immediateReward,
+            milestones: milestones.sort((a, b) => a.days - b.days),
+            progressions: progressions.sort((a, b) => a.days - b.days)
+          };
+          saveHabits();
+          updateTimelineView();
+          showToast(`Habit updated: ${identity}`, 'success');
+          editingHabitId = null;
+        }
+      } else {
+        // Create new habit
+        const habit = {
+          id: Date.now().toString(),
+          identity,
+          triggerCue,
+          triggerTime,
+          routineAction,
+          routineLocation,
+          immediateReward,
+          milestones: milestones.length > 0 ? milestones.sort((a, b) => a.days - b.days) : [],
+          progressions: progressions.length > 0 ? progressions.sort((a, b) => a.days - b.days) : [],
+          createdAt: new Date().toISOString()
+        };
+        habits.push(habit);
+        saveHabits();
+        updateTimelineView();
+        showToast(`Atomic habit created: ${identity}`, 'success');
+      }
+
+      // Reset form and UI
+      atomicHabitForm.reset();
+      document.getElementById('milestonesList').innerHTML = '';
+      document.getElementById('progressionList').innerHTML = '';
+      document.getElementById('submitHabitBtn').textContent = '🚀 Create Atomic Habit';
+      document.getElementById('submitHabitBtn').style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+      document.getElementById('createHabitSection').style.display = 'none';
+      document.getElementById('viewHabitsSection').style.display = 'block';
+      document.getElementById('viewHabitsTab').classList.add('active');
+      document.getElementById('viewHabitsTab').style.color = '#3b82f6';
+      document.getElementById('viewHabitsTab').style.borderBottomColor = '#3b82f6';
+    });
+
+    updateTimelineView();
+</script>
+</body>
+</html>
+
+
