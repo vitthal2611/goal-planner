@@ -1,25 +1,20 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
   "hosting": {
-    "public": ".",
+    "public": "public",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**",
-      "**/*.bat",
-      "**/*.exe",
-      "package.json",
-      "package-lock.json",
-      "vite.config.js",
-      "firestore.rules"
+      "**/node_modules/**"
     ],
     "rewrites": [
       {
         "source": "**",
-        "destination": "/quick-track-demo.html"
+        "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }
