@@ -570,11 +570,6 @@
           gap: 8px;
         }
 
-        .payment-method-name::before {
-          content: '💳';
-          font-size: 18px;
-        }
-
         .delete-btn {
           padding: 8px 14px;
           border: none;
@@ -1105,6 +1100,75 @@
           border-color: #3b82f6;
           box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
           transform: translateY(-1px);
+        }
+        
+        .visual-option {
+          padding: 14px 10px;
+          border: 2px solid #e5e7eb;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #ffffff, #f9fafb);
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 90px;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .visual-option::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05));
+          opacity: 0;
+          transition: opacity 0.25s;
+        }
+        
+        .visual-option:hover {
+          border-color: #3b82f6;
+          transform: translateY(-3px);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+        }
+        
+        .visual-option:hover::before {
+          opacity: 1;
+        }
+        
+        .visual-option.selected {
+          border-color: #3b82f6;
+          border-width: 3px;
+          background: linear-gradient(135deg, #dbeafe, #eff6ff);
+          box-shadow: 0 6px 24px rgba(59, 130, 246, 0.3);
+          transform: translateY(-2px);
+        }
+        
+        .visual-option.selected::after {
+          content: '✓';
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 20px;
+          height: 20px;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: bold;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        .visual-option:active {
+          transform: scale(0.96);
         }
 
         .transfer-from {
@@ -3116,7 +3180,7 @@
       
       // Add transaction details header
       csvContent += `TRANSACTION DETAILS\n`;
-      csvContent += `Date,Type,Description,Category,Payment Method,Amount\n`;
+      csvContent += `Date,Type,Description,Category,Payment Method,Expense Type,Amount\n`;
       
       // Add transactions
       sortedTransactions.forEach(t => {
@@ -3131,9 +3195,10 @@
         const description = (t.description || 'Transfer').replace(/,/g, ';');
         const category = t.envelope || (t.type === 'transfer' ? `${t.from} → ${t.to}` : '-');
         const payment = t.payment || (t.type === 'transfer' ? 'Transfer' : '-');
+        const expenseType = t.expenseType ? (t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)) : '-';
         const amount = parseFloat(t.amount);
         
-        csvContent += `${date},${type},${description},${category},${payment},${amount}\n`;
+        csvContent += `${date},${type},${description},${category},${payment},${expenseType},${amount}\n`;
       });
       
       // Create and download file
@@ -3181,23 +3246,56 @@
     }
 
     function deletePaymentMethod(name) {
-      if (confirm(`Delete ${name}?`)) {
+      const relatedTransactions = transactions.filter(t => 
+        t.payment === name || t.from === name || t.to === name
+      );
+      
+      const confirmMsg = relatedTransactions.length > 0
+        ? `Delete ${name}? This will also delete ${relatedTransactions.length} associated transaction(s).`
+        : `Delete ${name}?`;
+      
+      if (confirm(confirmMsg)) {
+        transactions = transactions.filter(t => 
+          t.payment !== name && t.from !== name && t.to !== name
+        );
         paymentMethods = paymentMethods.filter(method => method !== name);
         updatePaymentMethodsList();
         updatePaymentDropdowns();
+        updateBalanceSummary();
+        updateRecentTransactions();
+        updatePaymentBalances();
+        updateEnvelopeBudget();
         syncToCloud();
-        showToast(`${name} deleted`, 'error');
+        const msg = relatedTransactions.length > 0
+          ? `${name} and ${relatedTransactions.length} transaction(s) deleted`
+          : `${name} deleted`;
+        showToast(msg, 'error');
       }
     }
 
     function deleteEnvelope(name) {
-      if (confirm(`Delete ${name}?`)) {
+      const relatedTransactions = transactions.filter(t => t.envelope === name);
+      
+      const confirmMsg = relatedTransactions.length > 0
+        ? `Delete ${name}? This will also delete ${relatedTransactions.length} associated transaction(s).`
+        : `Delete ${name}?`;
+      
+      if (confirm(confirmMsg)) {
+        transactions = transactions.filter(t => t.envelope !== name);
         envelopes = envelopes.filter(env => env !== name);
         delete defaultBudgets[name];
+        budgets = budgets.filter(b => b.envelope !== name);
         updateEnvelopesList();
         updateEnvelopeDropdowns();
+        updateBalanceSummary();
+        updateRecentTransactions();
+        updatePaymentBalances();
+        updateEnvelopeBudget();
         syncToCloud();
-        showToast(`${name} deleted`, 'error');
+        const msg = relatedTransactions.length > 0
+          ? `${name} and ${relatedTransactions.length} transaction(s) deleted`
+          : `${name} deleted`;
+        showToast(msg, 'error');
       }
     }
 
@@ -3232,6 +3330,48 @@
       syncToCloud();
     }
 
+    function getPaymentMethodIcon(name) {
+      const lowerName = name.toLowerCase();
+      
+      // Cash
+      if (lowerName.includes('cash')) return '💵';
+      
+      // Banks
+      if (lowerName.includes('hdfc')) return '🏦';
+      if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
+      if (lowerName.includes('icici')) return '🏦';
+      if (lowerName.includes('axis')) return '🏦';
+      if (lowerName.includes('kotak')) return '🏦';
+      if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
+      if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
+      if (lowerName.includes('canara')) return '🏦';
+      if (lowerName.includes('bank')) return '🏦';
+      
+      // Cards
+      if (lowerName.includes('credit')) return '💳';
+      if (lowerName.includes('debit')) return '💳';
+      if (lowerName.includes('card')) return '💳';
+      if (lowerName.includes('visa')) return '💳';
+      if (lowerName.includes('mastercard')) return '💳';
+      if (lowerName.includes('rupay')) return '💳';
+      
+      // UPI & Digital Payments
+      if (lowerName.includes('upi')) return '📱';
+      if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
+      if (lowerName.includes('gpay') || lowerName.includes('google pay')) return '🔵';
+      if (lowerName.includes('paytm')) return '💙';
+      if (lowerName.includes('amazon pay')) return '🟠';
+      
+      // Wallets
+      if (lowerName.includes('wallet')) return '👛';
+      
+      // Transfers
+      if (lowerName.includes('transfer')) return '🔄';
+      
+      // Default
+      return '💰';
+    }
+
     function updatePaymentMethodsList() {
       const listContainer = document.getElementById('paymentMethodList');
       if (!listContainer) return;
@@ -3239,12 +3379,15 @@
         listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af; background: linear-gradient(135deg, #f9fafb, #ffffff); border-radius: 12px; border: 2px dashed #e5e7eb;">💳 No payment methods yet. Add one to get started!</div>';
         return;
       }
-      listContainer.innerHTML = paymentMethods.map(method => `
-        <div class="payment-method-item">
-          <div class="payment-method-name">${method}</div>
-          <button class="delete-btn" onclick="deletePaymentMethod('${method}')">Delete</button>
-        </div>
-      `).join('');
+      listContainer.innerHTML = paymentMethods.map(method => {
+        const icon = getPaymentMethodIcon(method);
+        return `
+          <div class="payment-method-item">
+            <div class="payment-method-name"><span style="font-size: 18px;">${icon}</span> ${method}</div>
+            <button class="delete-btn" onclick="deletePaymentMethod('${method}')">Delete</button>
+          </div>
+        `;
+      }).join('');
     }
 
     function updateEnvelopesList() {
@@ -3402,11 +3545,16 @@
       return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     }
 
-    function getTransactionIcon(type, description) {
+    function getTransactionIcon(type, description, expenseType) {
       if (type === 'income') return '💰';
       if (type === 'transfer') return '🔄';
       
-      // Expense icons based on description
+      // Expense type icons
+      if (expenseType === 'need') return '🎯';
+      if (expenseType === 'want') return '🎉';
+      if (expenseType === 'save') return '💰';
+      
+      // Fallback to description-based icons
       const desc = description.toLowerCase();
       if (desc.includes('food') || desc.includes('lunch') || desc.includes('dinner') || desc.includes('breakfast')) return '🍔';
       if (desc.includes('transport') || desc.includes('uber') || desc.includes('taxi') || desc.includes('bus')) return '🚕';
@@ -3600,19 +3748,26 @@
         .slice(0, 10);
       
       listContainer.innerHTML = recentTransactions.map(t => {
-        const icon = getTransactionIcon(t.type, t.description || '');
+        const icon = getTransactionIcon(t.type, t.description || '', t.expenseType);
         const timeAgo = getTimeAgo(t.date);
         const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
         const amount = t.type === 'transfer' 
           ? `${t.from} → ${t.to}` 
           : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
         
+        // Get expense type label
+        let expenseTypeLabel = '';
+        if (t.expenseType) {
+          const typeLabels = { need: 'Need', want: 'Want', save: 'Save' };
+          expenseTypeLabel = ` • ${typeLabels[t.expenseType] || ''}`;
+        }
+        
         return `
           <div class="transaction-item ${t.type}" style="position: relative;">
             <div class="transaction-icon">${icon}</div>
             <div class="transaction-details">
               <div class="transaction-desc">${t.description || 'Transfer'}</div>
-              <div class="transaction-time">${timeAgo}${t.envelope ? ' • ' + t.envelope : ''}</div>
+              <div class="transaction-time">${timeAgo}${t.envelope ? ' • ' + t.envelope : ''}${expenseTypeLabel}</div>
             </div>
             <div class="transaction-amount">${amount}</div>
             <button 
@@ -4202,12 +4357,18 @@
             <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" />
           </div>
           <input type="text" class="description-input" placeholder="What's this for?" data-field="description" />
-          <select class="envelope-select" data-field="envelope">
-            <option value="">Select Envelope</option>
-          </select>
-          <select class="payment-select" data-field="payment">
-            <option value="">Select Payment Method</option>
-          </select>
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📁 Category</div>
+            <div class="visual-selector" data-field="envelope" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment</div>
+            <div class="visual-selector" data-field="payment" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Type</div>
+            <div class="visual-selector" data-field="expenseType" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
+          </div>
         </div>
       `;
       
@@ -4273,37 +4434,232 @@
       if (expenseEntryCount > 0) {
         const previousEntry = document.querySelector(`.expense-entry[data-index="${expenseEntryCount - 1}"]`);
         if (previousEntry) {
-          const prevEnvelopeSelect = previousEntry.querySelector('[data-field="envelope"]');
-          const prevPaymentSelect = previousEntry.querySelector('[data-field="payment"]');
-          previousEnvelope = prevEnvelopeSelect ? prevEnvelopeSelect.value : '';
-          previousPayment = prevPaymentSelect ? prevPaymentSelect.value : '';
+          const prevEnvelopeBtn = previousEntry.querySelector('[data-field="envelope"] .visual-option.selected');
+          const prevPaymentBtn = previousEntry.querySelector('[data-field="payment"] .visual-option.selected');
+          previousEnvelope = prevEnvelopeBtn ? prevEnvelopeBtn.dataset.value : '';
+          previousPayment = prevPaymentBtn ? prevPaymentBtn.dataset.value : '';
         }
       }
       
       const entry = createExpenseEntry(expenseEntryCount);
       expenseEntriesContainer.appendChild(entry);
       
-      // Populate dropdowns
-      const envelopeSelect = entry.querySelector('[data-field="envelope"]');
-      const paymentSelect = entry.querySelector('[data-field="payment"]');
+      // Populate visual selectors
+      const envelopeContainer = entry.querySelector('[data-field="envelope"]');
+      const paymentContainer = entry.querySelector('[data-field="payment"]');
+      
+      // Smart icon matching function
+      function getEnvelopeIcon(name) {
+        const lowerName = name.toLowerCase();
+        
+        // Food & Dining
+        if (lowerName.includes('food') || lowerName.includes('meal')) return '🍽️';
+        if (lowerName.includes('breakfast')) return '🥞';
+        if (lowerName.includes('lunch')) return '🍱';
+        if (lowerName.includes('dinner')) return '🍽️';
+        if (lowerName.includes('restaurant') || lowerName.includes('dining')) return '🍴';
+        if (lowerName.includes('fastfood') || lowerName.includes('burger') || lowerName.includes('pizza')) return '🍔';
+        if (lowerName.includes('coffee') || lowerName.includes('cafe')) return '☕';
+        if (lowerName.includes('snack')) return '🍿';
+        if (lowerName.includes('drink') || lowerName.includes('beverage')) return '🥤';
+        if (lowerName.includes('bar') || lowerName.includes('alcohol')) return '🍺';
+        if (lowerName.includes('grocer')) return '🛒';
+        
+        // Transport
+        if (lowerName.includes('transport') || lowerName.includes('travel')) return '🚗';
+        if (lowerName.includes('taxi') || lowerName.includes('cab') || lowerName.includes('uber') || lowerName.includes('ola')) return '🚕';
+        if (lowerName.includes('bus')) return '🚌';
+        if (lowerName.includes('train') || lowerName.includes('metro') || lowerName.includes('railway')) return '🚆';
+        if (lowerName.includes('flight') || lowerName.includes('air')) return '✈️';
+        if (lowerName.includes('fuel') || lowerName.includes('petrol') || lowerName.includes('gas') || lowerName.includes('diesel')) return '⛽';
+        if (lowerName.includes('parking')) return '🅿️';
+        if (lowerName.includes('toll')) return '🛣️';
+        if (lowerName.includes('car')) return '🚙';
+        if (lowerName.includes('bike') || lowerName.includes('motorcycle')) return '🏍️';
+        if (lowerName.includes('bicycle') || lowerName.includes('cycle')) return '🚴';
+        if (lowerName.includes('auto')) return '🛺';
+        
+        // Shopping
+        if (lowerName.includes('shop')) return '🛍️';
+        if (lowerName.includes('cloth') || lowerName.includes('dress') || lowerName.includes('fashion')) return '👕';
+        if (lowerName.includes('shoe') || lowerName.includes('footwear')) return '👟';
+        if (lowerName.includes('electronic') || lowerName.includes('gadget')) return '💻';
+        if (lowerName.includes('furniture')) return '🛋️';
+        if (lowerName.includes('beauty') || lowerName.includes('cosmetic') || lowerName.includes('makeup')) return '💄';
+        if (lowerName.includes('jewelry') || lowerName.includes('jewellery')) return '💎';
+        
+        // Entertainment
+        if (lowerName.includes('entertainment') || lowerName.includes('fun')) return '🎮';
+        if (lowerName.includes('movie') || lowerName.includes('cinema') || lowerName.includes('film')) return '🎬';
+        if (lowerName.includes('music') || lowerName.includes('concert')) return '🎵';
+        if (lowerName.includes('game') || lowerName.includes('gaming')) return '🎮';
+        if (lowerName.includes('sport')) return '⚽';
+        if (lowerName.includes('party') || lowerName.includes('celebration')) return '🎉';
+        if (lowerName.includes('hobby')) return '🎨';
+        
+        // Health & Fitness
+        if (lowerName.includes('health') || lowerName.includes('medical')) return '⚕️';
+        if (lowerName.includes('doctor') || lowerName.includes('hospital') || lowerName.includes('clinic')) return '👨‍⚕️';
+        if (lowerName.includes('medicine') || lowerName.includes('drug')) return '💊';
+        if (lowerName.includes('pharmacy') || lowerName.includes('chemist')) return '🏥';
+        if (lowerName.includes('fitness') || lowerName.includes('gym') || lowerName.includes('workout')) return '💪';
+        if (lowerName.includes('yoga')) return '🧘';
+        if (lowerName.includes('salon') || lowerName.includes('haircut')) return '💇';
+        if (lowerName.includes('spa') || lowerName.includes('massage')) return '🧖';
+        if (lowerName.includes('dental') || lowerName.includes('dentist')) return '🦷';
+        
+        // Home & Utilities
+        if (lowerName.includes('rent') || lowerName.includes('house')) return '🏠';
+        if (lowerName.includes('utility') || lowerName.includes('utilities')) return '⚡';
+        if (lowerName.includes('electric')) return '💡';
+        if (lowerName.includes('water')) return '💧';
+        if (lowerName.includes('gas') && !lowerName.includes('fuel')) return '🔥';
+        if (lowerName.includes('internet') || lowerName.includes('wifi') || lowerName.includes('broadband')) return '🌐';
+        if (lowerName.includes('phone') || lowerName.includes('mobile') || lowerName.includes('recharge')) return '📱';
+        if (lowerName.includes('maintenance') || lowerName.includes('repair')) return '🔧';
+        if (lowerName.includes('clean')) return '🧹';
+        if (lowerName.includes('laundry')) return '👔';
+        if (lowerName.includes('garden')) return '🌱';
+        
+        // Education
+        if (lowerName.includes('education') || lowerName.includes('school') || lowerName.includes('college') || lowerName.includes('university')) return '🎓';
+        if (lowerName.includes('book')) return '📚';
+        if (lowerName.includes('course') || lowerName.includes('class') || lowerName.includes('tuition')) return '🎯';
+        if (lowerName.includes('stationery') || lowerName.includes('stationary')) return '✏️';
+        
+        // Bills & Finance
+        if (lowerName.includes('bill')) return '💡';
+        if (lowerName.includes('insurance')) return '🛡️';
+        if (lowerName.includes('saving')) return '💰';
+        if (lowerName.includes('invest')) return '📈';
+        if (lowerName.includes('loan') || lowerName.includes('emi')) return '🏦';
+        if (lowerName.includes('tax')) return '📋';
+        
+        // Special Occasions
+        if (lowerName.includes('gift')) return '🎁';
+        if (lowerName.includes('donation') || lowerName.includes('charity')) return '❤️';
+        if (lowerName.includes('wedding') || lowerName.includes('marriage')) return '💒';
+        if (lowerName.includes('birthday')) return '🎂';
+        if (lowerName.includes('festival') || lowerName.includes('holiday')) return '🎊';
+        
+        // Subscription & Services
+        if (lowerName.includes('subscription') || lowerName.includes('netflix') || lowerName.includes('spotify') || lowerName.includes('prime')) return '📺';
+        if (lowerName.includes('office') || lowerName.includes('work')) return '💼';
+        
+        // Pets
+        if (lowerName.includes('pet') || lowerName.includes('dog') || lowerName.includes('cat')) return '🐾';
+        
+        // Vacation
+        if (lowerName.includes('vacation') || lowerName.includes('holiday') || lowerName.includes('trip')) return '🏖️';
+        if (lowerName.includes('hotel') || lowerName.includes('accommodation')) return '🏨';
+        
+        // Default
+        return '📁';
+      }
       
       envelopes.forEach(env => {
-        const option = document.createElement('option');
-        option.value = env;
-        option.textContent = env;
-        envelopeSelect.appendChild(option);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'visual-option';
+        btn.dataset.value = env;
+        const icon = getEnvelopeIcon(env);
+        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${env}</div>`;
+        btn.onclick = () => selectVisualOption(envelopeContainer, env);
+        if (env === previousEnvelope) btn.classList.add('selected');
+        envelopeContainer.appendChild(btn);
       });
+      
+      // Smart icon matching function for payment methods
+      function getPaymentIcon(name) {
+        const lowerName = name.toLowerCase();
+        
+        // Cash
+        if (lowerName.includes('cash')) return '💵';
+        
+        // Banks - with specific colors/styles
+        if (lowerName.includes('hdfc')) return '🏦';
+        if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
+        if (lowerName.includes('icici')) return '🏦';
+        if (lowerName.includes('axis')) return '🏦';
+        if (lowerName.includes('kotak')) return '🏦';
+        if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
+        if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
+        if (lowerName.includes('canara')) return '🏦';
+        if (lowerName.includes('idbi')) return '🏦';
+        if (lowerName.includes('union bank')) return '🏦';
+        if (lowerName.includes('indian bank')) return '🏦';
+        if (lowerName.includes('yes bank')) return '🏦';
+        if (lowerName.includes('indusind')) return '🏦';
+        if (lowerName.includes('bank')) return '🏦';
+        
+        // Cards
+        if (lowerName.includes('credit')) return '💳';
+        if (lowerName.includes('debit')) return '💳';
+        if (lowerName.includes('card')) return '💳';
+        if (lowerName.includes('visa')) return '💳';
+        if (lowerName.includes('mastercard') || lowerName.includes('master card')) return '💳';
+        if (lowerName.includes('rupay')) return '💳';
+        if (lowerName.includes('amex') || lowerName.includes('american express')) return '💳';
+        
+        // UPI & Digital Payments
+        if (lowerName.includes('upi')) return '📱';
+        if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
+        if (lowerName.includes('gpay') || lowerName.includes('google pay') || lowerName.includes('googlepay')) return '🔵';
+        if (lowerName.includes('paytm')) return '💙';
+        if (lowerName.includes('amazon pay') || lowerName.includes('amazonpay')) return '🟠';
+        if (lowerName.includes('bhim')) return '📱';
+        if (lowerName.includes('whatsapp pay')) return '💚';
+        
+        // Wallets
+        if (lowerName.includes('wallet')) return '👛';
+        if (lowerName.includes('mobikwik')) return '👛';
+        if (lowerName.includes('freecharge')) return '👛';
+        if (lowerName.includes('paypal')) return '💰';
+        
+        // Bank Transfers
+        if (lowerName.includes('neft')) return '🔄';
+        if (lowerName.includes('rtgs')) return '🔄';
+        if (lowerName.includes('imps')) return '⚡';
+        if (lowerName.includes('transfer')) return '🔄';
+        if (lowerName.includes('net banking') || lowerName.includes('netbanking')) return '🌐';
+        
+        // Others
+        if (lowerName.includes('cheque') || lowerName.includes('check')) return '📝';
+        if (lowerName.includes('demand draft') || lowerName.includes('dd')) return '📄';
+        
+        // Default
+        return '💰';
+      }
       
       paymentMethods.forEach(method => {
-        const option = document.createElement('option');
-        option.value = method;
-        option.textContent = method;
-        paymentSelect.appendChild(option);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'visual-option';
+        btn.dataset.value = method;
+        const icon = getPaymentIcon(method);
+        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
+        btn.onclick = () => selectVisualOption(paymentContainer, method);
+        if (method === previousPayment) btn.classList.add('selected');
+        paymentContainer.appendChild(btn);
       });
       
-      // Set previous values
-      if (previousEnvelope) envelopeSelect.value = previousEnvelope;
-      if (previousPayment) paymentSelect.value = previousPayment;
+      // Add expense type selector (Need, Want, Save)
+      const expenseTypeContainer = entry.querySelector('[data-field="expenseType"]');
+      const expenseTypes = [
+        { value: 'need', label: 'Need', icon: '🎯' },
+        { value: 'want', label: 'Want', icon: '🎉' },
+        { value: 'save', label: 'Save', icon: '💰' }
+      ];
+      
+      expenseTypes.forEach(type => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'visual-option';
+        btn.dataset.value = type.value;
+        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${type.icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${type.label}</div>`;
+        btn.onclick = () => selectVisualOption(expenseTypeContainer, type.value);
+        expenseTypeContainer.appendChild(btn);
+      });
       
       expenseEntryCount++;
       
@@ -4314,6 +4670,12 @@
       }, 100);
       
       updateSubmitButtonText();
+    }
+    
+    function selectVisualOption(container, value) {
+      container.querySelectorAll('.visual-option').forEach(btn => btn.classList.remove('selected'));
+      const selected = container.querySelector(`[data-value="${value}"]`);
+      if (selected) selected.classList.add('selected');
     }
 
     function updateSubmitButtonText() {
@@ -4513,10 +4875,14 @@
         for (const entry of entries) {
           const amount = entry.querySelector('[data-field="amount"]').value;
           const description = entry.querySelector('[data-field="description"]').value;
-          const envelope = entry.querySelector('[data-field="envelope"]').value;
-          const payment = entry.querySelector('[data-field="payment"]').value;
+          const envelopeBtn = entry.querySelector('[data-field="envelope"] .visual-option.selected');
+          const paymentBtn = entry.querySelector('[data-field="payment"] .visual-option.selected');
+          const expenseTypeBtn = entry.querySelector('[data-field="expenseType"] .visual-option.selected');
+          const envelope = envelopeBtn ? envelopeBtn.dataset.value : '';
+          const payment = paymentBtn ? paymentBtn.dataset.value : '';
+          const expenseType = expenseTypeBtn ? expenseTypeBtn.dataset.value : '';
           
-          if (amount && description && envelope && payment) {
+          if (amount && description && envelope && payment && expenseType) {
             const transactionData = {
               id: Date.now() + successCount,
               type: 'expense',
@@ -4524,6 +4890,7 @@
               description,
               envelope,
               payment,
+              expenseType,
               date: new Date().toISOString()
             };
             
