@@ -990,32 +990,31 @@
           align-items: center;
           gap: 8px;
           margin-bottom: 0;
-          padding: 16px 20px;
+          padding: 12px 16px;
           background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-          border-radius: 16px;
-          border: 3px solid #3b82f6;
-          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+          border-radius: 12px;
+          border: 2px solid #3b82f6;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
           transition: all 0.3s;
         }
 
         .amount-input-wrapper:focus-within {
           border-color: #2563eb;
-          box-shadow: 0 6px 24px rgba(59, 130, 246, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.5);
-          transform: translateY(-2px);
+          box-shadow: 0 3px 12px rgba(59, 130, 246, 0.25);
+          transform: translateY(-1px);
         }
 
         .currency {
-          font-size: 32px;
+          font-size: 20px;
           font-weight: 800;
           color: #3b82f6;
-          text-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
         }
 
         .amount-input {
           flex: 1;
           border: none;
           background: transparent;
-          font-size: 36px;
+          font-size: 20px;
           font-weight: 800;
           color: #1e3a8a;
           outline: none;
@@ -2310,11 +2309,11 @@
           }
 
           .amount-input {
-            font-size: 24px;
+            font-size: 18px;
           }
 
           .currency {
-            font-size: 20px;
+            font-size: 18px;
           }
 
           .modal-content {
@@ -2425,6 +2424,25 @@
                     </select>
                     <button class="month-nav" id="nextMonth">›</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Need, Want, Save Summary -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+            <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 4px;">🎯</div>
+                <div style="font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Need</div>
+                <div style="font-size: 18px; font-weight: 800; color: #1e3a8a;" id="needTotalTop">₹0</div>
+            </div>
+            <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 4px;">🎉</div>
+                <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Want</div>
+                <div style="font-size: 18px; font-weight: 800; color: #78350f;" id="wantTotalTop">₹0</div>
+            </div>
+            <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 4px;">💰</div>
+                <div style="font-size: 11px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Save</div>
+                <div style="font-size: 18px; font-weight: 800; color: #064e3b;" id="saveTotalTop">₹0</div>
             </div>
         </div>
 
@@ -3863,14 +3881,20 @@
         }
       });
       
-      // Update Need, Want, Save display
+      // Update Need, Want, Save display (both top and envelope budget section)
       const needTotalEl = document.getElementById('needTotal');
       const wantTotalEl = document.getElementById('wantTotal');
       const saveTotalEl = document.getElementById('saveTotal');
+      const needTotalTopEl = document.getElementById('needTotalTop');
+      const wantTotalTopEl = document.getElementById('wantTotalTop');
+      const saveTotalTopEl = document.getElementById('saveTotalTop');
       
       if (needTotalEl) needTotalEl.textContent = `₹${needTotal.toLocaleString('en-IN')}`;
       if (wantTotalEl) wantTotalEl.textContent = `₹${wantTotal.toLocaleString('en-IN')}`;
       if (saveTotalEl) saveTotalEl.textContent = `₹${saveTotal.toLocaleString('en-IN')}`;
+      if (needTotalTopEl) needTotalTopEl.textContent = `₹${needTotal.toLocaleString('en-IN')}`;
+      if (wantTotalTopEl) wantTotalTopEl.textContent = `₹${wantTotal.toLocaleString('en-IN')}`;
+      if (saveTotalTopEl) saveTotalTopEl.textContent = `₹${saveTotal.toLocaleString('en-IN')}`;
       
       if (envelopes.length === 0) {
         container.innerHTML = '<div style="padding: 16px; text-align: center; color: #6b7280;">No envelopes available.</div>';
@@ -4447,16 +4471,16 @@
           ${index > 0 ? '<button type="button" class="remove-expense-btn" onclick="removeExpenseEntry(' + index + ')">×</button>' : ''}
         </div>
         <div class="expense-entry-fields">
-          <div class="amount-input-wrapper">
+          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
             <span class="currency">₹</span>
             <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" />
           </div>
-          <input type="text" class="description-input" placeholder="What's this for?" data-field="description" />
-          <div style="margin-bottom: 8px;">
+          <input type="text" class="description-input" placeholder="What's this for?" data-field="description" style="margin-bottom: 16px;" />
+          <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📁 Category</div>
             <div class="visual-selector" data-field="envelope" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
           </div>
-          <div>
+          <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment</div>
             <div class="visual-selector" data-field="payment" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
           </div>
@@ -4470,27 +4494,58 @@
       return entry;
     }
 
-    function createSingleEntry() {
+    function createSingleEntry(type) {
       const entry = document.createElement('div');
-      entry.innerHTML = `
-        <div class="amount-input-wrapper">
-          <span class="currency">₹</span>
-          <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
-        </div>
-        <input type="text" id="descriptionInput" placeholder="What's this for?" class="description-input" />
-        <select id="envelopeSelect" class="envelope-select">
-          <option value="">Select Envelope</option>
-        </select>
-        <select id="transferFrom" class="payment-select transfer-from">
-          <option value="">From Payment Method</option>
-        </select>
-        <select id="transferTo" class="payment-select transfer-to">
-          <option value="">To Payment Method</option>
-        </select>
-        <select id="paymentSelect" class="payment-select">
-          <option value="">Select Payment Method</option>
-        </select>
-      `;
+      
+      if (type === 'income') {
+        entry.innerHTML = `
+          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
+            <span class="currency">₹</span>
+            <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
+          </div>
+          <input type="text" id="descriptionInput" placeholder="What's this for?" class="description-input" style="margin-bottom: 16px;" />
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment Method</div>
+            <div class="visual-selector" id="incomePaymentSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          </div>
+        `;
+      } else if (type === 'transfer') {
+        entry.innerHTML = `
+          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
+            <span class="currency">₹</span>
+            <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
+          </div>
+          <input type="text" id="descriptionInput" placeholder="What's this for? (optional)" class="description-input" style="margin-bottom: 16px;" />
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📤 From Payment Method</div>
+            <div class="visual-selector" id="transferFromSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📥 To Payment Method</div>
+            <div class="visual-selector" id="transferToSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          </div>
+        `;
+      } else {
+        entry.innerHTML = `
+          <div class="amount-input-wrapper">
+            <span class="currency">₹</span>
+            <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
+          </div>
+          <input type="text" id="descriptionInput" placeholder="What's this for?" class="description-input" />
+          <select id="envelopeSelect" class="envelope-select">
+            <option value="">Select Envelope</option>
+          </select>
+          <select id="transferFrom" class="payment-select transfer-from">
+            <option value="">From Payment Method</option>
+          </select>
+          <select id="transferTo" class="payment-select transfer-to">
+            <option value="">To Payment Method</option>
+          </select>
+          <select id="paymentSelect" class="payment-select">
+            <option value="">Select Payment Method</option>
+          </select>
+        `;
+      }
       return entry;
     }
 
@@ -4799,25 +4854,47 @@
         submitBtn.textContent = 'Add Income';
         addAnotherExpenseBtn.style.display = 'none';
         
-        const singleEntry = createSingleEntry();
+        const singleEntry = createSingleEntry('income');
         expenseEntriesContainer.appendChild(singleEntry);
         
-        const envelopeSelect = singleEntry.querySelector('#envelopeSelect');
-        const paymentSelect = singleEntry.querySelector('#paymentSelect');
-        const transferFrom = singleEntry.querySelector('#transferFrom');
-        const transferTo = singleEntry.querySelector('#transferTo');
+        const paymentContainer = singleEntry.querySelector('#incomePaymentSelector');
         
-        envelopeSelect.classList.add('hide');
-        paymentSelect.style.display = 'block';
-        transferFrom.classList.remove('show');
-        transferTo.classList.remove('show');
+        // Smart icon matching function for payment methods
+        function getPaymentIcon(name) {
+          const lowerName = name.toLowerCase();
+          if (lowerName.includes('cash')) return '💵';
+          if (lowerName.includes('hdfc')) return '🏦';
+          if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
+          if (lowerName.includes('icici')) return '🏦';
+          if (lowerName.includes('axis')) return '🏦';
+          if (lowerName.includes('kotak')) return '🏦';
+          if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
+          if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
+          if (lowerName.includes('canara')) return '🏦';
+          if (lowerName.includes('bank')) return '🏦';
+          if (lowerName.includes('credit')) return '💳';
+          if (lowerName.includes('debit')) return '💳';
+          if (lowerName.includes('card')) return '💳';
+          if (lowerName.includes('upi')) return '📱';
+          if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
+          if (lowerName.includes('gpay') || lowerName.includes('google pay')) return '🔵';
+          if (lowerName.includes('paytm')) return '💙';
+          if (lowerName.includes('amazon pay')) return '🟠';
+          if (lowerName.includes('wallet')) return '👛';
+          if (lowerName.includes('transfer')) return '🔄';
+          return '💰';
+        }
         
-        // Populate payment methods
+        // Populate payment methods with visual buttons
         paymentMethods.forEach(method => {
-          const option = document.createElement('option');
-          option.value = method;
-          option.textContent = method;
-          paymentSelect.appendChild(option);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'visual-option';
+          btn.dataset.value = method;
+          const icon = getPaymentIcon(method);
+          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
+          btn.onclick = () => selectVisualOption(paymentContainer, method);
+          paymentContainer.appendChild(btn);
         });
         
         setTimeout(() => {
@@ -4842,30 +4919,60 @@
         submitBtn.textContent = 'Add Transfer';
         addAnotherExpenseBtn.style.display = 'none';
         
-        const singleEntry = createSingleEntry();
+        const singleEntry = createSingleEntry('transfer');
         expenseEntriesContainer.appendChild(singleEntry);
         
-        const envelopeSelect = singleEntry.querySelector('#envelopeSelect');
-        const paymentSelect = singleEntry.querySelector('#paymentSelect');
-        const transferFrom = singleEntry.querySelector('#transferFrom');
-        const transferTo = singleEntry.querySelector('#transferTo');
+        const transferFromContainer = singleEntry.querySelector('#transferFromSelector');
+        const transferToContainer = singleEntry.querySelector('#transferToSelector');
         
-        envelopeSelect.classList.add('hide');
-        paymentSelect.style.display = 'none';
-        transferFrom.classList.add('show');
-        transferTo.classList.add('show');
+        // Smart icon matching function for payment methods
+        function getPaymentIcon(name) {
+          const lowerName = name.toLowerCase();
+          if (lowerName.includes('cash')) return '💵';
+          if (lowerName.includes('hdfc')) return '🏦';
+          if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
+          if (lowerName.includes('icici')) return '🏦';
+          if (lowerName.includes('axis')) return '🏦';
+          if (lowerName.includes('kotak')) return '🏦';
+          if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
+          if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
+          if (lowerName.includes('canara')) return '🏦';
+          if (lowerName.includes('bank')) return '🏦';
+          if (lowerName.includes('credit')) return '💳';
+          if (lowerName.includes('debit')) return '💳';
+          if (lowerName.includes('card')) return '💳';
+          if (lowerName.includes('upi')) return '📱';
+          if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
+          if (lowerName.includes('gpay') || lowerName.includes('google pay')) return '🔵';
+          if (lowerName.includes('paytm')) return '💙';
+          if (lowerName.includes('amazon pay')) return '🟠';
+          if (lowerName.includes('wallet')) return '👛';
+          if (lowerName.includes('transfer')) return '🔄';
+          return '💰';
+        }
         
-        // Populate transfer dropdowns
+        // Populate FROM payment methods with visual buttons
         paymentMethods.forEach(method => {
-          const fromOption = document.createElement('option');
-          fromOption.value = method;
-          fromOption.textContent = method;
-          transferFrom.appendChild(fromOption);
-          
-          const toOption = document.createElement('option');
-          toOption.value = method;
-          toOption.textContent = method;
-          transferTo.appendChild(toOption);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'visual-option';
+          btn.dataset.value = method;
+          const icon = getPaymentIcon(method);
+          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
+          btn.onclick = () => selectVisualOption(transferFromContainer, method);
+          transferFromContainer.appendChild(btn);
+        });
+        
+        // Populate TO payment methods with visual buttons
+        paymentMethods.forEach(method => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'visual-option';
+          btn.dataset.value = method;
+          const icon = getPaymentIcon(method);
+          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
+          btn.onclick = () => selectVisualOption(transferToContainer, method);
+          transferToContainer.appendChild(btn);
         });
         
         setTimeout(() => {
@@ -5028,8 +5135,12 @@
       } else if (activeType === 'transfer') {
         const amount = document.getElementById('amountInput').value;
         const description = document.getElementById('descriptionInput').value;
-        const fromPayment = document.getElementById('transferFrom').value;
-        const toPayment = document.getElementById('transferTo').value;
+        const transferFromContainer = document.getElementById('transferFromSelector');
+        const transferToContainer = document.getElementById('transferToSelector');
+        const fromBtn = transferFromContainer ? transferFromContainer.querySelector('.visual-option.selected') : null;
+        const toBtn = transferToContainer ? transferToContainer.querySelector('.visual-option.selected') : null;
+        const fromPayment = fromBtn ? fromBtn.dataset.value : '';
+        const toPayment = toBtn ? toBtn.dataset.value : '';
         
         if (amount && fromPayment && toPayment) {
           const transactionData = {
@@ -5070,7 +5181,9 @@
       } else if (activeType === 'income') {
         const amount = document.getElementById('amountInput').value;
         const description = document.getElementById('descriptionInput').value;
-        const payment = document.getElementById('paymentSelect').value;
+        const paymentContainer = document.getElementById('incomePaymentSelector');
+        const paymentBtn = paymentContainer ? paymentContainer.querySelector('.visual-option.selected') : null;
+        const payment = paymentBtn ? paymentBtn.dataset.value : '';
         
         if (amount && description && payment) {
           const transactionData = {
