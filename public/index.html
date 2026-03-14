@@ -2479,15 +2479,15 @@
         </div>
 
         <div class="quick-track-header">
-            <button class="type-btn" id="incomeBtn">
+            <button class="type-btn income" id="incomeBtn">
                 <span class="icon">↓</span>
                 <span>Income</span>
             </button>
-            <button class="type-btn" id="expenseBtn">
+            <button class="type-btn expense" id="expenseBtn">
                 <span class="icon">↑</span>
                 <span>Expense</span>
             </button>
-            <button class="type-btn" id="transferBtn">
+            <button class="type-btn transfer" id="transferBtn">
                 <span class="icon">⇄</span>
                 <span>Transfer</span>
             </button>
@@ -2496,25 +2496,6 @@
         <div class="envelope-budget">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <h3 style="margin: 0;">Envelope Budget vs Actual</h3>
-            </div>
-            
-            <!-- Need, Want, Save Summary -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
-                <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; text-align: center;">
-                    <div style="font-size: 24px; margin-bottom: 4px;">🎯</div>
-                    <div style="font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Need</div>
-                    <div style="font-size: 18px; font-weight: 800; color: #1e3a8a;" id="needTotal">₹0</div>
-                </div>
-                <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; text-align: center;">
-                    <div style="font-size: 24px; margin-bottom: 4px;">🎉</div>
-                    <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Want</div>
-                    <div style="font-size: 18px; font-weight: 800; color: #78350f;" id="wantTotal">₹0</div>
-                </div>
-                <div style="padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; text-align: center;">
-                    <div style="font-size: 24px; margin-bottom: 4px;">💰</div>
-                    <div style="font-size: 11px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Save</div>
-                    <div style="font-size: 18px; font-weight: 800; color: #064e3b;" id="saveTotal">₹0</div>
-                </div>
             </div>
             
             <div id="envelopeBudgetList">
@@ -2799,6 +2780,18 @@
                     <button class="add-btn" id="importDataBtn" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706);">📤 Choose File to Import</button>
                 </div>
             </div>
+
+            <!-- CSV Import -->
+            <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+                <div class="section-title">📊 Import from Excel / CSV</div>
+                <div style="padding: 16px; background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-radius: 12px; border: 2px solid #7c3aed;">
+                    <div style="font-size: 14px; color: #4c1d95; margin-bottom: 8px; font-weight: 600;">📋 Required CSV columns:</div>
+                    <div style="font-size: 12px; color: #5b21b6; margin-bottom: 12px; font-family: monospace; background: white; padding: 8px; border-radius: 8px;">Date, Type, Description, Category, Payment Method, Expense Type, Amount</div>
+                    <div style="font-size: 12px; color: #5b21b6; margin-bottom: 12px;">• Save your Excel file as <strong>.csv</strong> (File → Save As → CSV)<br>• Type: <strong>income</strong>, <strong>expense</strong>, or <strong>transfer</strong><br>• Expense Type: <strong>need</strong>, <strong>want</strong>, or <strong>save</strong><br>• Adds to existing transactions (no data loss)</div>
+                    <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
+                    <button class="add-btn" id="csvImportBtn" style="width: 100%; background: linear-gradient(135deg, #7c3aed, #6d28d9);">📊 Choose CSV / Excel File</button>
+                </div>
+            </div>
         </div>
 
         <div class="tab-content" id="accountContent">
@@ -2864,6 +2857,28 @@
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- CSV Import Preview Modal -->
+<div id="csvPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:24px; padding:24px; max-width:520px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="font-size:20px; font-weight:800; color:#1f2937;">📊 CSV Preview</div>
+      <button onclick="document.getElementById('csvPreviewModal').style.display='none'" style="width:36px; height:36px; border:none; background:#f3f4f6; border-radius:10px; font-size:20px; cursor:pointer; color:#6b7280;">×</button>
+    </div>
+    <div id="csvPreviewStats" style="margin-bottom:12px; padding:12px; background:#f0fdf4; border-radius:10px; border:2px solid #86efac; font-size:13px; font-weight:600; color:#166534;"></div>
+    <div id="csvPreviewErrors" style="display:none; margin-bottom:12px; padding:12px; background:#fef2f2; border-radius:10px; border:2px solid #fca5a5; font-size:13px; color:#991b1b;"></div>
+    <div style="overflow-x:auto; margin-bottom:16px;">
+      <table id="csvPreviewTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead id="csvPreviewHead"></thead>
+        <tbody id="csvPreviewBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="document.getElementById('csvPreviewModal').style.display='none'" style="flex:1; padding:14px; border:2px solid #e5e7eb; background:white; color:#6b7280; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer;">Cancel</button>
+      <button id="csvConfirmImportBtn" style="flex:2; padding:14px; border:none; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(124,58,237,0.3);">✅ Import All Transactions</button>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom Navigation (Mobile Only) -->
 <div class="bottom-nav">
@@ -3881,17 +3896,11 @@
         }
       });
       
-      // Update Need, Want, Save display (both top and envelope budget section)
-      const needTotalEl = document.getElementById('needTotal');
-      const wantTotalEl = document.getElementById('wantTotal');
-      const saveTotalEl = document.getElementById('saveTotal');
+      // Update Need, Want, Save display
       const needTotalTopEl = document.getElementById('needTotalTop');
       const wantTotalTopEl = document.getElementById('wantTotalTop');
       const saveTotalTopEl = document.getElementById('saveTotalTop');
       
-      if (needTotalEl) needTotalEl.textContent = `₹${needTotal.toLocaleString('en-IN')}`;
-      if (wantTotalEl) wantTotalEl.textContent = `₹${wantTotal.toLocaleString('en-IN')}`;
-      if (saveTotalEl) saveTotalEl.textContent = `₹${saveTotal.toLocaleString('en-IN')}`;
       if (needTotalTopEl) needTotalTopEl.textContent = `₹${needTotal.toLocaleString('en-IN')}`;
       if (wantTotalTopEl) wantTotalTopEl.textContent = `₹${wantTotal.toLocaleString('en-IN')}`;
       if (saveTotalTopEl) saveTotalTopEl.textContent = `₹${saveTotal.toLocaleString('en-IN')}`;
@@ -4347,6 +4356,191 @@
       reader.readAsText(file);
     });
 
+    // ── CSV Import ──────────────────────────────────────────────
+    let csvParsedRows = [];
+
+    function parseCSV(text) {
+      const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+      const results = [];
+      let headerLine = -1;
+
+      // Find the header row (look for 'date' and 'amount' columns)
+      for (let i = 0; i < Math.min(lines.length, 20); i++) {
+        const lower = lines[i].toLowerCase();
+        if (lower.includes('date') && lower.includes('amount')) {
+          headerLine = i;
+          break;
+        }
+      }
+      if (headerLine === -1) return { headers: [], rows: [], error: 'Could not find header row with Date and Amount columns.' };
+
+      const headers = splitCSVLine(lines[headerLine]).map(h => h.trim().toLowerCase().replace(/[^a-z ]/g, ''));
+
+      for (let i = headerLine + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const cols = splitCSVLine(line);
+        if (cols.length < 2) continue;
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
+        results.push(row);
+      }
+      return { headers, rows: results, error: null };
+    }
+
+    function splitCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+        else { current += ch; }
+      }
+      result.push(current);
+      return result;
+    }
+
+    function mapCSVRow(row) {
+      // Flexible column name matching
+      const get = (...keys) => {
+        for (const k of keys) {
+          const found = Object.keys(row).find(h => h.includes(k));
+          if (found && row[found]) return row[found].trim();
+        }
+        return '';
+      };
+
+      const rawDate = get('date');
+      const type = get('type').toLowerCase();
+      const description = get('description', 'desc', 'note', 'narration', 'particulars');
+      const category = get('category', 'envelope', 'tag');
+      const payment = get('payment method', 'payment', 'account', 'bank', 'method');
+      const expenseType = get('expense type', 'expensetype', 'expense type').toLowerCase();
+      const rawAmount = get('amount', 'debit', 'credit').replace(/[^0-9.\-]/g, '');
+
+      const amount = parseFloat(rawAmount);
+      const errors = [];
+
+      // Parse date — support DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY
+      let parsedDate = '';
+      if (rawDate) {
+        const d = rawDate.replace(/\//g, '-');
+        const parts = d.split('-');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            parsedDate = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+          } else if (parseInt(parts[2]) > 31) {
+            parsedDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+          } else {
+            parsedDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+          }
+        }
+      }
+
+      if (!parsedDate || isNaN(new Date(parsedDate))) errors.push('Invalid date');
+      if (!['income','expense','transfer'].includes(type)) errors.push('Type must be income/expense/transfer');
+      if (isNaN(amount) || amount <= 0) errors.push('Invalid amount');
+
+      return {
+        date: parsedDate || rawDate,
+        type: type || 'expense',
+        description,
+        envelope: category,
+        payment,
+        expenseType: ['need','want','save'].includes(expenseType) ? expenseType : '',
+        amount: isNaN(amount) ? 0 : Math.abs(amount),
+        errors
+      };
+    }
+
+    function showCSVPreview(parsedRows) {
+      const valid = parsedRows.filter(r => r.errors.length === 0);
+      const invalid = parsedRows.filter(r => r.errors.length > 0);
+
+      document.getElementById('csvPreviewStats').textContent =
+        `✅ ${valid.length} valid rows ready to import` +
+        (invalid.length ? `  ⚠️ ${invalid.length} rows will be skipped` : '');
+
+      const errorsEl = document.getElementById('csvPreviewErrors');
+      if (invalid.length) {
+        errorsEl.style.display = 'block';
+        errorsEl.innerHTML = '<strong>Skipped rows:</strong><br>' +
+          invalid.slice(0, 5).map((r, i) => `Row ${i+1}: ${r.description || '(empty)'} — ${r.errors.join(', ')}`).join('<br>') +
+          (invalid.length > 5 ? `<br>...and ${invalid.length - 5} more` : '');
+      } else {
+        errorsEl.style.display = 'none';
+      }
+
+      // Build preview table (first 10 valid rows)
+      const cols = ['date','type','description','envelope','payment','expenseType','amount'];
+      const labels = ['Date','Type','Description','Category','Payment','Exp.Type','Amount'];
+      document.getElementById('csvPreviewHead').innerHTML =
+        '<tr>' + labels.map(l => `<th style="padding:6px 8px; background:#f3f4f6; border:1px solid #e5e7eb; font-size:11px; text-align:left;">${l}</th>`).join('') + '</tr>';
+
+      document.getElementById('csvPreviewBody').innerHTML = valid.slice(0, 10).map(r =>
+        '<tr>' + cols.map(c => `<td style="padding:6px 8px; border:1px solid #e5e7eb; font-size:11px; white-space:nowrap;">${r[c] || '-'}</td>`).join('') + '</tr>'
+      ).join('') + (valid.length > 10 ? `<tr><td colspan="7" style="padding:8px; text-align:center; color:#6b7280; font-size:12px;">...and ${valid.length - 10} more rows</td></tr>` : '');
+
+      csvParsedRows = valid;
+      const modal = document.getElementById('csvPreviewModal');
+      modal.style.display = 'flex';
+    }
+
+    document.getElementById('csvImportBtn').addEventListener('click', () => {
+      document.getElementById('csvImportFileInput').click();
+    });
+
+    document.getElementById('csvImportFileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const { rows, error } = parseCSV(event.target.result);
+        if (error) { showToast(error, 'error'); return; }
+        if (rows.length === 0) { showToast('No data rows found in file.', 'error'); return; }
+        const mapped = rows.map(mapCSVRow);
+        showCSVPreview(mapped);
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    document.getElementById('csvConfirmImportBtn').addEventListener('click', () => {
+      if (csvParsedRows.length === 0) return;
+      const newTransactions = csvParsedRows.map(r => ({
+        id: Date.now() + Math.random(),
+        date: new Date(r.date).toISOString(),
+        type: r.type,
+        description: r.description,
+        envelope: r.envelope,
+        payment: r.payment,
+        expenseType: r.expenseType,
+        amount: r.amount
+      }));
+      transactions = [...transactions, ...newTransactions];
+      saveToLocalStorage();
+
+      // Navigate to the month/year of the first imported transaction so it's visible
+      const firstDate = new Date(newTransactions[0].date);
+      const importedYear = firstDate.getFullYear().toString();
+      const importedMonth = `${importedYear}-${String(firstDate.getMonth() + 1).padStart(2, '0')}`;
+      yearSelect.value = importedYear;
+      generateMonthDropdown();
+      monthSelect.value = importedMonth;
+
+      updateBalanceSummary();
+      updateRecentTransactions();
+      updatePaymentBalances();
+      updateEnvelopeBudget();
+      document.getElementById('csvPreviewModal').style.display = 'none';
+      profileModal.classList.remove('show');
+      showToast(`✅ ${newTransactions.length} transactions imported!`, 'success');
+      csvParsedRows = [];
+    });
+    // ── End CSV Import ───────────────────────────────────────────
+
     // Payment balances toggle
     paymentHeader.addEventListener('click', (e) => {
       if (e.target.id !== 'toggleViewBtn2') {
@@ -4497,6 +4691,9 @@
     function createSingleEntry(type) {
       const entry = document.createElement('div');
       
+      // Default date = today in YYYY-MM-DD
+      const todayStr = new Date().toISOString().split('T')[0];
+
       if (type === 'income') {
         entry.innerHTML = `
           <div class="amount-input-wrapper" style="margin-bottom: 16px;">
@@ -4504,6 +4701,10 @@
             <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
           </div>
           <input type="text" id="descriptionInput" placeholder="What's this for?" class="description-input" style="margin-bottom: 16px;" />
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
+            <input type="date" id="transactionDate" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+          </div>
           <div>
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment Method</div>
             <div class="visual-selector" id="incomePaymentSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
@@ -4516,6 +4717,10 @@
             <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
           </div>
           <input type="text" id="descriptionInput" placeholder="What's this for? (optional)" class="description-input" style="margin-bottom: 16px;" />
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
+            <input type="date" id="transactionDate" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+          </div>
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📤 From Payment Method</div>
             <div class="visual-selector" id="transferFromSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
