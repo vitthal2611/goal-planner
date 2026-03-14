@@ -19,3 +19,7 @@ call firebase init
 echo.
 echo Setup complete! Run deploy.bat to deploy your app.
 pause
+
+
+
+
