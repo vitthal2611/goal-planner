@@ -3016,8 +3016,8 @@
 
         if (doc.exists) {
           const data = doc.data();
-          paymentMethods = data.paymentMethods || [];
-          envelopes = data.envelopes || [];
+          paymentMethods = [...new Set(data.paymentMethods || [])];
+          envelopes = [...new Set(data.envelopes || [])];
           defaultBudgets = data.defaultBudgets || {};
           budgets = data.budgets || [];
           transactions = data.transactions || [];
@@ -3050,8 +3050,8 @@
       try {
         const docRef = db.collection('users').doc(currentUser.uid);
         await docRef.set({
-          paymentMethods,
-          envelopes,
+          paymentMethods: [...new Set(paymentMethods)],
+          envelopes: [...new Set(envelopes)],
           defaultBudgets,
           budgets,
           transactions,
