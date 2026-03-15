@@ -1,0 +1,8 @@
+Date,Type,Description,Category,Payment Method,Expense Type,Amount
+15/06/2025,income,Salary,,HDFC Bank,,50000
+15/06/2025,income,Freelance Payment,,Cash,,5000
+15/06/2025,expense,Grocery Shopping,Food,HDFC Bank,need,2500
+15/06/2025,expense,Netflix Subscription,Entertainment,HDFC Bank,want,649
+15/06/2025,expense,SIP Investment,Savings,HDFC Bank,save,5000
+15/06/2025,transfer-out,Transfer to SBI,,HDFC Bank,,10000
+15/06/2025,transfer-in,Transfer from HDFC,,SBI Bank,,10000

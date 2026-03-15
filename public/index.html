@@ -2787,7 +2787,7 @@
                 <div style="padding: 16px; background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-radius: 12px; border: 2px solid #7c3aed;">
                     <div style="font-size: 14px; color: #4c1d95; margin-bottom: 8px; font-weight: 600;">📋 Required CSV columns:</div>
                     <div style="font-size: 12px; color: #5b21b6; margin-bottom: 12px; font-family: monospace; background: white; padding: 8px; border-radius: 8px;">Date, Type, Description, Category, Payment Method, Expense Type, Amount</div>
-                    <div style="font-size: 12px; color: #5b21b6; margin-bottom: 12px;">• Save your Excel file as <strong>.csv</strong> (File → Save As → CSV)<br>• Type: <strong>income</strong>, <strong>expense</strong>, or <strong>transfer</strong><br>• Expense Type: <strong>need</strong>, <strong>want</strong>, or <strong>save</strong><br>• Adds to existing transactions (no data loss)</div>
+                    <div style="font-size: 12px; color: #5b21b6; margin-bottom: 12px;">• Save your Excel file as <strong>.csv</strong> (File → Save As → CSV)<br>• Type: <strong>income</strong>, <strong>expense</strong>, <strong>transfer-in</strong>, or <strong>transfer-out</strong><br>• Expense Type: <strong>need</strong>, <strong>want</strong>, or <strong>save</strong><br>• Adds to existing transactions (no data loss)</div>
                     <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
                     <button class="add-btn" id="csvImportBtn" style="width: 100%; background: linear-gradient(135deg, #7c3aed, #6d28d9);">📊 Choose CSV / Excel File</button>
                 </div>
@@ -4417,6 +4417,8 @@
       const description = get('description', 'desc', 'note', 'narration', 'particulars');
       const category = get('category', 'envelope', 'tag');
       const payment = get('payment method', 'payment', 'account', 'bank', 'method');
+      const fromAccount = get('from account', 'from');
+      const toAccount = get('to account', 'to');
       const expenseType = get('expense type', 'expensetype', 'expense type').toLowerCase();
       const rawAmount = get('amount', 'debit', 'credit').replace(/[^0-9.\-]/g, '');
 
@@ -4440,8 +4442,9 @@
       }
 
       if (!parsedDate || isNaN(new Date(parsedDate))) errors.push('Invalid date');
-      if (!['income','expense','transfer'].includes(type)) errors.push('Type must be income/expense/transfer');
+      if (!['income','expense','transfer','transfer-in','transfer-out'].includes(type)) errors.push('Type must be income/expense/transfer/transfer-in/transfer-out');
       if (isNaN(amount) || amount <= 0) errors.push('Invalid amount');
+      if (type === 'transfer' && (!fromAccount || !toAccount)) errors.push('Transfer needs From Account and To Account columns');
 
       return {
         date: parsedDate || rawDate,
@@ -4449,6 +4452,8 @@
         description,
         envelope: category,
         payment,
+        fromAccount,
+        toAccount,
         expenseType: ['need','want','save'].includes(expenseType) ? expenseType : '',
         amount: isNaN(amount) ? 0 : Math.abs(amount),
         errors
@@ -4509,16 +4514,35 @@
 
     document.getElementById('csvConfirmImportBtn').addEventListener('click', () => {
       if (csvParsedRows.length === 0) return;
-      const newTransactions = csvParsedRows.map(r => ({
-        id: Date.now() + Math.random(),
-        date: new Date(r.date).toISOString(),
-        type: r.type,
-        description: r.description,
-        envelope: r.envelope,
-        payment: r.payment,
-        expenseType: r.expenseType,
-        amount: r.amount
-      }));
+      const newTransactions = csvParsedRows.map(r => {
+        let type = r.type;
+        let from = '';
+        let to = '';
+
+        if (type === 'transfer') {
+          from = r.fromAccount;
+          to = r.toAccount;
+        } else if (type === 'transfer-out') {
+          type = 'transfer';
+          from = r.payment;
+        } else if (type === 'transfer-in') {
+          type = 'transfer';
+          to = r.payment;
+        }
+
+        return {
+          id: Date.now() + Math.random(),
+          date: new Date(r.date).toISOString(),
+          type,
+          description: r.description,
+          envelope: r.envelope,
+          payment: r.payment,
+          from,
+          to,
+          expenseType: r.expenseType,
+          amount: r.amount
+        };
+      });
       transactions = [...transactions, ...newTransactions];
       saveToLocalStorage();
 
@@ -5289,6 +5313,10 @@
           const payment = paymentBtn ? paymentBtn.dataset.value : '';
           const expenseType = expenseTypeBtn ? expenseTypeBtn.dataset.value : '';
           
+          const dateInput = document.getElementById('transactionDate');
+          const selectedDateVal = dateInput ? dateInput.value : '';
+          const entryDate = selectedDateVal ? new Date(selectedDateVal).toISOString() : new Date().toISOString();
+
           if (amount && description && envelope && payment && expenseType) {
             const transactionData = {
               id: Date.now() + successCount,
@@ -5298,7 +5326,7 @@
               envelope,
               payment,
               expenseType,
-              date: new Date().toISOString()
+              date: entryDate
             };
             
             try {
@@ -5347,6 +5375,10 @@
         const fromPayment = fromBtn ? fromBtn.dataset.value : '';
         const toPayment = toBtn ? toBtn.dataset.value : '';
         
+        const transferDateInput = document.getElementById('transactionDate');
+        const transferDateVal = transferDateInput ? transferDateInput.value : '';
+        const transferDate = transferDateVal ? new Date(transferDateVal).toISOString() : new Date().toISOString();
+
         if (amount && fromPayment && toPayment) {
           const transactionData = {
             id: Date.now(),
@@ -5355,7 +5387,7 @@
             description,
             from: fromPayment,
             to: toPayment,
-            date: new Date().toISOString()
+            date: transferDate
           };
           
           try {
@@ -5390,6 +5422,10 @@
         const paymentBtn = paymentContainer ? paymentContainer.querySelector('.visual-option.selected') : null;
         const payment = paymentBtn ? paymentBtn.dataset.value : '';
         
+        const incomeDateInput = document.getElementById('transactionDate');
+        const incomeDateVal = incomeDateInput ? incomeDateInput.value : '';
+        const incomeDate = incomeDateVal ? new Date(incomeDateVal).toISOString() : new Date().toISOString();
+
         if (amount && description && payment) {
           const transactionData = {
             id: Date.now(),
@@ -5397,7 +5433,7 @@
             amount,
             description,
             payment,
-            date: new Date().toISOString()
+            date: incomeDate
           };
           
           try {
