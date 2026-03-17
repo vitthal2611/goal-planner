@@ -2837,11 +2837,11 @@
     </div>
 
     <div class="app-tabs">
-        <button class="app-tab active" id="financeTab">Finance</button>
-        <button class="app-tab" id="habitTab">Habit</button>
+        <button class="app-tab active" id="habitTab">Habit</button>
+        <button class="app-tab" id="financeTab">Finance</button>
     </div>
 
-    <div class="tab-content-section active" id="financeContent">
+    <div class="tab-content-section" id="financeContent">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="flex: 1; display: flex; gap: 12px;">
                 <div class="year-selector">
@@ -2954,7 +2954,7 @@
         </div>
     </div>
 
-    <div class="tab-content-section" id="habitContent">
+    <div class="tab-content-section active" id="habitContent">
         <div style="padding: 20px 0;">
             <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 20px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); margin-bottom: 20px; border: 2px solid #e2e8f0;">
                 <button id="prevDay" style="width: 44px; height: 44px; border: none; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.2s; color: #475569; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">‹</button>
@@ -3040,6 +3040,41 @@
                             </div>
                         </div>
 
+                        <!-- Frequency Section -->
+                        <div style="background: linear-gradient(135deg, #fdf4ff 0%, #f3f4f6 100%); border: 2px solid #d946ef; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <span style="font-size: 24px;">📅</span>
+                                <div>
+                                    <div style="font-weight: 800; color: #1f2937; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase;">Frequency</div>
+                                    <div style="font-size: 12px; color: #6b7280; font-weight: 500; margin-top: 2px;">Which days does this habit run?</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Mon" class="freq-day" style="accent-color: #d946ef;" /> Mon
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Tue" class="freq-day" style="accent-color: #d946ef;" /> Tue
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Wed" class="freq-day" style="accent-color: #d946ef;" /> Wed
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Thu" class="freq-day" style="accent-color: #d946ef;" /> Thu
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Fri" class="freq-day" style="accent-color: #d946ef;" /> Fri
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Sat" class="freq-day" style="accent-color: #d946ef;" /> Sat
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: all 0.2s; user-select: none;">
+                                    <input type="checkbox" name="freq" value="Sun" class="freq-day" style="accent-color: #d946ef;" /> Sun
+                                </label>
+                            </div>
+                            <p style="font-size: 11px; color: #9ca3af; margin-top: 10px; font-weight: 500;">Leave all unchecked for daily.</p>
+                        </div>
+
                         <!-- Routine Section -->
                         <div style="background: linear-gradient(135deg, #dbeafe 0%, #f3f4f6 100%); border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; transition: all 0.3s ease;">
                             <div class="section-header" onclick="toggleSection(this)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 16px; user-select: none;">
@@ -3060,6 +3095,11 @@
                                 <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 14px 16px; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.2s;">
                                     <span style="font-size: 16px; font-weight: 700; color: #3b82f6; min-width: 30px;">at</span>
                                     <input type="text" id="routineLocation" placeholder="location (e.g., park)" style="flex: 1; border: none; background: transparent; font-size: 15px; outline: none; color: #1f2937; font-weight: 500;" />
+                                </div>
+                                <!-- 2-Minute Rule -->
+                                <div style="background: #eff6ff; border-radius: 12px; padding: 12px 14px; border: 1.5px dashed #93c5fd;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">⏱ 2-Minute Rule — Make it easy</div>
+                                    <input type="text" id="twoMinuteVersion" placeholder="e.g., put on running shoes" style="width: 100%; border: none; background: transparent; font-size: 14px; outline: none; color: #1f2937; font-weight: 500;" />
                                 </div>
                             </div>
                         </div>
@@ -6016,6 +6056,15 @@
       return habitCheckins.some(c => c.habitId === habitId && c.date === date);
     }
 
+    function getDayName(dateStr) {
+      return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateStr).getDay()];
+    }
+
+    function isScheduledOnDate(habit, dateStr) {
+      const freq = habit.frequency || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      return freq.includes(getDayName(dateStr));
+    }
+
     function toggleHabitCheckIn(habitId, date) {
       const index = habitCheckins.findIndex(c => c.habitId === habitId && c.date === date);
       
@@ -6140,6 +6189,13 @@
       document.getElementById('routineAction').value = habit.routineAction || '';
       document.getElementById('routineLocation').value = habit.routineLocation || '';
       document.getElementById('immediateReward').value = habit.immediateReward || '';
+      document.getElementById('twoMinuteVersion').value = habit.twoMinuteVersion || '';
+
+      // Restore frequency checkboxes
+      const freqDays = habit.frequency || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      document.querySelectorAll('.freq-day').forEach(cb => {
+        cb.checked = freqDays.includes(cb.value);
+      });
 
       // Clear and repopulate milestones
       const milestonesList = document.getElementById('milestonesList');
@@ -6246,32 +6302,58 @@
         .replace(/'/g, '&#39;');
     }
 
+    // Palette: [border, bg-light, identity-color, badge-bg, badge-color]
+    const HABIT_PALETTE = [
+      ['#6366f1', '#eef2ff', '#4f46e5', '#eef2ff', '#4f46e5'], // indigo
+      ['#f59e0b', '#fffbeb', '#b45309', '#fef3c7', '#92400e'], // amber
+      ['#10b981', '#ecfdf5', '#059669', '#d1fae5', '#065f46'], // emerald
+      ['#ef4444', '#fff1f2', '#dc2626', '#fee2e2', '#991b1b'], // red
+      ['#8b5cf6', '#f5f3ff', '#7c3aed', '#ede9fe', '#5b21b6'], // violet
+      ['#06b6d4', '#ecfeff', '#0891b2', '#cffafe', '#164e63'], // cyan
+      ['#f97316', '#fff7ed', '#ea580c', '#ffedd5', '#9a3412'], // orange
+      ['#ec4899', '#fdf2f8', '#db2777', '#fce7f3', '#831843'], // pink
+    ];
+
+    function getHabitColor(habitId) {
+      let hash = 0;
+      for (let i = 0; i < habitId.length; i++) hash = habitId.charCodeAt(i) + ((hash << 5) - hash);
+      return HABIT_PALETTE[Math.abs(hash) % HABIT_PALETTE.length];
+    }
+
     function renderHabitCard(habit, date) {
       const checked = isCheckedOnDate(habit.id, date);
-      const streak = getStreak(habit.id, date);
+      const streak  = getStreak(habit.id, date);
       const identityLabel = habit.identity ? escapeHtml(habit.identity) : '';
       const timeAnchor = habit.triggerTime ? escapeHtml(habit.triggerTime) : '';
       const location = habit.routineLocation ? escapeHtml(habit.routineLocation) : '';
+      const voteCount = habitCheckins.filter(c => c.habitId === habit.id).length;
 
-      // Trigger line without time
+      const [border, bgLight, identityColor, badgeBg, badgeColor] = getHabitColor(habit.id);
+
       let triggerParts = [`After I ${escapeHtml(habit.triggerCue)}`];
       if (location) triggerParts.push(location);
       const triggerLine = triggerParts.join(' · ');
 
+      const cardBg   = checked ? '#f0fdf4' : bgLight;
+      const cardBorder = checked ? '#22c55e' : border;
+
       return `
-        <div class="hc ${checked ? 'hc--done' : ''}" onclick="openHabitSheet('${escapeHtml(habit.id)}')" style="cursor:pointer;">
+        <div class="hc ${checked ? 'hc--done' : ''}"
+          onclick="openHabitSheet('${escapeHtml(habit.id)}')"
+          style="border-left-color:${cardBorder}; background:${cardBg};">
           <button
             class="hc-check ${checked ? 'hc-check--done' : ''}"
             onclick="event.stopPropagation(); toggleHabitCheckIn('${escapeHtml(habit.id)}', '${escapeHtml(date)}')"
             aria-label="${checked ? 'Mark incomplete' : 'Mark complete'}: ${escapeHtml(habit.routineAction)}"
+            style="${checked ? '' : `border-color:${border};`}"
           >${checked ? '✓' : '○'}</button>
           <div class="hc-body">
-            ${identityLabel ? `<div class="hc-identity">${identityLabel}</div>` : ''}
+            ${identityLabel ? `<div class="hc-identity" style="color:${checked ? '#16a34a' : identityColor};">${identityLabel} <span style="font-weight:500;opacity:0.65;">· ${voteCount} vote${voteCount !== 1 ? 's' : ''}</span></div>` : ''}
             <div class="hc-action">${escapeHtml(habit.routineAction)}</div>
             <div class="hc-trigger">${triggerLine}</div>
           </div>
-          ${timeAnchor ? `<div class="hc-time-badge">${timeAnchor}</div>` : ''}
-          <div class="hc-streak ${checked ? 'hc-streak--done' : ''}">
+          ${timeAnchor ? `<div class="hc-time-badge" style="background:${checked ? '#dcfce7' : badgeBg}; color:${checked ? '#15803d' : badgeColor};">${timeAnchor}</div>` : ''}
+          <div class="hc-streak ${checked ? 'hc-streak--done' : ''}" style="border-left-color:${checked ? '#bbf7d0' : border}20;">
             <span class="hc-streak-num">${streak}</span>
             <span class="hc-streak-label">streak</span>
           </div>
@@ -6331,12 +6413,21 @@
         return;
       }
 
-      // Count completed habits
-      const completedCount = habits.filter(h => isCheckedOnDate(h.id, selectedDate)).length;
-      habitStats.textContent = `${completedCount}/${habits.length}`;
+      // Generate List View - Sort by time
+      const sortedHabits = [...habits]
+        .filter(h => isScheduledOnDate(h, selectedDate))
+        .sort((a, b) => {
+          const timeA = a.triggerTime || '23:59';
+          const timeB = b.triggerTime || '23:59';
+          return timeA.localeCompare(timeB);
+        });
+
+      // Count completed habits (only scheduled ones)
+      const completedCount = sortedHabits.filter(h => isCheckedOnDate(h.id, selectedDate)).length;
+      habitStats.textContent = `${completedCount}/${sortedHabits.length}`;
       
       // Update stats color
-      if (completedCount === habits.length && habits.length > 0) {
+      if (completedCount === sortedHabits.length && sortedHabits.length > 0) {
         habitStats.style.background = '#d1fae5';
         habitStats.style.color = '#059669';
       } else if (completedCount > 0) {
@@ -6347,12 +6438,22 @@
         habitStats.style.color = '#6b7280';
       }
 
-      // Generate List View - Sort by time
-      const sortedHabits = [...habits].sort((a, b) => {
-        const timeA = a.triggerTime || '23:59';
-        const timeB = b.triggerTime || '23:59';
-        return timeA.localeCompare(timeB);
-      });
+      // Never Miss Twice — any habit scheduled yesterday that was not checked
+      const yesterday = new Date(selectedDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const trulyMissed = habits.filter(h =>
+        isScheduledOnDate(h, yesterdayStr) && !isCheckedOnDate(h.id, yesterdayStr)
+      );
+      const neverMissTwiceBanner = (selectedDate === getToday() && trulyMissed.length > 0)
+        ? `<div style="display:flex;align-items:center;gap:10px;background:#fff7ed;border:2px solid #fb923c;border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+            <span style="font-size:20px;">⚠️</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#c2410c;">Never Miss Twice</div>
+              <div style="font-size:12px;color:#9a3412;margin-top:2px;">You missed ${trulyMissed.length} habit${trulyMissed.length > 1 ? 's' : ''} yesterday. Don't let it become a new habit.</div>
+            </div>
+           </div>`
+        : '';
 
       if (groupByIdentity) {
         // Group by Identity when toggled
@@ -6377,12 +6478,12 @@
           `;
         }).join('');
 
-        listContainer.innerHTML = listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>';
+        listContainer.innerHTML = neverMissTwiceBanner + (listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>');
       } else {
         // Default view - no grouping
         const listHTML = sortedHabits.map(habit => renderHabitCard(habit, selectedDate)).join('');
 
-        listContainer.innerHTML = listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>';
+        listContainer.innerHTML = neverMissTwiceBanner + (listHTML || '<div style="padding: 32px 16px; text-align: center; color: #64748b; font-size: 16px;">✨ No habits scheduled for today.</div>');
       }
     }
 
@@ -6428,6 +6529,9 @@
       const routineAction = document.getElementById('routineAction').value.trim();
       const routineLocation = document.getElementById('routineLocation').value.trim();
       const immediateReward = document.getElementById('immediateReward').value.trim();
+      const twoMinuteVersion = document.getElementById('twoMinuteVersion').value.trim();
+      const freqDays = [...document.querySelectorAll('.freq-day:checked')].map(cb => cb.value);
+      const frequency = freqDays.length > 0 ? freqDays : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
       if (!identity || !triggerCue || !routineAction || !routineLocation || !immediateReward) {
         showToast('Please fill all required fields', 'error');
@@ -6464,6 +6568,8 @@
             routineAction,
             routineLocation,
             immediateReward,
+            twoMinuteVersion,
+            frequency,
             milestones: milestones.sort((a, b) => a.days - b.days),
             progressions: progressions.sort((a, b) => a.days - b.days)
           };
@@ -6482,6 +6588,8 @@
           routineAction,
           routineLocation,
           immediateReward,
+          twoMinuteVersion,
+          frequency,
           milestones: milestones.length > 0 ? milestones.sort((a, b) => a.days - b.days) : [],
           progressions: progressions.length > 0 ? progressions.sort((a, b) => a.days - b.days) : [],
           createdAt: new Date().toISOString()
@@ -6519,6 +6627,13 @@
       const milestones = habit.milestones || [];
       const nextMilestone = milestones.find(m => m.days > streak);
 
+      // Apply palette color to hero
+      const [border] = getHabitColor(habitId);
+      const hero = document.getElementById('sheetHero');
+      if (!checked) {
+        hero.style.background = `linear-gradient(135deg, ${border} 0%, ${border}cc 100%)`;
+      }
+
       document.getElementById('sheetIdentity').textContent = habit.identity || '';
       document.getElementById('sheetAction').textContent   = habit.routineAction;
       document.getElementById('sheetStreak').textContent   = streak;
@@ -6546,6 +6661,18 @@
         document.getElementById('sheetMilestone').textContent = `Day ${nextMilestone.days}: ${nextMilestone.milestone}`;
         milestoneRow.style.display = 'flex';
       } else { milestoneRow.style.display = 'none'; }
+
+      const twoMinRow = document.getElementById('sheetTwoMinRow');
+      if (habit.twoMinuteVersion) {
+        document.getElementById('sheetTwoMin').textContent = habit.twoMinuteVersion;
+        twoMinRow.style.display = 'flex';
+      } else { twoMinRow.style.display = 'none'; }
+
+      const freqRow = document.getElementById('sheetFreqRow');
+      const freq = habit.frequency || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const isDaily = freq.length === 7;
+      document.getElementById('sheetFreq').textContent = isDaily ? 'Every day' : freq.join(', ');
+      freqRow.style.display = 'flex';
 
       const btn = document.getElementById('sheetCheckBtn');
       btn.textContent = checked ? '✓' : '○';
@@ -6637,6 +6764,20 @@
           <div>
             <div class="sheet-row-label">Next Milestone</div>
             <div id="sheetMilestone" class="sheet-row-value"></div>
+          </div>
+        </div>
+        <div class="sheet-row" id="sheetTwoMinRow">
+          <div class="sheet-row-icon">⏱</div>
+          <div>
+            <div class="sheet-row-label">2-Minute Version</div>
+            <div id="sheetTwoMin" class="sheet-row-value"></div>
+          </div>
+        </div>
+        <div class="sheet-row" id="sheetFreqRow">
+          <div class="sheet-row-icon">📅</div>
+          <div>
+            <div class="sheet-row-label">Schedule</div>
+            <div id="sheetFreq" class="sheet-row-value"></div>
           </div>
         </div>
       </div>
