@@ -3633,6 +3633,33 @@
                     <div style="font-size: 13px; color: #1e40af; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email Address</div>
                     <div id="userEmailModal" style="font-size: 16px; font-weight: 700; color: #1e3a8a;"></div>
                 </div>
+                <div style="padding: 16px; background: #f0fdf4; border-radius: 12px; border: 2px solid #86efac;">
+                    <div style="font-size: 13px; color: #166534; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">User ID</div>
+                    <div id="accountUserId" style="font-size: 12px; font-weight: 600; color: #15803d; word-break: break-all;"></div>
+                </div>
+            </div>
+
+            <!-- Data Summary -->
+            <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+                <div class="section-title">📊 Data Summary</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="accountDataSummary">
+                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
+                        <div id="accountTxCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
+                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Transactions</div>
+                    </div>
+                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
+                        <div id="accountHabitCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
+                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Habits</div>
+                    </div>
+                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
+                        <div id="accountPaymentCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
+                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Payment Methods</div>
+                    </div>
+                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
+                        <div id="accountEnvelopeCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
+                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Categories</div>
+                    </div>
+                </div>
             </div>
 
             <!-- App Info -->
@@ -3645,7 +3672,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span style="font-size: 14px; color: #6b7280;">Last Synced</span>
-                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Just now</span>
+                        <span id="accountLastSynced" style="font-size: 14px; font-weight: 600; color: #1f2937;">—</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="font-size: 14px; color: #6b7280;">Storage</span>
@@ -3891,6 +3918,7 @@
           progressions,
           lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         });
+        localStorage.setItem('lastSyncedAt', new Date().toISOString());
       } catch (error) {
         console.error('Error saving user data:', error);
         showToast('Error saving data', 'error');
@@ -4947,6 +4975,7 @@
     // Profile button
     profileBtn.addEventListener('click', () => {
       profileModal.classList.add('show');
+      populateAccountTab();
     });
 
     // Tab switching
@@ -4975,7 +5004,40 @@
       accountContent.classList.add('active');
       financeSetupContent.classList.remove('active');
       dataContent.classList.remove('active');
+      populateAccountTab();
     });
+
+    function populateAccountTab() {
+      // Email + UID
+      if (currentUser) {
+        const emailEl = document.getElementById('userEmailModal');
+        const uidEl = document.getElementById('accountUserId');
+        if (emailEl) emailEl.textContent = currentUser.email || '—';
+        if (uidEl) uidEl.textContent = currentUser.uid || '—';
+      }
+
+      // Data counts
+      const txEl = document.getElementById('accountTxCount');
+      const habitEl = document.getElementById('accountHabitCount');
+      const pmEl = document.getElementById('accountPaymentCount');
+      const envEl = document.getElementById('accountEnvelopeCount');
+      if (txEl) txEl.textContent = (typeof transactions !== 'undefined' ? transactions.length : 0);
+      if (habitEl) habitEl.textContent = (typeof habits !== 'undefined' ? habits.length : 0);
+      if (pmEl) pmEl.textContent = (typeof paymentMethods !== 'undefined' ? paymentMethods.length : 0);
+      if (envEl) envEl.textContent = (typeof envelopes !== 'undefined' ? envelopes.length : 0);
+
+      // Last synced
+      const syncEl = document.getElementById('accountLastSynced');
+      if (syncEl) {
+        const lastSync = localStorage.getItem('lastSyncedAt');
+        if (lastSync) {
+          const d = new Date(lastSync);
+          syncEl.textContent = d.toLocaleString();
+        } else {
+          syncEl.textContent = 'Not yet synced';
+        }
+      }
+    }
 
     // Close modal
     closeModal.addEventListener('click', () => {
@@ -5598,6 +5660,8 @@
       entry.className = 'expense-entry';
       entry.dataset.index = index;
       
+      const todayStr = new Date().toISOString().split('T')[0];
+
       entry.innerHTML = `
         <div class="expense-entry-header">
           <div class="expense-entry-number">Expense #${index + 1}</div>
@@ -5609,6 +5673,10 @@
             <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" />
           </div>
           <input type="text" class="description-input" placeholder="What's this for?" data-field="description" style="margin-bottom: 16px;" />
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">� Date</div>
+            <input type="date" data-field="date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+          </div>
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📁 Category</div>
             <div class="visual-selector" data-field="envelope" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
@@ -6211,7 +6279,7 @@
           const payment = paymentBtn ? paymentBtn.dataset.value : '';
           const expenseType = expenseTypeBtn ? expenseTypeBtn.dataset.value : '';
           
-          const dateInput = document.getElementById('transactionDate');
+          const dateInput = entry.querySelector('[data-field="date"]');
           const selectedDateVal = dateInput ? dateInput.value : '';
           const entryDate = selectedDateVal ? new Date(selectedDateVal).toISOString() : new Date().toISOString();
 
@@ -6242,9 +6310,17 @@
             } catch (error) {
               console.error('Error adding expense:', error);
             }
+          } else {
+            const missing = [];
+            if (!amount) missing.push('amount');
+            if (!description) missing.push('description');
+            if (!envelope) missing.push('category');
+            if (!payment) missing.push('payment');
+            if (!expenseType) missing.push('type');
+            showToast(`Missing: ${missing.join(', ')}`, 'error');
           }
-        }
-        
+        } // end for loop
+
         if (successCount > 0) {
           saveToLocalStorage();
           updateBalanceSummary();
@@ -6310,7 +6386,9 @@
             showToast('Error adding transfer. Please try again.', 'error');
           }
         } else {
-          showToast('Please fill all required fields', 'error');
+          if (!amount) showToast('Please enter amount', 'error');
+          else if (!fromPayment) showToast('Please select "From" payment method', 'error');
+          else if (!toPayment) showToast('Please select "To" payment method', 'error');
         }
         
       } else if (activeType === 'income') {
