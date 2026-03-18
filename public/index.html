@@ -20,14 +20,14 @@
     <script>
       // Firebase Configuration
       const firebaseConfig = {
-        apiKey: "%VITE_FIREBASE_API_KEY%",
-        authDomain: "%VITE_FIREBASE_AUTH_DOMAIN%",
-        databaseURL: "%VITE_FIREBASE_DATABASE_URL%",
-        projectId: "%VITE_FIREBASE_PROJECT_ID%",
-        storageBucket: "%VITE_FIREBASE_STORAGE_BUCKET%",
-        messagingSenderId: "%VITE_FIREBASE_MESSAGING_SENDER_ID%",
-        appId: "%VITE_FIREBASE_APP_ID%",
-        measurementId: "%VITE_FIREBASE_MEASUREMENT_ID%"
+        apiKey: "AIzaSyDkVbVhmFA301ZERkgNuxzfkjxzmlpe7Uk",
+        authDomain: "goal-planner-b604e.firebaseapp.com",
+        databaseURL: "https://goal-planner-b604e-default-rtdb.firebaseio.com",
+        projectId: "goal-planner-b604e",
+        storageBucket: "goal-planner-b604e.firebasestorage.app",
+        messagingSenderId: "82233624728",
+        appId: "1:82233624728:web:49b5d083a39237d987e8ed",
+        measurementId: "G-ZJRQEGH25W"
       };
       
       // Initialize Firebase
@@ -1413,62 +1413,190 @@
           font-size: var(--font-md);
           font-weight: 700;
           color: var(--color-text);
-          margin: 0 0 12px 0;
+          margin: 0;
+        }
+
+        .recent-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+
+        .recent-actions {
+          display: flex;
+          gap: 6px;
+        }
+
+        .recent-action-btn {
+          padding: 6px 12px;
+          border: none;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: 'Inter', sans-serif;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          min-height: 32px;
+        }
+
+        .recent-action-btn.report {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        .recent-action-btn.report:hover {
+          background: #a7f3d0;
+        }
+
+        .recent-action-btn.danger {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+
+        .recent-action-btn.danger:hover {
+          background: #fecaca;
+        }
+
+        .tx-date-group {
+          margin-bottom: 8px;
+        }
+
+        .tx-date-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--color-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 4px 0;
+          margin-bottom: 2px;
         }
 
         .transaction-item {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 10px;
+          padding: 8px 6px;
           border-radius: var(--radius-sm);
-          margin-bottom: 4px;
           transition: background 0.15s;
         }
 
         .transaction-item:hover { background: #f9fafb; }
-        .transaction-item:last-child { margin-bottom: 0; }
+        .transaction-item:hover .tx-delete { opacity: 1; }
 
         .transaction-icon {
-          width: 44px;
-          height: 44px;
+          width: 36px;
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
-          border-radius: var(--radius-sm);
-          background: #f3f4f6;
+          font-size: 18px;
+          border-radius: 10px;
           flex-shrink: 0;
         }
 
-        .transaction-item.income .transaction-icon { background: var(--color-success-light); }
-        .transaction-item.expense .transaction-icon { background: var(--color-danger-light); }
+        .transaction-item.income .transaction-icon  { background: var(--color-success-light); }
+        .transaction-item.expense .transaction-icon  { background: var(--color-danger-light); }
+        .transaction-item.transfer .transaction-icon { background: #dbeafe; }
 
         .transaction-details { flex: 1; min-width: 0; }
 
         .transaction-desc {
-          font-size: var(--font-base);
+          font-size: 13px;
           font-weight: 600;
           color: var(--color-text);
-          margin-bottom: 2px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
-        .transaction-time {
-          font-size: var(--font-xs);
+        .transaction-meta {
+          font-size: 11px;
           color: var(--color-text-muted);
+          margin-top: 1px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-wrap: wrap;
         }
 
+        .tx-tag {
+          background: #f3f4f6;
+          border-radius: 4px;
+          padding: 1px 5px;
+          font-size: 10px;
+          font-weight: 600;
+          color: #6b7280;
+        }
+
+        .tx-tag.need { background: #dbeafe; color: #1d4ed8; }
+        .tx-tag.want { background: #fce7f3; color: #be185d; }
+        .tx-tag.save { background: #d1fae5; color: #065f46; }
+
         .transaction-amount {
-          font-size: var(--font-md);
+          font-size: 14px;
           font-weight: 700;
+          flex-shrink: 0;
+          text-align: right;
+        }
+
+        .transaction-item.income .transaction-amount  { color: #059669; }
+        .transaction-item.expense .transaction-amount { color: #dc2626; }
+        .transaction-item.transfer .transaction-amount { color: #2563eb; font-size: 12px; }
+
+        .tx-delete {
+          opacity: 0;
+          padding: 4px 8px;
+          border: none;
+          background: transparent;
+          color: #dc2626;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.15s;
           flex-shrink: 0;
         }
 
-        .transaction-item.income .transaction-amount { color: #059669; }
-        .transaction-item.expense .transaction-amount { color: #dc2626; }
+        .tx-delete:hover { background: #fee2e2; }
+
+        .tx-load-more {
+          display: flex;
+          gap: 8px;
+          padding: 10px 6px 2px;
+        }
+
+        .tx-load-btn {
+          flex: 1;
+          padding: 8px;
+          border: 1.5px solid #e5e7eb;
+          background: white;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.15s;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .tx-load-btn:hover {
+          border-color: var(--color-primary);
+          color: var(--color-primary);
+          background: var(--color-primary-light);
+        }
+
+        .tx-load-btn.secondary {
+          color: #6b7280;
+        }
+
+        .tx-load-btn.secondary:hover {
+          border-color: #9ca3af;
+          color: #374151;
+          background: #f9fafb;
+        }
 
         .save-budget-btn:active {
           transform: translateY(0);
@@ -1486,39 +1614,65 @@
           font-size: 16px;
           font-weight: 700;
           color: #1f2937;
-          margin: 0 0 12px 0;
+          margin: 0 0 10px 0;
+        }
+
+        #envelopeBudgetList {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
         }
 
         .envelope-item {
-          margin-bottom: 12px;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 10px;
+          transition: box-shadow 0.2s;
         }
 
-        .envelope-item:last-child {
-          margin-bottom: 0;
+        .envelope-item:hover {
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .envelope-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 8px;
+          align-items: flex-start;
+          margin-bottom: 6px;
+          gap: 4px;
         }
 
         .envelope-name {
-          font-size: 15px;
+          font-size: 12px;
           font-weight: 600;
-          color: #1f2937;
+          color: #374151;
+          line-height: 1.3;
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .envelope-pct-badge {
+          font-size: 11px;
+          font-weight: 700;
+          padding: 1px 6px;
+          border-radius: 20px;
+          flex-shrink: 0;
+          color: white;
         }
 
         .envelope-amounts {
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 11px;
           color: #6b7280;
+          margin-bottom: 5px;
         }
 
         .envelope-bar {
-          height: 8px;
-          background: #f3f4f6;
+          height: 5px;
+          background: #e5e7eb;
           border-radius: 8px;
           overflow: hidden;
         }
@@ -1526,8 +1680,26 @@
         .envelope-progress {
           height: 100%;
           border-radius: 8px;
-          transition: width 0.3s ease;
+          transition: width 0.4s ease;
         }
+
+        .nws-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          margin-top: 6px;
+        }
+
+        .nws-chip {
+          font-size: 10px;
+          font-weight: 600;
+          padding: 2px 6px;
+          border-radius: 20px;
+        }
+
+        .nws-chip.need { background: #dbeafe; color: #1d4ed8; }
+        .nws-chip.want { background: #fce7f3; color: #be185d; }
+        .nws-chip.save { background: #d1fae5; color: #065f46; }
 
         .budget-envelope-item {
           display: flex;
@@ -1811,6 +1983,36 @@
         }
         .wiz-step-sub {
           font-size: 12px; color: var(--color-text-muted); margin-bottom: 4px;
+        }
+        .wiz-chips {
+          display: flex; flex-wrap: wrap; gap: 6px;
+          margin-top: 8px;
+          min-height: 0;
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.25s ease, opacity 0.2s;
+          opacity: 0;
+        }
+        .wiz-chips.open {
+          max-height: 200px;
+          opacity: 1;
+        }
+        .wiz-chip {
+          padding: 5px 11px;
+          border-radius: var(--radius-pill);
+          background: #f1f5f9;
+          border: 1.5px solid #e2e8f0;
+          font-size: 12px; font-weight: 600;
+          color: var(--color-text-secondary);
+          cursor: pointer;
+          transition: all 0.15s;
+          white-space: nowrap;
+          user-select: none;
+        }
+        .wiz-chip:hover {
+          background: var(--color-primary-light);
+          border-color: var(--color-primary);
+          color: var(--color-primary);
         }
 
         /* ── Habit Card ── */
@@ -2967,6 +3169,10 @@
             align-items: stretch;
           }
 
+          #envelopeBudgetList {
+            grid-template-columns: 1fr;
+          }
+
           .budget-envelope-name {
             flex: 1;
             margin-bottom: 8px;
@@ -3123,16 +3329,14 @@
         </div>
 
         <div class="recent-transactions">
-            <div style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 style="margin: 0;">Recent</h3>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button id="downloadReportBtn" style="padding: 10px 12px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; font-family: 'Inter', sans-serif;">📊 Report</button>
-                    <button id="deleteAllExpensesBtn" style="padding: 10px 12px; border: none; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; font-family: 'Inter', sans-serif;">🗑️ Delete Expenses</button>
+            <div class="recent-header">
+                <h3>Recent</h3>
+                <div class="recent-actions">
+                    <button id="downloadReportBtn" class="recent-action-btn report">📊 Report</button>
+                    <button id="deleteAllExpensesBtn" class="recent-action-btn danger">🗑️ Delete All</button>
                 </div>
             </div>
-            <div id="envelopeFilterChips" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+            <div id="envelopeFilterChips" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
                 <!-- Envelope filter chips will be inserted here -->
             </div>
             <div id="recentTransactionsList">
@@ -3166,6 +3370,7 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <div style="font-size: 13px; font-weight: 600; color: #6b7280; background: #f3f4f6; padding: 8px 14px; border-radius: 10px; display: flex; align-items: center; gap: 6px;" id="habitStats"><span style="font-size: 16px;">✓</span> 0/0</div>
                             <button id="groupByIdentityBtn" onclick="toggleGroupByIdentity()" style="padding: 6px 12px; border: none; background: transparent; color: #6b7280; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; border: 2px solid #e5e7eb;">Group</button>
+                            <button onclick="openNotificationSettings()" title="Notification settings" style="width:36px;height:36px;border:none;background:#f3f4f6;border-radius:10px;font-size:18px;cursor:pointer;color:#6b7280;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border:2px solid #e5e7eb;" id="notifBellBtn">🔔</button>
                         </div>
                     </div>
                     <div id="listView" style="display: flex; flex-direction: column; gap: 10px;">
@@ -3226,6 +3431,7 @@
                         <span class="wiz-prefix">I am</span>
                         <input class="wiz-input" type="text" id="identity" placeholder="someone who reads daily" autocomplete="off" />
                       </div>
+                      <div class="wiz-chips" id="identityChips"></div>
                     </div>
                     <div>
                       <div class="wiz-label">The habit (action)</div>
@@ -3233,6 +3439,7 @@
                         <span class="wiz-prefix">I will</span>
                         <input class="wiz-input" type="text" id="routineAction" placeholder="read 10 pages" autocomplete="off" />
                       </div>
+                      <div class="wiz-chips" id="actionChips"></div>
                     </div>
                     <div class="wiz-nav">
                       <button type="button" class="wiz-btn wiz-btn--next" onclick="wizNext(1)">Next →</button>
@@ -3251,6 +3458,7 @@
                         <span class="wiz-prefix">After I</span>
                         <input class="wiz-input" type="text" id="triggerCue" placeholder="finish my morning coffee" autocomplete="off" />
                       </div>
+                      <div class="wiz-chips" id="cueChips"></div>
                     </div>
                     <div style="display:flex;gap:10px;">
                       <div style="flex:1;">
@@ -4419,54 +4627,60 @@
         return;
       }
       
-      // Get last 10 transactions, sorted by date (newest first)
-      const recentTransactions = [...filteredTransactions]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
-      
-      listContainer.innerHTML = recentTransactions.map(t => {
+      // Sort all filtered transactions newest first
+      const sorted = [...filteredTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const total = sorted.length;
+      const visible = sorted.slice(0, recentTxVisibleCount);
+
+      function renderTxItem(t) {
         const icon = getTransactionIcon(t.type, t.description || '', t.expenseType);
         const timeAgo = getTimeAgo(t.date);
         const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
-        const amount = t.type === 'transfer' 
-          ? `${t.from} → ${t.to} Rs.${parseFloat(t.amount).toLocaleString('en-IN')}` 
+        const amount = t.type === 'transfer'
+          ? `${t.from}→${t.to} ₹${parseFloat(t.amount).toLocaleString('en-IN')}`
           : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
-        
-        // Get expense type label
-        let expenseTypeLabel = '';
-        if (t.expenseType) {
-          const typeLabels = { need: 'Need', want: 'Want', save: 'Save' };
-          expenseTypeLabel = ` • ${typeLabels[t.expenseType] || ''}`;
-        }
-        
+        const typeTag = t.expenseType
+          ? `<span class="tx-tag ${t.expenseType}">${t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)}</span>`
+          : '';
+        const envelopeTag = t.envelope ? `<span class="tx-tag">${t.envelope}</span>` : '';
+        const paymentTag = t.paymentMethod ? `<span class="tx-tag">${t.paymentMethod}</span>` : '';
         return `
-          <div class="transaction-item ${t.type}" style="position: relative;">
+          <div class="transaction-item ${t.type}">
             <div class="transaction-icon">${icon}</div>
             <div class="transaction-details">
               <div class="transaction-desc">${t.description || 'Transfer'}</div>
-              <div class="transaction-time">${timeAgo}${t.envelope ? ' • ' + t.envelope : ''}${expenseTypeLabel}</div>
+              <div class="transaction-meta">${timeAgo}${envelopeTag}${typeTag}${paymentTag}</div>
             </div>
             <div class="transaction-amount">${amount}</div>
-            <button 
-              onclick="deleteTransaction(${t.id})" 
-              style="
-                padding: 6px 10px;
-                border: none;
-                background: linear-gradient(135deg, #fee2e2, #fecaca);
-                color: #dc2626;
-                border-radius: 8px;
-                font-size: 12px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-                margin-left: 8px;
-              "
-              onmouseover="this.style.background='linear-gradient(135deg, #fecaca, #fca5a5)'; this.style.transform='translateY(-1px)'"
-              onmouseout="this.style.background='linear-gradient(135deg, #fee2e2, #fecaca)'; this.style.transform='translateY(0)'"
-            >🗑️</button>
-          </div>
-        `;
-      }).join('');
+            <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Delete">🗑</button>
+          </div>`;
+      }
+
+      const remaining = total - visible.length;
+      const footer = remaining > 0 ? `
+        <div class="tx-load-more">
+          <button class="tx-load-btn" onclick="loadMoreTransactions()">Load ${Math.min(remaining, 10)} more</button>
+          <button class="tx-load-btn secondary" onclick="loadAllTransactions()">Show all ${total}</button>
+        </div>` : (total > 10 ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>` : '');
+
+      listContainer.innerHTML = visible.map(renderTxItem).join('') + footer;
+    }
+
+    let recentTxVisibleCount = 10;
+
+    function loadMoreTransactions() {
+      recentTxVisibleCount += 10;
+      updateRecentTransactions();
+    }
+
+    function loadAllTransactions() {
+      recentTxVisibleCount = Infinity;
+      updateRecentTransactions();
+    }
+
+    function loadFewerTransactions() {
+      recentTxVisibleCount = 10;
+      updateRecentTransactions();
     }
 
     function updateEnvelopeBudget() {
@@ -4608,16 +4822,28 @@
         if (saveSpent > 0) breakdownParts.push(`💰 ₹${saveSpent.toLocaleString('en-IN')}`);
         const breakdown = breakdownParts.length > 0 ? breakdownParts.join(' • ') : '';
         
+        const remaining = budgetAmount - actualSpent;
+        const remainingText = remaining >= 0
+          ? `₹${remaining.toLocaleString('en-IN')} left`
+          : `₹${Math.abs(remaining).toLocaleString('en-IN')} over`;
+
+        const chips = [
+          needSpent  > 0 ? `<span class="nws-chip need">🎯 ₹${needSpent.toLocaleString('en-IN')}</span>`  : '',
+          wantSpent  > 0 ? `<span class="nws-chip want">🎉 ₹${wantSpent.toLocaleString('en-IN')}</span>`  : '',
+          saveSpent  > 0 ? `<span class="nws-chip save">💰 ₹${saveSpent.toLocaleString('en-IN')}</span>`  : '',
+        ].filter(Boolean).join('');
+
         return `
           <div class="envelope-item">
             <div class="envelope-header">
-              <span class="envelope-name">${envelope}</span>
-              <span class="envelope-amounts">₹${actualSpent.toLocaleString('en-IN')} / ₹${budgetAmount.toLocaleString('en-IN')}</span>
+              <span class="envelope-name" title="${envelope}">${envelope}</span>
+              <span class="envelope-pct-badge" style="background:${color}">${Math.round(percentage)}%</span>
             </div>
-            ${breakdown ? `<div style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600;">${breakdown}</div>` : ''}
+            <div class="envelope-amounts">₹${actualSpent.toLocaleString('en-IN')} / ₹${budgetAmount.toLocaleString('en-IN')} &nbsp;·&nbsp; ${remainingText}</div>
             <div class="envelope-bar">
-              <div class="envelope-progress" style="width: ${Math.min(percentage, 100)}%; background-color: ${color};"></div>
+              <div class="envelope-progress" style="width:${Math.min(percentage,100)}%;background:${color}"></div>
             </div>
+            ${chips ? `<div class="nws-chips">${chips}</div>` : ''}
           </div>
         `;
       }).join('');
@@ -5264,6 +5490,7 @@
 
     // Year select change
     yearSelect.addEventListener('change', () => {
+      recentTxVisibleCount = 10;
       generateMonthDropdown();
       updateBalanceSummary();
       updatePaymentBalances();
@@ -5296,6 +5523,7 @@
 
     // Month select change
     monthSelect.addEventListener('change', () => {
+      recentTxVisibleCount = 10;
       updateBalanceSummary();
       updatePaymentBalances();
       updateRecentTransactions();
@@ -7129,7 +7357,77 @@
       renderHabitCal();
     }
 
-    // ── Wizard navigation ──
+    // ── Wizard suggestions ──
+    const WIZ_SUGGESTIONS = {
+      identity: [
+        'a reader', 'a runner', 'an athlete', 'a meditator',
+        'a healthy eater', 'a writer', 'an early riser',
+        'someone who exercises daily', 'a lifelong learner',
+        'a minimalist', 'a journaler', 'someone who drinks more water',
+        'a focused worker', 'a grateful person', 'a strong person'
+      ],
+      action: [
+        'read 10 pages', 'meditate for 5 minutes', 'do 10 push-ups',
+        'drink a glass of water', 'go for a 20-min walk', 'write 200 words',
+        'stretch for 5 minutes', 'review my goals', 'practice gratitude',
+        'do 15 minutes of exercise', 'plan tomorrow\'s tasks',
+        'learn one new thing', 'call a friend or family member',
+        'cook a healthy meal', 'sleep by 10 pm'
+      ],
+      cue: [
+        'wake up', 'finish my morning coffee', 'brush my teeth',
+        'eat lunch', 'finish work for the day', 'sit down at my desk',
+        'arrive home', 'eat dinner', 'get into bed',
+        'put on my workout clothes', 'open my laptop',
+        'finish my commute', 'make tea or coffee', 'take a shower'
+      ]
+    };
+
+    function wizInitSuggestions() {
+      function setup(inputId, chipsId, suggestions) {
+        const input = document.getElementById(inputId);
+        const chips = document.getElementById(chipsId);
+        if (!input || !chips) return;
+
+        // Render all chips once
+        chips.innerHTML = suggestions.map(s =>
+          `<div class="wiz-chip" onclick="wizPickChip('${inputId}','${chipsId}',this)">${s}</div>`
+        ).join('');
+
+        input.addEventListener('focus', () => {
+          wizFilterChips(input, chips, suggestions);
+          chips.classList.add('open');
+        });
+        input.addEventListener('input', () => wizFilterChips(input, chips, suggestions));
+        input.addEventListener('blur', () => {
+          // Small delay so chip click fires first
+          setTimeout(() => chips.classList.remove('open'), 180);
+        });
+      }
+
+      setup('identity',      'identityChips', WIZ_SUGGESTIONS.identity);
+      setup('routineAction', 'actionChips',   WIZ_SUGGESTIONS.action);
+      setup('triggerCue',    'cueChips',      WIZ_SUGGESTIONS.cue);
+    }
+
+    function wizFilterChips(input, chips, suggestions) {
+      const q = input.value.toLowerCase();
+      const filtered = q
+        ? suggestions.filter(s => s.toLowerCase().includes(q))
+        : suggestions;
+      chips.innerHTML = filtered.map(s =>
+        `<div class="wiz-chip" onclick="wizPickChip('${input.id}','${chips.id}',this)">${s}</div>`
+      ).join('');
+    }
+
+    function wizPickChip(inputId, chipsId, el) {
+      document.getElementById(inputId).value = el.textContent;
+      document.getElementById(chipsId).classList.remove('open');
+    }
+
+    wizInitSuggestions();
+
+    updateTimelineView();
     function wizSetStep(step) {
       [1,2,3].forEach(i => {
         document.getElementById(`wizStep${i}`).classList.toggle('active', i === step);
@@ -7246,6 +7544,16 @@
             <div id="sheetFreq" class="sheet-row-value"></div>
           </div>
         </div>
+        <div class="sheet-row" id="sheetNotifRow" style="cursor:pointer;" onclick="toggleHabitNotification()">
+          <div class="sheet-row-icon">🔔</div>
+          <div style="flex:1;">
+            <div class="sheet-row-label">Daily Reminder</div>
+            <div id="sheetNotifValue" class="sheet-row-value">Off</div>
+          </div>
+          <div id="sheetNotifToggle" style="width:44px;height:24px;border-radius:12px;background:#e5e7eb;position:relative;transition:background 0.2s;flex-shrink:0;">
+            <div id="sheetNotifThumb" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -7295,6 +7603,175 @@
     <div id="habitCalStats" style="display:flex;gap:12px;justify-content:center;margin-top:20px;padding:0 20px;"></div>
   </div>
 </div>
+
+<!-- Notification Settings Modal -->
+<div id="notifModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;" onclick="closeNotifModal(event)">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px 20px 40px;box-shadow:0 -8px 32px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
+    <div style="width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="font-size:22px;">🔔</span>
+      <h3 style="font-size:18px;font-weight:700;color:#1f2937;margin:0;">Habit Reminders</h3>
+    </div>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">Set a daily reminder time for each habit. You'll get a browser notification at that time.</p>
+    <div id="notifPermBanner" style="display:none;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
+      ⚠️ Notifications are blocked. Please allow notifications in your browser settings.
+    </div>
+    <div id="notifHabitList" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<script>
+  // ── Habit Notifications ──
+  let habitNotifications = JSON.parse(localStorage.getItem('habitNotifications') || '{}');
+  // { habitId: { enabled: true, time: "08:00" } }
+
+  let notifTimers = {};
+
+  function saveHabitNotifications() {
+    localStorage.setItem('habitNotifications', JSON.stringify(habitNotifications));
+  }
+
+  async function requestNotifPermission() {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    const result = await Notification.requestPermission();
+    return result === 'granted';
+  }
+
+  function scheduleHabitNotifications() {
+    // Clear existing timers
+    Object.values(notifTimers).forEach(clearTimeout);
+    notifTimers = {};
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const now = new Date();
+    Object.entries(habitNotifications).forEach(([habitId, cfg]) => {
+      if (!cfg.enabled || !cfg.time) return;
+      const habit = habits.find(h => h.id === habitId);
+      if (!habit) return;
+
+      const [hh, mm] = cfg.time.split(':').map(Number);
+      const fire = new Date(now);
+      fire.setHours(hh, mm, 0, 0);
+      if (fire <= now) fire.setDate(fire.getDate() + 1);
+
+      const delay = fire - now;
+      notifTimers[habitId] = setTimeout(() => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (isScheduledOnDate(habit, todayStr) && !isCheckedOnDate(habitId, todayStr)) {
+          new Notification('Habit Reminder 🔔', {
+            body: habit.routineAction,
+            icon: '/favicon.ico',
+            tag: `habit-${habitId}`
+          });
+        }
+        // Reschedule for next day
+        scheduleHabitNotifications();
+      }, delay);
+    });
+  }
+
+  async function openNotificationSettings() {
+    const granted = await requestNotifPermission();
+    const modal = document.getElementById('notifModal');
+    const banner = document.getElementById('notifPermBanner');
+    banner.style.display = (!('Notification' in window) || Notification.permission === 'denied') ? 'block' : 'none';
+
+    const list = document.getElementById('notifHabitList');
+    if (habits.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:24px;">No habits yet.</div>';
+    } else {
+      list.innerHTML = habits.map(h => {
+        const cfg = habitNotifications[h.id] || { enabled: false, time: h.triggerTime || '08:00' };
+        const on = cfg.enabled;
+        return `
+          <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;border-radius:14px;padding:12px 14px;border:2px solid ${on ? '#10b981' : '#e5e7eb'};">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.routineAction)}</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:2px;">${escapeHtml(h.identity || '')}</div>
+            </div>
+            <input type="time" value="${escapeHtml(cfg.time || '08:00')}"
+              onchange="setHabitNotifTime('${escapeHtml(h.id)}', this.value)"
+              style="border:2px solid #e5e7eb;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;color:#374151;background:#fff;outline:none;width:90px;${on ? '' : 'opacity:0.5;'}">
+            <div onclick="toggleNotifEnabled('${escapeHtml(h.id)}')" style="width:44px;height:24px;border-radius:12px;background:${on ? '#10b981' : '#e5e7eb'};position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;">
+              <div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${on ? '22px' : '2px'};transition:left 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  function closeNotifModal(e) {
+    if (e && e.target !== document.getElementById('notifModal')) return;
+    document.getElementById('notifModal').style.display = 'none';
+  }
+
+  async function toggleNotifEnabled(habitId) {
+    const granted = await requestNotifPermission();
+    if (!granted) {
+      document.getElementById('notifPermBanner').style.display = 'block';
+      return;
+    }
+    const cfg = habitNotifications[habitId] || { enabled: false, time: '08:00' };
+    cfg.enabled = !cfg.enabled;
+    habitNotifications[habitId] = cfg;
+    saveHabitNotifications();
+    scheduleHabitNotifications();
+    openNotificationSettings(); // re-render
+    showToast(cfg.enabled ? 'Reminder enabled 🔔' : 'Reminder off', cfg.enabled ? 'success' : 'error');
+  }
+
+  function setHabitNotifTime(habitId, time) {
+    const cfg = habitNotifications[habitId] || { enabled: false, time: '08:00' };
+    cfg.time = time;
+    habitNotifications[habitId] = cfg;
+    saveHabitNotifications();
+    scheduleHabitNotifications();
+  }
+
+  // Update notification toggle in habit detail sheet
+  function updateSheetNotifRow(habitId) {
+    const cfg = habitNotifications[habitId] || { enabled: false, time: '' };
+    const on = cfg.enabled;
+    const toggle = document.getElementById('sheetNotifToggle');
+    const thumb = document.getElementById('sheetNotifThumb');
+    const val = document.getElementById('sheetNotifValue');
+    if (!toggle) return;
+    toggle.style.background = on ? '#10b981' : '#e5e7eb';
+    thumb.style.left = on ? '22px' : '2px';
+    val.textContent = on ? `Daily at ${cfg.time}` : 'Off';
+  }
+
+  async function toggleHabitNotification() {
+    if (!sheetHabitId) return;
+    const granted = await requestNotifPermission();
+    if (!granted) {
+      showToast('Please allow notifications in browser settings', 'error');
+      return;
+    }
+    const cfg = habitNotifications[sheetHabitId] || { enabled: false, time: '08:00' };
+    cfg.enabled = !cfg.enabled;
+    habitNotifications[sheetHabitId] = cfg;
+    saveHabitNotifications();
+    scheduleHabitNotifications();
+    updateSheetNotifRow(sheetHabitId);
+    showToast(cfg.enabled ? 'Reminder enabled 🔔' : 'Reminder off', cfg.enabled ? 'success' : 'error');
+  }
+
+  // Patch openHabitSheet to update notif row
+  const _origOpenHabitSheet = openHabitSheet;
+  openHabitSheet = function(habitId) {
+    _origOpenHabitSheet(habitId);
+    updateSheetNotifRow(habitId);
+  };
+
+  // Kick off scheduling on load
+  scheduleHabitNotifications();
+</script>
 
 </body>
 </html>
