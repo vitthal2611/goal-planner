@@ -7114,6 +7114,7 @@
       document.getElementById('sheetHero').classList.toggle('done', checked);
 
       document.getElementById('habitSheet').classList.add('open');
+      if (typeof updateSheetNotifRow === 'function') updateSheetNotifRow(habitId);
     }
 
     function closeHabitSheet(e) {
@@ -7761,13 +7762,6 @@
     updateSheetNotifRow(sheetHabitId);
     showToast(cfg.enabled ? 'Reminder enabled 🔔' : 'Reminder off', cfg.enabled ? 'success' : 'error');
   }
-
-  // Patch openHabitSheet to update notif row
-  const _origOpenHabitSheet = openHabitSheet;
-  openHabitSheet = function(habitId) {
-    _origOpenHabitSheet(habitId);
-    updateSheetNotifRow(habitId);
-  };
 
   // Kick off scheduling on load
   scheduleHabitNotifications();
