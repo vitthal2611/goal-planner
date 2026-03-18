@@ -3629,35 +3629,34 @@
             <!-- Account Info -->
             <div class="modal-section">
                 <div class="section-title">👤 Account Information</div>
-                <div style="padding: 16px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 12px; margin-bottom: 16px; border: 2px solid #3b82f6;">
-                    <div style="font-size: 13px; color: #1e40af; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email Address</div>
-                    <div id="userEmailModal" style="font-size: 16px; font-weight: 700; color: #1e3a8a;"></div>
-                </div>
-                <div style="padding: 16px; background: #f0fdf4; border-radius: 12px; border: 2px solid #86efac;">
-                    <div style="font-size: 13px; color: #166534; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">User ID</div>
-                    <div id="accountUserId" style="font-size: 12px; font-weight: 600; color: #15803d; word-break: break-all;"></div>
+                <div style="padding: 16px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 12px; border: 2px solid #3b82f6;">
+                    <div style="font-size: 13px; color: #1e40af; margin-bottom: 6px; font-weight: 600;">Email Address</div>
+                    <div id="userEmailModal" style="font-size: 15px; font-weight: 700; color: #1e3a8a;"></div>
+                    <div style="font-size: 13px; color: #1e40af; margin-top: 12px; margin-bottom: 6px; font-weight: 600;">User ID</div>
+                    <div id="accountUserId" style="font-size: 12px; font-weight: 600; color: #1e3a8a; word-break: break-all; opacity: 0.75;"></div>
                 </div>
             </div>
 
             <!-- Data Summary -->
             <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
                 <div class="section-title">📊 Data Summary</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="accountDataSummary">
-                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
-                        <div id="accountTxCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
-                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Transactions</div>
+                <div style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">Overview of your stored data</div>
+                <div style="padding: 16px; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 14px; color: #6b7280;">Transactions</span>
+                        <span id="accountTxCount" style="font-size: 14px; font-weight: 700; color: #1f2937;">—</span>
                     </div>
-                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
-                        <div id="accountHabitCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
-                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Habits</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 14px; color: #6b7280;">Habits</span>
+                        <span id="accountHabitCount" style="font-size: 14px; font-weight: 700; color: #1f2937;">—</span>
                     </div>
-                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
-                        <div id="accountPaymentCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
-                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Payment Methods</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 14px; color: #6b7280;">Payment Methods</span>
+                        <span id="accountPaymentCount" style="font-size: 14px; font-weight: 700; color: #1f2937;">—</span>
                     </div>
-                    <div style="padding: 14px; background: #f9fafb; border-radius: 12px; text-align: center; border: 2px solid #e5e7eb;">
-                        <div id="accountEnvelopeCount" style="font-size: 22px; font-weight: 800; color: #1f2937;">—</div>
-                        <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-top: 2px;">Categories</div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 14px; color: #6b7280;">Categories</span>
+                        <span id="accountEnvelopeCount" style="font-size: 14px; font-weight: 700; color: #1f2937;">—</span>
                     </div>
                 </div>
             </div>
@@ -3665,18 +3664,19 @@
             <!-- App Info -->
             <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
                 <div class="section-title">ℹ️ App Information</div>
-                <div style="padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <div style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">Version and sync status</div>
+                <div style="padding: 16px; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <span style="font-size: 14px; color: #6b7280;">Version</span>
-                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">1.0.0</span>
+                        <span style="font-size: 14px; font-weight: 700; color: #1f2937;">1.0.0</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <span style="font-size: 14px; color: #6b7280;">Last Synced</span>
-                        <span id="accountLastSynced" style="font-size: 14px; font-weight: 600; color: #1f2937;">—</span>
+                        <span id="accountLastSynced" style="font-size: 14px; font-weight: 700; color: #1f2937;">—</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="font-size: 14px; color: #6b7280;">Storage</span>
-                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Cloud Synced ☁️</span>
+                        <span style="font-size: 14px; font-weight: 700; color: #1f2937;">Cloud Synced ☁️</span>
                     </div>
                 </div>
             </div>
@@ -3684,7 +3684,8 @@
             <!-- Logout -->
             <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
                 <div class="section-title">🚪 Sign Out</div>
-                <button class="logout-btn" id="logoutBtn" style="width: 100%; padding: 14px;">🚪 Logout</button>
+                <div style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">You'll need to sign in again to access your data</div>
+                <button class="add-btn" id="logoutBtn" style="width: 100%; background: linear-gradient(135deg, #ef4444, #dc2626);">🚪 Logout</button>
             </div>
         </div>
     </div>
