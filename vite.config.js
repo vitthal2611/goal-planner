@@ -1,15 +1,23 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  root: 'public',
-  envDir: resolve(__dirname, '.'),
-  server: {
-    port: 5000,
-    open: true
-  },
+  plugins: [react()],
   build: {
-    outDir: '../dist',
-    emptyOutDir: true
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore']
+        }
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    open: true
   }
-})
+});

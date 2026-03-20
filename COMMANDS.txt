@@ -1,0 +1,33 @@
+# Quick Command Reference
+
+## Development
+npm install              # Install dependencies
+npm run dev             # Start dev server (http://localhost:3000)
+npm run build           # Build for production
+npm run preview         # Preview production build
+
+## Deployment
+npm run deploy          # Build and deploy to Firebase
+./deploy.sh             # Alternative deployment script
+
+## Firebase
+firebase login          # Login to Firebase
+firebase use            # Select Firebase project
+firebase deploy         # Deploy to hosting
+
+## Troubleshooting
+rm -rf node_modules     # Delete dependencies
+npm install             # Reinstall dependencies
+npm run dev -- --port 3001  # Use different port
+
+## File Locations
+src/components/         # React components
+src/store/              # State management
+src/config/firebase.js  # Firebase config
+src/styles/global.css   # Global styles
+
+## Documentation
+GETTING_STARTED.md      # Start here!
+QUICKSTART.md           # 5-minute setup
+README.md               # Project overview
+ARCHITECTURE.md         # Technical details
