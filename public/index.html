@@ -6749,14 +6749,64 @@
     }
 
     /**
-     * Focus on amount input after a short delay
+     * Focus on amount input after a short delay and add real-time validation
      * @param {HTMLElement} entry - Entry element containing the amount input
      * @param {string} selector - CSS selector for the amount input (default: '#amountInput')
      */
     function focusAmountInput(entry, selector = '#amountInput') {
       setTimeout(() => {
         const amountInput = entry.querySelector(selector);
-        if (amountInput) amountInput.focus();
+        if (amountInput) {
+          amountInput.focus();
+          
+          // Add real-time validation
+          amountInput.addEventListener('input', function() {
+            clearFieldError(this);
+          });
+          
+          amountInput.addEventListener('blur', function() {
+            if (this.value) {
+              const validation = validateAmount(this.value);
+              if (!validation.valid) {
+                showFieldError(this, validation.error);
+              }
+            }
+          });
+        }
+        
+        // Add validation to description field
+        const descInput = entry.querySelector('[data-field="description"], #descriptionInput');
+        if (descInput) {
+          descInput.addEventListener('input', function() {
+            clearFieldError(this);
+          });
+          
+          descInput.addEventListener('blur', function() {
+            if (this.value) {
+              const validation = validateDescription(this.value);
+              if (!validation.valid) {
+                showFieldError(this, validation.error);
+              }
+            }
+          });
+        }
+        
+        // Add validation to date field
+        const dateInput = entry.querySelector('[data-field="date"], #transactionDate');
+        if (dateInput) {
+          dateInput.addEventListener('input', function() {
+            clearFieldError(this);
+          });
+          
+          dateInput.addEventListener('blur', function() {
+            if (this.value) {
+              const validation = validateDate(this.value);
+              if (!validation.valid) {
+                showFieldError(this, validation.error);
+              }
+            }
+          });
+        }
       }, 100);
     }
 
@@ -6949,32 +6999,168 @@
       document.getElementById('identity').focus();
     });
 
+    // ============================================
+    // VALIDATION UTILITIES
+    // ============================================
+    
+    function validateAmount(amount) {
+      const num = parseFloat(amount);
+      if (!amount || amount.trim() === '') return { valid: false, error: 'Amount is required' };
+      if (isNaN(num)) return { valid: false, error: 'Invalid amount' };
+      if (num <= 0) return { valid: false, error: 'Amount must be greater than 0' };
+      if (num > 10000000) return { valid: false, error: 'Amount too large' };
+      return { valid: true };
+    }
+    
+    function validateDescription(description) {
+      if (!description || description.trim() === '') return { valid: false, error: 'Description is required' };
+      if (description.trim().length < 2) return { valid: false, error: 'Description too short' };
+      if (description.length > 200) return { valid: false, error: 'Description too long (max 200 chars)' };
+      return { valid: true };
+    }
+    
+    function validateDate(dateStr) {
+      if (!dateStr) return { valid: false, error: 'Date is required' };
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return { valid: false, error: 'Invalid date' };
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (date > today) return { valid: false, error: 'Future dates not allowed' };
+      return { valid: true };
+    }
+    
+    function validateSelection(value, fieldName) {
+      if (!value || value.trim() === '') return { valid: false, error: `${fieldName} is required` };
+      return { valid: true };
+    }
+    
+    function showFieldError(field, message) {
+      // Remove existing error
+      const existingError = field.parentElement.querySelector('.field-error');
+      if (existingError) existingError.remove();
+      
+      // Add error styling
+      field.style.borderColor = '#ef4444';
+      field.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+      
+      // Add error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'field-error';
+      errorDiv.textContent = message;
+      errorDiv.style.cssText = 'color: #ef4444; font-size: 11px; margin-top: 4px; font-weight: 600;';
+      field.parentElement.appendChild(errorDiv);
+      
+      // Scroll to first error
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    function clearFieldError(field) {
+      const existingError = field.parentElement.querySelector('.field-error');
+      if (existingError) existingError.remove();
+      field.style.borderColor = '';
+      field.style.boxShadow = '';
+    }
+    
+    function setSubmitButtonLoading(loading) {
+      if (loading) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.dataset.originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Processing...';
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        if (submitBtn.dataset.originalText) {
+          submitBtn.textContent = submitBtn.dataset.originalText;
+        }
+      }
+    }
+
     quickForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      if (activeType === 'expense') {
-        // Handle multiple expenses
-        const entries = document.querySelectorAll('.expense-entry');
-        let successCount = 0;
-        let totalAmount = 0;
-        
-        for (const entry of entries) {
-          const amount = entry.querySelector('[data-field="amount"]').value;
-          const description = entry.querySelector('[data-field="description"]').value;
-          const envelope = getSelectedValue(entry.querySelector('[data-field="envelope"]'));
-          const payment = getSelectedValue(entry.querySelector('[data-field="payment"]'));
-          const expenseType = getSelectedValue(entry.querySelector('[data-field="expenseType"]'));
+      // Prevent double submission
+      if (submitBtn.disabled) return;
+      
+      setSubmitButtonLoading(true);
+      
+      try {
+        if (activeType === 'expense') {
+          // Handle multiple expenses with validation
+          const entries = document.querySelectorAll('.expense-entry');
+          let successCount = 0;
+          let totalAmount = 0;
+          let hasValidationError = false;
           
-          const dateInput = entry.querySelector('[data-field="date"]');
-          const selectedDateVal = dateInput ? dateInput.value : '';
-          const entryDate = selectedDateVal ? new Date(selectedDateVal).toISOString() : new Date().toISOString();
-
-          if (amount && description && envelope && payment && expenseType) {
+          for (const entry of entries) {
+            const amountField = entry.querySelector('[data-field="amount"]');
+            const descriptionField = entry.querySelector('[data-field="description"]');
+            const dateField = entry.querySelector('[data-field="date"]');
+            const envelopeContainer = entry.querySelector('[data-field="envelope"]');
+            const paymentContainer = entry.querySelector('[data-field="payment"]');
+            const expenseTypeContainer = entry.querySelector('[data-field="expenseType"]');
+            
+            const amount = amountField.value;
+            const description = descriptionField.value;
+            const dateValue = dateField.value;
+            const envelope = getSelectedValue(envelopeContainer);
+            const payment = getSelectedValue(paymentContainer);
+            const expenseType = getSelectedValue(expenseTypeContainer);
+            
+            // Clear previous errors
+            clearFieldError(amountField);
+            clearFieldError(descriptionField);
+            clearFieldError(dateField);
+            
+            // Validate amount
+            const amountValidation = validateAmount(amount);
+            if (!amountValidation.valid) {
+              showFieldError(amountField, amountValidation.error);
+              hasValidationError = true;
+              continue;
+            }
+            
+            // Validate description
+            const descValidation = validateDescription(description);
+            if (!descValidation.valid) {
+              showFieldError(descriptionField, descValidation.error);
+              hasValidationError = true;
+              continue;
+            }
+            
+            // Validate date
+            const dateValidation = validateDate(dateValue);
+            if (!dateValidation.valid) {
+              showFieldError(dateField, dateValidation.error);
+              hasValidationError = true;
+              continue;
+            }
+            
+            // Validate selections
+            if (!envelope) {
+              showToast('Please select a category', 'error');
+              hasValidationError = true;
+              continue;
+            }
+            if (!payment) {
+              showToast('Please select payment method', 'error');
+              hasValidationError = true;
+              continue;
+            }
+            if (!expenseType) {
+              showToast('Please select expense type', 'error');
+              hasValidationError = true;
+              continue;
+            }
+            
+            const entryDate = new Date(dateValue).toISOString();
             const transactionData = {
               id: `EXP-${Date.now()}-${successCount}`,
               type: 'expense',
-              amount,
-              description,
+              amount: parseFloat(amount).toFixed(2),
+              description: description.trim(),
               envelope,
               payment,
               expenseType,
@@ -6995,62 +7181,90 @@
               totalAmount += parseFloat(amount);
             } catch (error) {
               console.error('Error adding expense:', error);
+              showToast('Error saving expense. Please try again.', 'error');
             }
-          } else {
-            const missing = [];
-            if (!amount) missing.push('amount');
-            if (!description) missing.push('description');
-            if (!envelope) missing.push('category');
-            if (!payment) missing.push('payment');
-            if (!expenseType) missing.push('type');
-            showToast(`Missing: ${missing.join(', ')}`, 'error');
           }
-        } // end for loop
 
-        if (successCount > 0) {
-          saveToLocalStorage();
-          updateBalanceSummary();
-          updateRecentTransactions();
-          updatePaymentBalances();
-          updateEnvelopeBudget();
+          if (hasValidationError && successCount === 0) {
+            showToast('Please fix the errors and try again', 'error');
+            setSubmitButtonLoading(false);
+            return;
+          }
+
+          if (successCount > 0) {
+            saveToLocalStorage();
+            updateBalanceSummary();
+            updateRecentTransactions();
+            updatePaymentBalances();
+            updateEnvelopeBudget();
+            
+            const message = successCount > 1 
+              ? `${successCount} expenses added: ₹${totalAmount.toLocaleString('en-IN')}`
+              : `Expense: ₹${totalAmount.toLocaleString('en-IN')}`;
+            showToast(message, 'success');
+            transactionModal.classList.remove('show');
+            expenseEntriesContainer.innerHTML = '';
+            expenseEntryCount = 0;
+          }
           
-          const message = successCount > 1 
-            ? `${successCount} expenses added: ₹${totalAmount.toLocaleString('en-IN')}`
-            : `Expense: ₹${totalAmount.toLocaleString('en-IN')}`;
-          showToast(message, 'success');
-          transactionModal.classList.remove('show');
-          expenseEntriesContainer.innerHTML = '';
-          expenseEntryCount = 0;
-        } else {
-          showToast('Please fill all required fields', 'error');
-        }
-        
-      } else if (activeType === 'transfer') {
-        const amount = document.getElementById('amountInput').value;
-        const description = document.getElementById('descriptionInput').value;
-        const transferFromContainer = document.getElementById('transferFromSelector');
-        const transferToContainer = document.getElementById('transferToSelector');
-        const fromPayment = getSelectedValue(transferFromContainer);
-        const toPayment = getSelectedValue(transferToContainer);
-        
-        const transferDateInput = document.getElementById('transactionDate');
-        const transferDateVal = transferDateInput ? transferDateInput.value : '';
-        const transferDate = transferDateVal ? new Date(transferDateVal).toISOString() : new Date().toISOString();
+        } else if (activeType === 'transfer') {
+          const amountField = document.getElementById('amountInput');
+          const dateField = document.getElementById('transactionDate');
+          const transferFromContainer = document.getElementById('transferFromSelector');
+          const transferToContainer = document.getElementById('transferToSelector');
+          
+          const amount = amountField.value;
+          const description = document.getElementById('descriptionInput').value;
+          const dateValue = dateField.value;
+          const fromPayment = getSelectedValue(transferFromContainer);
+          const toPayment = getSelectedValue(transferToContainer);
+          
+          // Clear previous errors
+          clearFieldError(amountField);
+          clearFieldError(dateField);
+          
+          // Validate amount
+          const amountValidation = validateAmount(amount);
+          if (!amountValidation.valid) {
+            showFieldError(amountField, amountValidation.error);
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Validate date
+          const dateValidation = validateDate(dateValue);
+          if (!dateValidation.valid) {
+            showFieldError(dateField, dateValidation.error);
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Validate selections
+          if (!fromPayment) {
+            showToast('Please select source account', 'error');
+            setSubmitButtonLoading(false);
+            return;
+          }
+          if (!toPayment) {
+            showToast('Please select destination account', 'error');
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Check if same account
+          if (fromPayment === toPayment) {
+            showToast('Cannot transfer to the same account', 'error');
+            setSubmitButtonLoading(false);
+            return;
+          }
 
-        // Validation: Check if same account selected
-        if (fromPayment && toPayment && fromPayment === toPayment) {
-          showToast('Cannot transfer to the same account', 'error');
-          return;
-        }
-
-        if (amount && fromPayment && toPayment) {
-          // Auto-generate description if empty
-          const finalDescription = description || `Transfer from ${fromPayment} to ${toPayment}`;
+          const finalDescription = description.trim() || `Transfer from ${fromPayment} to ${toPayment}`;
+          const transferDate = new Date(dateValue).toISOString();
           
           const transactionData = {
             id: `TRF-${Date.now()}`,
             type: 'transfer',
-            amount,
+            amount: parseFloat(amount).toFixed(2),
             description: finalDescription,
             from: fromPayment,
             to: toPayment,
@@ -7069,7 +7283,7 @@
             updateRecentTransactions();
             updatePaymentBalances();
             updateEnvelopeBudget();
-            const message = `Moved ₹${amount} from ${fromPayment} to ${toPayment}`;
+            const message = `Moved ₹${parseFloat(amount).toLocaleString('en-IN')} from ${fromPayment} to ${toPayment}`;
             showToast(message, 'success');
             transactionModal.classList.remove('show');
             expenseEntriesContainer.innerHTML = '';
@@ -7078,28 +7292,60 @@
             console.error('Error adding transfer:', error);
             showToast('Error moving money. Please try again.', 'error');
           }
-        } else {
-          if (!amount) showToast('Please enter amount', 'error');
-          else if (!fromPayment) showToast('Please select source account', 'error');
-          else if (!toPayment) showToast('Please select destination account', 'error');
-        }
-        
-      } else if (activeType === 'income') {
-        const amount = document.getElementById('amountInput').value;
-        const description = document.getElementById('descriptionInput').value;
-        const paymentContainer = document.getElementById('incomePaymentSelector');
-        const payment = getSelectedValue(paymentContainer);
-        
-        const incomeDateInput = document.getElementById('transactionDate');
-        const incomeDateVal = incomeDateInput ? incomeDateInput.value : '';
-        const incomeDate = incomeDateVal ? new Date(incomeDateVal).toISOString() : new Date().toISOString();
+          
+        } else if (activeType === 'income') {
+          const amountField = document.getElementById('amountInput');
+          const descriptionField = document.getElementById('descriptionInput');
+          const dateField = document.getElementById('transactionDate');
+          const paymentContainer = document.getElementById('incomePaymentSelector');
+          
+          const amount = amountField.value;
+          const description = descriptionField.value;
+          const dateValue = dateField.value;
+          const payment = getSelectedValue(paymentContainer);
+          
+          // Clear previous errors
+          clearFieldError(amountField);
+          clearFieldError(descriptionField);
+          clearFieldError(dateField);
+          
+          // Validate amount
+          const amountValidation = validateAmount(amount);
+          if (!amountValidation.valid) {
+            showFieldError(amountField, amountValidation.error);
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Validate description
+          const descValidation = validateDescription(description);
+          if (!descValidation.valid) {
+            showFieldError(descriptionField, descValidation.error);
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Validate date
+          const dateValidation = validateDate(dateValue);
+          if (!dateValidation.valid) {
+            showFieldError(dateField, dateValidation.error);
+            setSubmitButtonLoading(false);
+            return;
+          }
+          
+          // Validate payment
+          if (!payment) {
+            showToast('Please select payment method', 'error');
+            setSubmitButtonLoading(false);
+            return;
+          }
 
-        if (amount && description && payment) {
+          const incomeDate = new Date(dateValue).toISOString();
           const transactionData = {
             id: `INC-${Date.now()}`,
             type: 'income',
-            amount,
-            description,
+            amount: parseFloat(amount).toFixed(2),
+            description: description.trim(),
             payment,
             date: incomeDate
           };
@@ -7116,7 +7362,7 @@
             updateRecentTransactions();
             updatePaymentBalances();
             updateEnvelopeBudget();
-            const message = `Income: ₹${amount} - ${description}`;
+            const message = `Income: ₹${parseFloat(amount).toLocaleString('en-IN')} - ${description.trim()}`;
             showToast(message, 'success');
             transactionModal.classList.remove('show');
             expenseEntriesContainer.innerHTML = '';
@@ -7125,11 +7371,9 @@
             console.error('Error adding income:', error);
             showToast('Error adding income. Please try again.', 'error');
           }
-        } else {
-          if (!amount) showToast('Please enter amount', 'error');
-          else if (!description) showToast('Please enter description', 'error');
-          else if (!payment) showToast('Please select payment method', 'error');
         }
+      } finally {
+        setSubmitButtonLoading(false);
       }
     });
 </script>
