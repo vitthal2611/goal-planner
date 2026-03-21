@@ -465,15 +465,28 @@
         }
 
         .modal-content {
-          background: var(--color-surface);
-          border-radius: var(--radius-xl);
-          padding: var(--space-lg);
-          max-width: 480px;
+          background: linear-gradient(to bottom, #ffffff, #fafbfc);
+          border-radius: 24px;
+          padding: 32px 28px;
+          max-width: 500px;
           width: 94%;
-          max-height: 88vh;
+          max-height: 90vh;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          box-shadow: var(--shadow-lg);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+          opacity: 1;
+          border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 400px) {
+          .modal-content {
+            padding: 24px 20px;
+            border-radius: 20px;
+            width: 96%;
+          }
+        }
+        
+        .modal.show .modal-content {
           animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -538,13 +551,20 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 24px;
-          padding-bottom: 16px;
+          margin-bottom: 28px;
+          padding-bottom: 20px;
           border-bottom: 2px solid #e5e7eb;
+        }
+        
+        @media (max-width: 400px) {
+          .modal-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+          }
         }
 
         .modal-title {
-          font-size: 22px;
+          font-size: 24px;
           font-weight: 800;
           color: #0f172a;
           letter-spacing: -0.5px;
@@ -552,6 +572,12 @@
           align-items: center;
           gap: 10px;
           font-family: 'Inter', sans-serif;
+        }
+        
+        @media (max-width: 400px) {
+          .modal-title {
+            font-size: 22px;
+          }
         }
 
         .close-btn {
@@ -1051,42 +1077,99 @@
         .amount-input-wrapper {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 0;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-          border-radius: 12px;
-          border: 2px solid #3b82f6;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-          transition: all 0.3s;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding: 20px 24px;
+          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+          border-radius: 20px;
+          border: 3px solid transparent;
+          background-clip: padding-box;
+          position: relative;
+          box-shadow: 0 6px 24px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @media (max-width: 400px) {
+          .amount-input-wrapper {
+            padding: 18px 20px;
+            border-radius: 18px;
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+        }
+        
+        .amount-input-wrapper::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 20px;
+          padding: 3px;
+          background: linear-gradient(135deg, #3b82f6, #2563eb, #1d4ed8);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        
+        @media (max-width: 400px) {
+          .amount-input-wrapper::before {
+            border-radius: 18px;
+          }
+        }
+
+        .amount-input-wrapper:focus-within::before {
+          opacity: 1;
         }
 
         .amount-input-wrapper:focus-within {
-          border-color: #2563eb;
-          box-shadow: 0 3px 12px rgba(59, 130, 246, 0.25);
-          transform: translateY(-1px);
+          box-shadow: 0 8px 30px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+          transform: translateY(-2px);
+        }
+        
+        @media (hover: none) {
+          .amount-input-wrapper:focus-within {
+            transform: none;
+          }
         }
 
         .currency {
-          font-size: 20px;
-          font-weight: 800;
-          color: #3b82f6;
+          font-size: 28px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          line-height: 1;
+        }
+        
+        @media (max-width: 400px) {
+          .currency {
+            font-size: 24px;
+          }
         }
 
         .amount-input {
           flex: 1;
           border: none;
           background: transparent;
-          font-size: 20px;
-          font-weight: 800;
+          font-size: 32px;
+          font-weight: 900;
           color: #1e3a8a;
           outline: none;
           width: 100%;
+          letter-spacing: -0.5px;
+        }
+        
+        @media (max-width: 400px) {
+          .amount-input {
+            font-size: 28px;
+          }
         }
 
         .amount-input::placeholder {
           color: #93c5fd;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .amount-input::-webkit-inner-spin-button,
@@ -1097,24 +1180,168 @@
 
         .description-input {
           width: 100%;
-          padding: 13px 16px;
-          border: 2px solid var(--color-border);
-          border-radius: var(--radius-md);
-          font-size: var(--font-base);
-          transition: border-color 0.2s, box-shadow 0.2s;
-          background: var(--color-surface);
+          padding: 16px 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 16px;
+          font-size: 15px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: #ffffff;
           font-weight: 500;
           font-family: 'Inter', sans-serif;
-          color: var(--color-text);
+          color: #1f2937;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 400px) {
+          .description-input {
+            padding: 14px 18px;
+            font-size: 14px;
+            border-radius: 14px;
+          }
         }
 
         .description-input:focus {
           outline: none;
-          border-color: var(--color-primary);
-          box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+          border-color: #3b82f6;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        @media (hover: none) {
+          .description-input:focus {
+            transform: none;
+          }
         }
 
-        .description-input::placeholder { color: var(--color-text-muted); }
+        .description-input::placeholder { 
+          color: #9ca3af;
+          font-weight: 400;
+        }
+        
+        /* ── Field Labels ── */
+        .field-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #6b7280;
+          margin-bottom: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        @media (max-width: 400px) {
+          .field-label {
+            font-size: 11px;
+            margin-bottom: 8px;
+          }
+        }
+        
+        /* ── Form Field Spacing ── */
+        .form-field {
+          margin-bottom: 20px;
+        }
+        
+        @media (max-width: 400px) {
+          .form-field {
+            margin-bottom: 16px;
+          }
+        }
+        
+        .form-field:last-child {
+          margin-bottom: 0;
+        }
+        
+        .form-section {
+          margin-bottom: 24px;
+        }
+        
+        @media (max-width: 400px) {
+          .form-section {
+            margin-bottom: 20px;
+          }
+        }
+        
+        .form-section:last-child {
+          margin-bottom: 0;
+        }
+        
+        /* ── Info Banner ── */
+        .info-banner {
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          padding: 14px 16px;
+          border-radius: 14px;
+          margin-bottom: 20px;
+          border: 2px solid #93c5fd;
+        }
+        
+        @media (max-width: 400px) {
+          .info-banner {
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+          }
+        }
+        
+        .info-banner-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1e40af;
+          margin-bottom: 4px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .info-banner-text {
+          font-size: 12px;
+          color: #3b82f6;
+          line-height: 1.4;
+        }
+        
+        /* ── Date Input ── */
+        input[type="date"] {
+          width: 100%;
+          padding: 14px 18px;
+          border: 2px solid #e5e7eb;
+          border-radius: 16px;
+          font-size: 15px;
+          font-weight: 600;
+          color: #1f2937;
+          background: #ffffff;
+          outline: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-family: 'Inter', sans-serif;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 400px) {
+          input[type="date"] {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-radius: 14px;
+          }
+        }
+        
+        input[type="date"]:hover {
+          border-color: #cbd5e1;
+        }
+        
+        input[type="date"]:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        @media (hover: none) {
+          input[type="date"]:focus {
+            transform: none;
+          }
+        }
 
         .envelope-select {
           width: 100%;
@@ -1159,20 +1386,30 @@
         }
         
         .visual-option {
-          padding: 14px 10px;
+          padding: 18px 14px;
           border: 2px solid #e5e7eb;
-          border-radius: 14px;
+          border-radius: 18px;
           background: linear-gradient(135deg, #ffffff, #f9fafb);
           cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          min-height: 90px;
+          min-height: 110px;
           position: relative;
-          overflow: hidden;
+          overflow: visible;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option {
+            padding: 16px 12px;
+            min-height: 100px;
+            border-radius: 16px;
+          }
         }
         
         .visual-option::before {
@@ -1185,12 +1422,29 @@
           background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05));
           opacity: 0;
           transition: opacity 0.25s;
+          border-radius: 18px;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option::before {
+            border-radius: 16px;
+          }
         }
         
         .visual-option:hover {
-          border-color: #3b82f6;
-          transform: translateY(-3px);
-          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+          border-color: #93c5fd;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+        }
+        
+        @media (hover: none) {
+          .visual-option:hover {
+            transform: none;
+          }
+          
+          .visual-option:active {
+            transform: scale(0.97);
+          }
         }
         
         .visual-option:hover::before {
@@ -1200,55 +1454,292 @@
         .visual-option.selected {
           border-color: #3b82f6;
           border-width: 3px;
-          background: linear-gradient(135deg, #dbeafe, #eff6ff);
-          box-shadow: 0 6px 24px rgba(59, 130, 246, 0.3);
-          transform: translateY(-2px);
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+          box-shadow: 0 10px 32px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.15);
+          transform: translateY(-4px) scale(1.03);
+          padding: 17px 13px;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option.selected {
+            padding: 15px 11px;
+            transform: translateY(-3px) scale(1.02);
+          }
+        }
+        
+        .visual-option.selected::before {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #60a5fa, #3b82f6, #2563eb);
+          opacity: 0.3;
+          filter: blur(10px);
+          z-index: -1;
+          animation: glowPulse 2s ease-in-out infinite;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option.selected::before {
+            border-radius: 18px;
+            filter: blur(8px);
+          }
+        }
+        
+        .visual-option.selected > div:first-child {
+          font-size: 32px !important;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+          animation: iconPulse 0.4s ease-out;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option.selected > div:first-child {
+            font-size: 30px !important;
+          }
+        }
+        
+        .visual-option.selected > div:last-child {
+          color: #ffffff !important;
+          font-weight: 700 !important;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         
         .visual-option.selected::after {
           content: '✓';
           position: absolute;
-          top: 4px;
-          right: 4px;
-          width: 20px;
-          height: 20px;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          top: -12px;
+          right: -12px;
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, #10b981, #059669);
           color: white;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 12px;
+          font-size: 15px;
           font-weight: bold;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+          border: 3px solid white;
+          animation: checkmarkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          z-index: 10;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option.selected::after {
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+            top: -10px;
+            right: -10px;
+          }
         }
         
         .visual-option:active {
           transform: scale(0.96);
         }
-
-        .transfer-from {
-          display: none;
+        
+        /* ── Visual Option Content ── */
+        .visual-option-icon {
+          font-size: 28px;
+          margin-bottom: 6px;
+          transition: transform 0.3s, filter 0.3s;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option-icon {
+            font-size: 26px;
+            margin-bottom: 4px;
+          }
+        }
+        
+        .visual-option-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+          line-height: 1.2;
+        }
+        
+        @media (max-width: 400px) {
+          .visual-option-label {
+            font-size: 10px;
+          }
         }
 
-        .transfer-from.show {
-          display: block;
+        /* ── Payment Method Chips ── */
+        .pm-chips {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          gap: 14px;
+          width: 100%;
+        }
+        
+        @media (max-width: 400px) {
+          .pm-chips {
+            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+            gap: 12px;
+          }
         }
 
-        .transfer-to {
-          display: none;
+        .pm-chip {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 16px 18px;
+          border: 2px solid #e5e7eb;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #ffffff, #f9fafb);
+          font-size: 14px;
+          font-weight: 600;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          white-space: nowrap;
+          user-select: none;
+          position: relative;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          min-height: 56px;
+          text-align: center;
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 400px) {
+          .pm-chip {
+            padding: 14px 16px;
+            font-size: 13px;
+            min-height: 52px;
+            gap: 8px;
+          }
         }
 
-        .transfer-to.show {
-          display: block;
+        .pm-chip .pm-chip-icon {
+          font-size: 22px;
+          line-height: 1;
+          transition: transform 0.25s;
+          flex-shrink: 0;
+        }
+        
+        @media (max-width: 400px) {
+          .pm-chip .pm-chip-icon {
+            font-size: 20px;
+          }
+        }
+
+        .pm-chip:hover {
+          border-color: #93c5fd;
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          color: #1d4ed8;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+        }
+        
+        .pm-chip:hover .pm-chip-icon {
+          transform: scale(1.15);
+        }
+        
+        @media (hover: none) {
+          .pm-chip:hover {
+            transform: none;
+          }
+          
+          .pm-chip:active {
+            transform: scale(0.97);
+          }
+        }
+
+        .pm-chip.selected {
+          border-color: #3b82f6;
+          border-width: 3px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+          color: #ffffff;
+          box-shadow: 0 8px 28px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.15);
+          transform: translateY(-3px) scale(1.02);
+          padding: 15px 17px;
+          font-weight: 700;
+        }
+        
+        @media (max-width: 400px) {
+          .pm-chip.selected {
+            padding: 13px 15px;
+            transform: translateY(-2px) scale(1.02);
+          }
+        }
+
+        .pm-chip.selected .pm-chip-icon {
+          filter: brightness(10) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+          transform: scale(1.15);
+          animation: iconPulse 0.4s ease-out;
+        }
+        
+        @keyframes iconPulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.25); }
+          100% { transform: scale(1.15); }
+        }
+        
+        .pm-chip.selected::before {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: 18px;
+          background: linear-gradient(135deg, #60a5fa, #3b82f6, #2563eb);
+          opacity: 0.3;
+          filter: blur(8px);
+          z-index: -1;
+          animation: glowPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.5; }
+        }
+        
+        .pm-chip.selected::after {
+          content: '✓';
+          position: absolute;
+          top: -10px;
+          right: -10px;
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+          font-weight: bold;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+          border: 3px solid white;
+          animation: checkmarkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes checkmarkPop {
+          0% { transform: scale(0) rotate(-180deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @media (max-width: 400px) {
+          .pm-chip.selected::after {
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+            top: -9px;
+            right: -9px;
+          }
+        }
+
+        .pm-chip:active {
+          transform: scale(0.96);
         }
 
         .submit-btn {
           width: 100%;
-          padding: 16px 24px;
+          padding: 18px 24px;
           border: none;
-          border-radius: 14px;
-          font-size: 16px;
+          border-radius: 16px;
+          font-size: 17px;
           font-weight: 800;
           color: white;
           cursor: pointer;
@@ -1257,6 +1748,20 @@
           letter-spacing: 0.5px;
           position: relative;
           overflow: hidden;
+          min-height: 56px;
+          -webkit-tap-highlight-color: transparent;
+          margin-top: 28px;
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        }
+        
+        @media (max-width: 400px) {
+          .submit-btn {
+            padding: 16px 20px;
+            font-size: 16px;
+            border-radius: 14px;
+            min-height: 52px;
+            margin-top: 24px;
+          }
         }
 
         .submit-btn::before {
@@ -1279,6 +1784,16 @@
 
         .submit-btn:hover {
           transform: translateY(-3px);
+        }
+        
+        @media (hover: none) {
+          .submit-btn:hover {
+            transform: none;
+          }
+          
+          .submit-btn:active {
+            transform: scale(0.97);
+          }
         }
 
         .submit-btn:active {
@@ -2407,8 +2922,6 @@
           background: #fff1f2;
           color: #e11d48;
         }
-          flex: 1;
-        }
 
         .habit-title {
           font-size: 16px;
@@ -3314,7 +3827,7 @@
             </button>
             <button class="type-btn transfer" id="transferBtn">
                 <span class="icon">⇄</span>
-                <span>Transfer</span>
+                <span>Move Money</span>
             </button>
         </div>
 
@@ -3609,9 +4122,14 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
                         <span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Date</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Type</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Description</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Category</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Payment Method</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Expense Type</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Amount</span>
                     </div>
+                    <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 8px; margin-top: 12px;">Optional column:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                        <span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">ID</span>
+                    </div>
                     <div style="font-size: 12px; color: #5b21b6; margin-bottom: 14px; line-height: 1.6;">
                         💡 Type: <strong>income</strong>, <strong>expense</strong>, <strong>transfer-in</strong>, <strong>transfer-out</strong><br>
                         💡 Expense Type: <strong>need</strong>, <strong>want</strong>, <strong>save</strong><br>
+                        💡 ID: Auto-generated if not provided (INC-*, EXP-*, TRF-*)<br>
                         ✅ Adds to existing data — no data loss
                     </div>
                     <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
@@ -3686,6 +4204,8 @@
     </div>
 </div>
 
+</div>
+
 <!-- Transaction Modal -->
 <div class="modal" id="transactionModal">
     <div class="modal-content">
@@ -3728,8 +4248,6 @@
       <button onclick="document.getElementById('csvPreviewModal').style.display='none'" style="flex:1; padding:16px; border:2px solid #e5e7eb; background:white; color:#6b7280; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer;">Cancel</button>
       <button id="csvConfirmImportBtn" style="flex:2; padding:16px; border:none; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(124,58,237,0.4);">✅ Import All</button>
     </div>
-  </div>
-</div>
   </div>
 </div>
 
@@ -4089,10 +4607,11 @@
       
       // Add transaction details header
       csvContent += `TRANSACTION DETAILS\n`;
-      csvContent += `Date,Type,Description,Category,Payment Method,Expense Type,Amount\n`;
+      csvContent += `ID,Date,Type,Description,Category,Payment Method,Expense Type,Amount\n`;
       
       // Add transactions
       sortedTransactions.forEach(t => {
+        const id = t.id || 'N/A';
         const date = new Date(t.date).toLocaleString('en-IN', { 
           year: 'numeric', 
           month: 'short', 
@@ -4107,7 +4626,7 @@
         const expenseType = t.expenseType ? (t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)) : '-';
         const amount = parseFloat(t.amount);
         
-        csvContent += `${date},${type},${description},${category},${payment},${expenseType},${amount}\n`;
+        csvContent += `${id},${date},${type},${description},${category},${payment},${expenseType},${amount}\n`;
       });
       
       // Create and download file
@@ -5312,6 +5831,7 @@
         return '';
       };
 
+      const id = get('id', 'transaction id', 'transactionid');
       const rawDate = get('date');
       const type = get('type').toLowerCase();
       const description = get('description', 'desc', 'note', 'narration', 'particulars');
@@ -5347,6 +5867,7 @@
       if (type === 'transfer' && (!fromAccount || !toAccount)) errors.push('Transfer needs From Account and To Account columns');
 
       return {
+        id: id || null,
         date: parsedDate || rawDate,
         type: type || 'expense',
         description,
@@ -5429,7 +5950,7 @@
 
     document.getElementById('csvConfirmImportBtn').addEventListener('click', () => {
       if (csvParsedRows.length === 0) return;
-      const newTransactions = csvParsedRows.map(r => {
+      const newTransactions = csvParsedRows.map((r, index) => {
         let type = r.type;
         let from = '';
         let to = '';
@@ -5445,8 +5966,23 @@
           to = r.payment;
         }
 
+        // Generate ID based on type if not provided
+        let transactionId = r.id;
+        if (!transactionId) {
+          const timestamp = Date.now() + index;
+          if (type === 'income') {
+            transactionId = `INC-${timestamp}`;
+          } else if (type === 'expense') {
+            transactionId = `EXP-${timestamp}-0`;
+          } else if (type === 'transfer') {
+            transactionId = `TRF-${timestamp}`;
+          } else {
+            transactionId = `${type.toUpperCase()}-${timestamp}`;
+          }
+        }
+
         return {
-          id: Date.now() + Math.random(),
+          id: transactionId,
           date: new Date(r.date).toISOString(),
           type,
           description: r.description,
@@ -5660,12 +6196,12 @@
         <div class="expense-entry-fields">
           <div class="amount-input-wrapper" style="margin-bottom: 16px;">
             <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" />
+            <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" name="expense-amount-${index}" id="expense-amount-${index}" />
           </div>
-          <input type="text" class="description-input" placeholder="What's this for?" data-field="description" style="margin-bottom: 16px;" />
+          <input type="text" class="description-input" placeholder="What's this for?" data-field="description" name="expense-description-${index}" id="expense-description-${index}" style="margin-bottom: 16px;" />
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">� Date</div>
-            <input type="date" data-field="date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+            <input type="date" data-field="date" name="expense-date-${index}" id="expense-date-${index}" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
           </div>
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📁 Category</div>
@@ -5673,7 +6209,7 @@
           </div>
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment</div>
-            <div class="visual-selector" data-field="payment" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+            <div class="pm-chips" data-field="payment"></div>
           </div>
           <div>
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Type</div>
@@ -5695,37 +6231,44 @@
         entry.innerHTML = `
           <div class="amount-input-wrapper" style="margin-bottom: 16px;">
             <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
+            <input type="number" inputmode="decimal" id="amountInput" name="income-amount" placeholder="0" class="amount-input" />
           </div>
-          <input type="text" id="descriptionInput" placeholder="What's this for?" class="description-input" style="margin-bottom: 16px;" />
+          <input type="text" id="descriptionInput" name="income-description" placeholder="What's this for?" class="description-input" style="margin-bottom: 16px;" />
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
-            <input type="date" id="transactionDate" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+            <input type="date" id="transactionDate" name="income-date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
           </div>
           <div>
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment Method</div>
-            <div class="visual-selector" id="incomePaymentSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+            <div class="pm-chips" id="incomePaymentSelector"></div>
           </div>
         `;
       } else if (type === 'transfer') {
         entry.innerHTML = `
+          <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 14px; border-radius: 12px; margin-bottom: 16px; border: 2px solid #93c5fd;">
+            <div style="font-size: 13px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">💡 Moving money between your accounts</div>
+            <div style="font-size: 12px; color: #3b82f6;">This doesn't affect your total balance</div>
+          </div>
           <div class="amount-input-wrapper" style="margin-bottom: 16px;">
             <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" id="amountInput" placeholder="0" class="amount-input" />
+            <input type="number" inputmode="decimal" id="amountInput" name="transfer-amount" placeholder="0" class="amount-input" />
           </div>
-          <input type="text" id="descriptionInput" placeholder="What's this for? (optional)" class="description-input" style="margin-bottom: 16px;" />
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
-            <input type="date" id="transactionDate" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+            <input type="date" id="transactionDate" name="transfer-date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
           </div>
           <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📤 From Payment Method</div>
-            <div class="visual-selector" id="transferFromSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📤 From Account</div>
+            <div class="pm-chips" id="transferFromSelector"></div>
+          </div>
+          <div style="display: flex; justify-content: center; margin: -8px 0 8px 0;">
+            <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 8px 16px; border-radius: 20px; font-size: 18px; font-weight: 700; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">↓</div>
           </div>
           <div>
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📥 To Payment Method</div>
-            <div class="visual-selector" id="transferToSelector" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📥 To Account</div>
+            <div class="pm-chips" id="transferToSelector"></div>
           </div>
+          <input type="text" id="descriptionInput" name="transfer-description" placeholder="Note (optional)" class="description-input" style="margin-top: 16px; font-size: 14px; color: #6b7280;" />
         `;
       } else {
         entry.innerHTML = `
@@ -5786,10 +6329,8 @@
       if (expenseEntryCount > 0) {
         const previousEntry = document.querySelector(`.expense-entry[data-index="${expenseEntryCount - 1}"]`);
         if (previousEntry) {
-          const prevEnvelopeBtn = previousEntry.querySelector('[data-field="envelope"] .visual-option.selected');
-          const prevPaymentBtn = previousEntry.querySelector('[data-field="payment"] .visual-option.selected');
-          previousEnvelope = prevEnvelopeBtn ? prevEnvelopeBtn.dataset.value : '';
-          previousPayment = prevPaymentBtn ? prevPaymentBtn.dataset.value : '';
+          previousEnvelope = getSelectedValue(previousEntry.querySelector('[data-field="envelope"]'));
+          previousPayment = getSelectedValue(previousEntry.querySelector('[data-field="payment"]'));
         }
       }
       
@@ -5800,200 +6341,11 @@
       const envelopeContainer = entry.querySelector('[data-field="envelope"]');
       const paymentContainer = entry.querySelector('[data-field="payment"]');
       
-      // Smart icon matching function
-      function getEnvelopeIcon(name) {
-        const lowerName = name.toLowerCase();
-        
-        // Food & Dining
-        if (lowerName.includes('food') || lowerName.includes('meal')) return '🍽️';
-        if (lowerName.includes('breakfast')) return '🥞';
-        if (lowerName.includes('lunch')) return '🍱';
-        if (lowerName.includes('dinner')) return '🍽️';
-        if (lowerName.includes('restaurant') || lowerName.includes('dining')) return '🍴';
-        if (lowerName.includes('fastfood') || lowerName.includes('burger') || lowerName.includes('pizza')) return '🍔';
-        if (lowerName.includes('coffee') || lowerName.includes('cafe')) return '☕';
-        if (lowerName.includes('snack')) return '🍿';
-        if (lowerName.includes('drink') || lowerName.includes('beverage')) return '🥤';
-        if (lowerName.includes('bar') || lowerName.includes('alcohol')) return '🍺';
-        if (lowerName.includes('grocer')) return '🛒';
-        
-        // Transport
-        if (lowerName.includes('transport') || lowerName.includes('travel')) return '🚗';
-        if (lowerName.includes('taxi') || lowerName.includes('cab') || lowerName.includes('uber') || lowerName.includes('ola')) return '🚕';
-        if (lowerName.includes('bus')) return '🚌';
-        if (lowerName.includes('train') || lowerName.includes('metro') || lowerName.includes('railway')) return '🚆';
-        if (lowerName.includes('flight') || lowerName.includes('air')) return '✈️';
-        if (lowerName.includes('fuel') || lowerName.includes('petrol') || lowerName.includes('gas') || lowerName.includes('diesel')) return '⛽';
-        if (lowerName.includes('parking')) return '🅿️';
-        if (lowerName.includes('toll')) return '🛣️';
-        if (lowerName.includes('car')) return '🚙';
-        if (lowerName.includes('bike') || lowerName.includes('motorcycle')) return '🏍️';
-        if (lowerName.includes('bicycle') || lowerName.includes('cycle')) return '🚴';
-        if (lowerName.includes('auto')) return '🛺';
-        
-        // Shopping
-        if (lowerName.includes('shop')) return '🛍️';
-        if (lowerName.includes('cloth') || lowerName.includes('dress') || lowerName.includes('fashion')) return '👕';
-        if (lowerName.includes('shoe') || lowerName.includes('footwear')) return '👟';
-        if (lowerName.includes('electronic') || lowerName.includes('gadget')) return '💻';
-        if (lowerName.includes('furniture')) return '🛋️';
-        if (lowerName.includes('beauty') || lowerName.includes('cosmetic') || lowerName.includes('makeup')) return '💄';
-        if (lowerName.includes('jewelry') || lowerName.includes('jewellery')) return '💎';
-        
-        // Entertainment
-        if (lowerName.includes('entertainment') || lowerName.includes('fun')) return '🎮';
-        if (lowerName.includes('movie') || lowerName.includes('cinema') || lowerName.includes('film')) return '🎬';
-        if (lowerName.includes('music') || lowerName.includes('concert')) return '🎵';
-        if (lowerName.includes('game') || lowerName.includes('gaming')) return '🎮';
-        if (lowerName.includes('sport')) return '⚽';
-        if (lowerName.includes('party') || lowerName.includes('celebration')) return '🎉';
-        if (lowerName.includes('hobby')) return '🎨';
-        
-        // Health & Fitness
-        if (lowerName.includes('health') || lowerName.includes('medical')) return '⚕️';
-        if (lowerName.includes('doctor') || lowerName.includes('hospital') || lowerName.includes('clinic')) return '👨‍⚕️';
-        if (lowerName.includes('medicine') || lowerName.includes('drug')) return '💊';
-        if (lowerName.includes('pharmacy') || lowerName.includes('chemist')) return '🏥';
-        if (lowerName.includes('fitness') || lowerName.includes('gym') || lowerName.includes('workout')) return '💪';
-        if (lowerName.includes('yoga')) return '🧘';
-        if (lowerName.includes('salon') || lowerName.includes('haircut')) return '💇';
-        if (lowerName.includes('spa') || lowerName.includes('massage')) return '🧖';
-        if (lowerName.includes('dental') || lowerName.includes('dentist')) return '🦷';
-        
-        // Home & Utilities
-        if (lowerName.includes('rent') || lowerName.includes('house')) return '🏠';
-        if (lowerName.includes('utility') || lowerName.includes('utilities')) return '⚡';
-        if (lowerName.includes('electric')) return '💡';
-        if (lowerName.includes('water')) return '💧';
-        if (lowerName.includes('gas') && !lowerName.includes('fuel')) return '🔥';
-        if (lowerName.includes('internet') || lowerName.includes('wifi') || lowerName.includes('broadband')) return '🌐';
-        if (lowerName.includes('phone') || lowerName.includes('mobile') || lowerName.includes('recharge')) return '📱';
-        if (lowerName.includes('maintenance') || lowerName.includes('repair')) return '🔧';
-        if (lowerName.includes('clean')) return '🧹';
-        if (lowerName.includes('laundry')) return '👔';
-        if (lowerName.includes('garden')) return '🌱';
-        
-        // Education
-        if (lowerName.includes('education') || lowerName.includes('school') || lowerName.includes('college') || lowerName.includes('university')) return '🎓';
-        if (lowerName.includes('book')) return '📚';
-        if (lowerName.includes('course') || lowerName.includes('class') || lowerName.includes('tuition')) return '🎯';
-        if (lowerName.includes('stationery') || lowerName.includes('stationary')) return '✏️';
-        
-        // Bills & Finance
-        if (lowerName.includes('bill')) return '💡';
-        if (lowerName.includes('insurance')) return '🛡️';
-        if (lowerName.includes('saving')) return '💰';
-        if (lowerName.includes('invest')) return '📈';
-        if (lowerName.includes('loan') || lowerName.includes('emi')) return '🏦';
-        if (lowerName.includes('tax')) return '📋';
-        
-        // Special Occasions
-        if (lowerName.includes('gift')) return '🎁';
-        if (lowerName.includes('donation') || lowerName.includes('charity')) return '❤️';
-        if (lowerName.includes('wedding') || lowerName.includes('marriage')) return '💒';
-        if (lowerName.includes('birthday')) return '🎂';
-        if (lowerName.includes('festival') || lowerName.includes('holiday')) return '🎊';
-        
-        // Subscription & Services
-        if (lowerName.includes('subscription') || lowerName.includes('netflix') || lowerName.includes('spotify') || lowerName.includes('prime')) return '📺';
-        if (lowerName.includes('office') || lowerName.includes('work')) return '💼';
-        
-        // Pets
-        if (lowerName.includes('pet') || lowerName.includes('dog') || lowerName.includes('cat')) return '🐾';
-        
-        // Vacation
-        if (lowerName.includes('vacation') || lowerName.includes('holiday') || lowerName.includes('trip')) return '🏖️';
-        if (lowerName.includes('hotel') || lowerName.includes('accommodation')) return '🏨';
-        
-        // Default
-        return '📁';
-      }
+      // Populate envelopes with visual buttons using utility function
+      createVisualOptions(envelopeContainer, envelopes, previousEnvelope, getEnvelopeIcon);
       
-      envelopes.forEach(env => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'visual-option';
-        btn.dataset.value = env;
-        const icon = getEnvelopeIcon(env);
-        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${env}</div>`;
-        btn.onclick = () => selectVisualOption(envelopeContainer, env);
-        if (env === previousEnvelope) btn.classList.add('selected');
-        envelopeContainer.appendChild(btn);
-      });
-      
-      // Smart icon matching function for payment methods
-      function getPaymentIcon(name) {
-        const lowerName = name.toLowerCase();
-        
-        // Cash
-        if (lowerName.includes('cash')) return '💵';
-        
-        // Banks - with specific colors/styles
-        if (lowerName.includes('hdfc')) return '🏦';
-        if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
-        if (lowerName.includes('icici')) return '🏦';
-        if (lowerName.includes('axis')) return '🏦';
-        if (lowerName.includes('kotak')) return '🏦';
-        if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
-        if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
-        if (lowerName.includes('canara')) return '🏦';
-        if (lowerName.includes('idbi')) return '🏦';
-        if (lowerName.includes('union bank')) return '🏦';
-        if (lowerName.includes('indian bank')) return '🏦';
-        if (lowerName.includes('yes bank')) return '🏦';
-        if (lowerName.includes('indusind')) return '🏦';
-        if (lowerName.includes('bank')) return '🏦';
-        
-        // Cards
-        if (lowerName.includes('credit')) return '💳';
-        if (lowerName.includes('debit')) return '💳';
-        if (lowerName.includes('card')) return '💳';
-        if (lowerName.includes('visa')) return '💳';
-        if (lowerName.includes('mastercard') || lowerName.includes('master card')) return '💳';
-        if (lowerName.includes('rupay')) return '💳';
-        if (lowerName.includes('amex') || lowerName.includes('american express')) return '💳';
-        
-        // UPI & Digital Payments
-        if (lowerName.includes('upi')) return '📱';
-        if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
-        if (lowerName.includes('gpay') || lowerName.includes('google pay') || lowerName.includes('googlepay')) return '🔵';
-        if (lowerName.includes('paytm')) return '💙';
-        if (lowerName.includes('amazon pay') || lowerName.includes('amazonpay')) return '🟠';
-        if (lowerName.includes('bhim')) return '📱';
-        if (lowerName.includes('whatsapp pay')) return '💚';
-        
-        // Wallets
-        if (lowerName.includes('wallet')) return '👛';
-        if (lowerName.includes('mobikwik')) return '👛';
-        if (lowerName.includes('freecharge')) return '👛';
-        if (lowerName.includes('paypal')) return '💰';
-        
-        // Bank Transfers
-        if (lowerName.includes('neft')) return '🔄';
-        if (lowerName.includes('rtgs')) return '🔄';
-        if (lowerName.includes('imps')) return '⚡';
-        if (lowerName.includes('transfer')) return '🔄';
-        if (lowerName.includes('net banking') || lowerName.includes('netbanking')) return '🌐';
-        
-        // Others
-        if (lowerName.includes('cheque') || lowerName.includes('check')) return '📝';
-        if (lowerName.includes('demand draft') || lowerName.includes('dd')) return '📄';
-        
-        // Default
-        return '💰';
-      }
-      
-      paymentMethods.forEach(method => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'visual-option';
-        btn.dataset.value = method;
-        const icon = getPaymentIcon(method);
-        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
-        btn.onclick = () => selectVisualOption(paymentContainer, method);
-        if (method === previousPayment) btn.classList.add('selected');
-        paymentContainer.appendChild(btn);
-      });
+      // Populate payment methods using utility function
+      createPaymentChips(paymentContainer, paymentMethods, previousPayment);
       
       // Add expense type selector (Need, Want, Save)
       const expenseTypeContainer = entry.querySelector('[data-field="expenseType"]');
@@ -6003,23 +6355,12 @@
         { value: 'save', label: 'Save', icon: '💰' }
       ];
       
-      expenseTypes.forEach(type => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'visual-option';
-        btn.dataset.value = type.value;
-        btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${type.icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${type.label}</div>`;
-        btn.onclick = () => selectVisualOption(expenseTypeContainer, type.value);
-        expenseTypeContainer.appendChild(btn);
-      });
+      createVisualOptions(expenseTypeContainer, expenseTypes);
       
       expenseEntryCount++;
       
       // Focus on amount input
-      setTimeout(() => {
-        const amountInput = entry.querySelector('[data-field="amount"]');
-        if (amountInput) amountInput.focus();
-      }, 100);
+      focusAmountInput(entry, '[data-field="amount"]');
       
       updateSubmitButtonText();
     }
@@ -6028,6 +6369,286 @@
       container.querySelectorAll('.visual-option').forEach(btn => btn.classList.remove('selected'));
       const selected = container.querySelector(`[data-value="${value}"]`);
       if (selected) selected.classList.add('selected');
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS - Global Scope
+    // ============================================
+
+    /**
+     * Get icon for payment method based on name
+     * @param {string} name - Payment method name
+     * @returns {string} - Emoji icon
+     */
+    function getPaymentIcon(name) {
+      const lowerName = name.toLowerCase();
+      
+      // Cash
+      if (lowerName.includes('cash')) return '💵';
+      
+      // Banks - with specific colors/styles
+      if (lowerName.includes('hdfc')) return '🏦';
+      if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
+      if (lowerName.includes('icici')) return '🏦';
+      if (lowerName.includes('axis')) return '🏦';
+      if (lowerName.includes('kotak')) return '🏦';
+      if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
+      if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
+      if (lowerName.includes('canara')) return '🏦';
+      if (lowerName.includes('idbi')) return '🏦';
+      if (lowerName.includes('union bank')) return '🏦';
+      if (lowerName.includes('indian bank')) return '🏦';
+      if (lowerName.includes('yes bank')) return '🏦';
+      if (lowerName.includes('indusind')) return '🏦';
+      if (lowerName.includes('bank')) return '🏦';
+      
+      // Cards
+      if (lowerName.includes('credit')) return '💳';
+      if (lowerName.includes('debit')) return '💳';
+      if (lowerName.includes('card')) return '💳';
+      if (lowerName.includes('visa')) return '💳';
+      if (lowerName.includes('mastercard') || lowerName.includes('master card')) return '💳';
+      if (lowerName.includes('rupay')) return '💳';
+      if (lowerName.includes('amex') || lowerName.includes('american express')) return '💳';
+      
+      // UPI & Digital Payments
+      if (lowerName.includes('upi')) return '📱';
+      if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
+      if (lowerName.includes('gpay') || lowerName.includes('google pay') || lowerName.includes('googlepay')) return '🔵';
+      if (lowerName.includes('paytm')) return '💙';
+      if (lowerName.includes('amazon pay') || lowerName.includes('amazonpay')) return '🟠';
+      if (lowerName.includes('bhim')) return '📱';
+      if (lowerName.includes('whatsapp pay')) return '💚';
+      
+      // Wallets
+      if (lowerName.includes('wallet')) return '👛';
+      if (lowerName.includes('mobikwik')) return '👛';
+      if (lowerName.includes('freecharge')) return '👛';
+      if (lowerName.includes('paypal')) return '💰';
+      
+      // Bank Transfers
+      if (lowerName.includes('neft')) return '🔄';
+      if (lowerName.includes('rtgs')) return '🔄';
+      if (lowerName.includes('imps')) return '⚡';
+      if (lowerName.includes('transfer')) return '🔄';
+      if (lowerName.includes('net banking') || lowerName.includes('netbanking')) return '🌐';
+      
+      // Others
+      if (lowerName.includes('cheque') || lowerName.includes('check')) return '📝';
+      if (lowerName.includes('demand draft') || lowerName.includes('dd')) return '📄';
+      
+      // Default
+      return '💰';
+    }
+
+    /**
+     * Get icon for envelope/category based on name
+     * @param {string} name - Envelope name
+     * @returns {string} - Emoji icon
+     */
+    function getEnvelopeIcon(name) {
+      const lowerName = name.toLowerCase();
+      
+      // Food & Dining
+      if (lowerName.includes('food') || lowerName.includes('meal')) return '🍽️';
+      if (lowerName.includes('breakfast')) return '🥞';
+      if (lowerName.includes('lunch')) return '🍱';
+      if (lowerName.includes('dinner')) return '🍽️';
+      if (lowerName.includes('restaurant') || lowerName.includes('dining')) return '🍴';
+      if (lowerName.includes('fastfood') || lowerName.includes('burger') || lowerName.includes('pizza')) return '🍔';
+      if (lowerName.includes('coffee') || lowerName.includes('cafe')) return '☕';
+      if (lowerName.includes('snack')) return '🍿';
+      if (lowerName.includes('drink') || lowerName.includes('beverage')) return '🥤';
+      if (lowerName.includes('bar') || lowerName.includes('alcohol')) return '🍺';
+      if (lowerName.includes('grocer')) return '🛒';
+      
+      // Transport
+      if (lowerName.includes('transport') || lowerName.includes('travel')) return '🚗';
+      if (lowerName.includes('taxi') || lowerName.includes('cab') || lowerName.includes('uber') || lowerName.includes('ola')) return '🚕';
+      if (lowerName.includes('bus')) return '🚌';
+      if (lowerName.includes('train') || lowerName.includes('metro') || lowerName.includes('railway')) return '🚆';
+      if (lowerName.includes('flight') || lowerName.includes('air')) return '✈️';
+      if (lowerName.includes('fuel') || lowerName.includes('petrol') || lowerName.includes('gas') || lowerName.includes('diesel')) return '⛽';
+      if (lowerName.includes('parking')) return '🅿️';
+      if (lowerName.includes('toll')) return '🛣️';
+      if (lowerName.includes('car')) return '🚙';
+      if (lowerName.includes('bike') || lowerName.includes('motorcycle')) return '🏍️';
+      if (lowerName.includes('bicycle') || lowerName.includes('cycle')) return '🚴';
+      if (lowerName.includes('auto')) return '🛺';
+      
+      // Shopping
+      if (lowerName.includes('shop')) return '🛍️';
+      if (lowerName.includes('cloth') || lowerName.includes('dress') || lowerName.includes('fashion')) return '👕';
+      if (lowerName.includes('shoe') || lowerName.includes('footwear')) return '👟';
+      if (lowerName.includes('electronic') || lowerName.includes('gadget')) return '💻';
+      if (lowerName.includes('furniture')) return '🛋️';
+      if (lowerName.includes('beauty') || lowerName.includes('cosmetic') || lowerName.includes('makeup')) return '💄';
+      if (lowerName.includes('jewelry') || lowerName.includes('jewellery')) return '💎';
+      
+      // Entertainment
+      if (lowerName.includes('entertainment') || lowerName.includes('fun')) return '🎮';
+      if (lowerName.includes('movie') || lowerName.includes('cinema') || lowerName.includes('film')) return '🎬';
+      if (lowerName.includes('music') || lowerName.includes('concert')) return '🎵';
+      if (lowerName.includes('game') || lowerName.includes('gaming')) return '🎮';
+      if (lowerName.includes('sport')) return '⚽';
+      if (lowerName.includes('party') || lowerName.includes('celebration')) return '🎉';
+      if (lowerName.includes('hobby')) return '🎨';
+      
+      // Health & Fitness
+      if (lowerName.includes('health') || lowerName.includes('medical')) return '⚕️';
+      if (lowerName.includes('doctor') || lowerName.includes('hospital') || lowerName.includes('clinic')) return '👨‍⚕️';
+      if (lowerName.includes('medicine') || lowerName.includes('drug')) return '💊';
+      if (lowerName.includes('pharmacy') || lowerName.includes('chemist')) return '🏥';
+      if (lowerName.includes('fitness') || lowerName.includes('gym') || lowerName.includes('workout')) return '💪';
+      if (lowerName.includes('yoga')) return '🧘';
+      if (lowerName.includes('salon') || lowerName.includes('haircut')) return '💇';
+      if (lowerName.includes('spa') || lowerName.includes('massage')) return '🧖';
+      if (lowerName.includes('dental') || lowerName.includes('dentist')) return '🦷';
+      
+      // Home & Utilities
+      if (lowerName.includes('rent') || lowerName.includes('house')) return '🏠';
+      if (lowerName.includes('utility') || lowerName.includes('utilities')) return '⚡';
+      if (lowerName.includes('electric')) return '💡';
+      if (lowerName.includes('water')) return '💧';
+      if (lowerName.includes('gas') && !lowerName.includes('fuel')) return '🔥';
+      if (lowerName.includes('internet') || lowerName.includes('wifi') || lowerName.includes('broadband')) return '🌐';
+      if (lowerName.includes('phone') || lowerName.includes('mobile') || lowerName.includes('recharge')) return '📱';
+      if (lowerName.includes('maintenance') || lowerName.includes('repair')) return '🔧';
+      if (lowerName.includes('clean')) return '🧹';
+      if (lowerName.includes('laundry')) return '👔';
+      if (lowerName.includes('garden')) return '🌱';
+      
+      // Education
+      if (lowerName.includes('education') || lowerName.includes('school') || lowerName.includes('college') || lowerName.includes('university')) return '🎓';
+      if (lowerName.includes('book')) return '📚';
+      if (lowerName.includes('course') || lowerName.includes('class') || lowerName.includes('tuition')) return '🎯';
+      if (lowerName.includes('stationery') || lowerName.includes('stationary')) return '✏️';
+      
+      // Bills & Finance
+      if (lowerName.includes('bill')) return '💡';
+      if (lowerName.includes('insurance')) return '🛡️';
+      if (lowerName.includes('saving')) return '💰';
+      if (lowerName.includes('invest')) return '📈';
+      if (lowerName.includes('loan') || lowerName.includes('emi')) return '🏦';
+      if (lowerName.includes('tax')) return '📋';
+      
+      // Special Occasions
+      if (lowerName.includes('gift')) return '🎁';
+      if (lowerName.includes('donation') || lowerName.includes('charity')) return '❤️';
+      if (lowerName.includes('wedding') || lowerName.includes('marriage')) return '💒';
+      if (lowerName.includes('birthday')) return '🎂';
+      if (lowerName.includes('festival') || lowerName.includes('holiday')) return '🎊';
+      
+      // Subscription & Services
+      if (lowerName.includes('subscription') || lowerName.includes('netflix') || lowerName.includes('spotify') || lowerName.includes('prime')) return '📺';
+      if (lowerName.includes('office') || lowerName.includes('work')) return '💼';
+      
+      // Pets
+      if (lowerName.includes('pet') || lowerName.includes('dog') || lowerName.includes('cat')) return '🐾';
+      
+      // Vacation
+      if (lowerName.includes('vacation') || lowerName.includes('holiday') || lowerName.includes('trip')) return '🏖️';
+      if (lowerName.includes('hotel') || lowerName.includes('accommodation')) return '🏨';
+      
+      // Default
+      return '📁';
+    }
+
+    /**
+     * Create payment method chips
+     * @param {HTMLElement} container - Container element
+     * @param {Array} methods - Array of payment method names
+     * @param {string} selectedValue - Pre-selected value (optional)
+     * @param {Function} onSelect - Callback on selection (optional)
+     */
+    function createPaymentChips(container, methods, selectedValue = '', onSelect = null) {
+      methods.forEach(method => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pm-chip';
+        btn.dataset.value = method;
+        const icon = getPaymentIcon(method);
+        btn.innerHTML = `<span class="pm-chip-icon">${icon}</span><span>${method}</span>`;
+        
+        btn.onclick = () => {
+          selectVisualOption(container, method);
+          if (onSelect) onSelect(method);
+        };
+        
+        if (method === selectedValue) {
+          btn.classList.add('selected');
+        }
+        
+        container.appendChild(btn);
+      });
+    }
+
+    /**
+     * Create visual option cards (envelopes, expense types, etc.)
+     * @param {HTMLElement} container - Container element
+     * @param {Array} options - Array of options (strings or {value, label, icon} objects)
+     * @param {string} selectedValue - Pre-selected value (optional)
+     * @param {Function} iconGetter - Function to get icon for string options (optional)
+     */
+    function createVisualOptions(container, options, selectedValue = '', iconGetter = null) {
+      options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'visual-option';
+        
+        // Handle both string options and object options
+        const value = typeof option === 'string' ? option : option.value;
+        const label = typeof option === 'string' ? option : option.label;
+        const icon = typeof option === 'string' 
+          ? (iconGetter ? iconGetter(option) : '📁')
+          : option.icon;
+        
+        btn.dataset.value = value;
+        btn.innerHTML = `<div class="visual-option-icon">${icon}</div><div class="visual-option-label">${label}</div>`;
+        btn.onclick = () => selectVisualOption(container, value);
+        
+        if (value === selectedValue) {
+          btn.classList.add('selected');
+        }
+        
+        container.appendChild(btn);
+      });
+    }
+
+    /**
+     * Focus on amount input after a short delay
+     * @param {HTMLElement} entry - Entry element containing the amount input
+     * @param {string} selector - CSS selector for the amount input (default: '#amountInput')
+     */
+    function focusAmountInput(entry, selector = '#amountInput') {
+      setTimeout(() => {
+        const amountInput = entry.querySelector(selector);
+        if (amountInput) amountInput.focus();
+      }, 100);
+    }
+
+    /**
+     * Setup modal for specific transaction type
+     * @param {string} type - Transaction type ('income', 'expense', 'transfer')
+     * @param {string} title - Modal title
+     * @param {string} buttonText - Submit button text
+     */
+    function setupModalForType(type, title, buttonText) {
+      transactionModalTitle.textContent = title;
+      submitBtn.classList.remove('income', 'expense', 'transfer');
+      submitBtn.classList.add(type);
+      submitBtn.textContent = buttonText;
+    }
+
+    /**
+     * Get selected value from a visual option container
+     * @param {HTMLElement} container - Container element
+     * @returns {string} - Selected value or empty string
+     */
+    function getSelectedValue(container) {
+      if (!container) return '';
+      const selectedBtn = container.querySelector('.visual-option.selected');
+      return selectedBtn ? selectedBtn.dataset.value : '';
     }
 
     function updateSubmitButtonText() {
@@ -6050,75 +6671,26 @@
       expenseEntryCount = 0;
       
       if (type === 'income') {
-        transactionModalTitle.textContent = 'Add Income';
-        submitBtn.classList.remove('expense', 'transfer');
-        submitBtn.classList.add('income');
-        submitBtn.textContent = 'Add Income';
+        setupModalForType('income', 'Add Income', 'Add Income');
         addAnotherExpenseBtn.style.display = 'none';
         
         const singleEntry = createSingleEntry('income');
         expenseEntriesContainer.appendChild(singleEntry);
         
         const paymentContainer = singleEntry.querySelector('#incomePaymentSelector');
+        createPaymentChips(paymentContainer, paymentMethods);
         
-        // Smart icon matching function for payment methods
-        function getPaymentIcon(name) {
-          const lowerName = name.toLowerCase();
-          if (lowerName.includes('cash')) return '💵';
-          if (lowerName.includes('hdfc')) return '🏦';
-          if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
-          if (lowerName.includes('icici')) return '🏦';
-          if (lowerName.includes('axis')) return '🏦';
-          if (lowerName.includes('kotak')) return '🏦';
-          if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
-          if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
-          if (lowerName.includes('canara')) return '🏦';
-          if (lowerName.includes('bank')) return '🏦';
-          if (lowerName.includes('credit')) return '💳';
-          if (lowerName.includes('debit')) return '💳';
-          if (lowerName.includes('card')) return '💳';
-          if (lowerName.includes('upi')) return '📱';
-          if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
-          if (lowerName.includes('gpay') || lowerName.includes('google pay')) return '🔵';
-          if (lowerName.includes('paytm')) return '💙';
-          if (lowerName.includes('amazon pay')) return '🟠';
-          if (lowerName.includes('wallet')) return '👛';
-          if (lowerName.includes('transfer')) return '🔄';
-          return '💰';
-        }
-        
-        // Populate payment methods with visual buttons
-        paymentMethods.forEach(method => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'visual-option';
-          btn.dataset.value = method;
-          const icon = getPaymentIcon(method);
-          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
-          btn.onclick = () => selectVisualOption(paymentContainer, method);
-          paymentContainer.appendChild(btn);
-        });
-        
-        setTimeout(() => {
-          const amountInput = singleEntry.querySelector('#amountInput');
-          if (amountInput) amountInput.focus();
-        }, 100);
+        focusAmountInput(singleEntry);
         
       } else if (type === 'expense') {
-        transactionModalTitle.textContent = 'Add Expenses';
-        submitBtn.classList.remove('income', 'transfer');
-        submitBtn.classList.add('expense');
-        submitBtn.textContent = 'Add Expense';
+        setupModalForType('expense', 'Add Expenses', 'Add Expense');
         addAnotherExpenseBtn.style.display = 'flex';
         
         // Add first expense entry
         addExpenseEntry();
         
       } else if (type === 'transfer') {
-        transactionModalTitle.textContent = 'Add Transfer';
-        submitBtn.classList.remove('income', 'expense');
-        submitBtn.classList.add('transfer');
-        submitBtn.textContent = 'Add Transfer';
+        setupModalForType('transfer', 'Move Money', 'Move Money');
         addAnotherExpenseBtn.style.display = 'none';
         
         const singleEntry = createSingleEntry('transfer');
@@ -6127,66 +6699,49 @@
         const transferFromContainer = singleEntry.querySelector('#transferFromSelector');
         const transferToContainer = singleEntry.querySelector('#transferToSelector');
         
-        // Smart icon matching function for payment methods
-        function getPaymentIcon(name) {
-          const lowerName = name.toLowerCase();
-          if (lowerName.includes('cash')) return '💵';
-          if (lowerName.includes('hdfc')) return '🏦';
-          if (lowerName.includes('sbi') || lowerName.includes('state bank')) return '🏦';
-          if (lowerName.includes('icici')) return '🏦';
-          if (lowerName.includes('axis')) return '🏦';
-          if (lowerName.includes('kotak')) return '🏦';
-          if (lowerName.includes('pnb') || lowerName.includes('punjab')) return '🏦';
-          if (lowerName.includes('bob') || lowerName.includes('baroda')) return '🏦';
-          if (lowerName.includes('canara')) return '🏦';
-          if (lowerName.includes('bank')) return '🏦';
-          if (lowerName.includes('credit')) return '💳';
-          if (lowerName.includes('debit')) return '💳';
-          if (lowerName.includes('card')) return '💳';
-          if (lowerName.includes('upi')) return '📱';
-          if (lowerName.includes('phonepe') || lowerName.includes('phone pe')) return '💜';
-          if (lowerName.includes('gpay') || lowerName.includes('google pay')) return '🔵';
-          if (lowerName.includes('paytm')) return '💙';
-          if (lowerName.includes('amazon pay')) return '🟠';
-          if (lowerName.includes('wallet')) return '👛';
-          if (lowerName.includes('transfer')) return '🔄';
-          return '💰';
+        // Helper function to update transfer visual flow
+        function updateTransferFlow() {
+          const fromValue = getSelectedValue(transferFromContainer);
+          const toValue = getSelectedValue(transferToContainer);
+          
+          // If both selected and same, clear the "to" selection
+          if (fromValue && toValue && fromValue === toValue) {
+            const toBtn = transferToContainer.querySelector('.visual-option.selected');
+            if (toBtn) toBtn.classList.remove('selected');
+          }
         }
         
-        // Populate FROM payment methods with visual buttons
-        paymentMethods.forEach(method => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'visual-option';
-          btn.dataset.value = method;
-          const icon = getPaymentIcon(method);
-          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
-          btn.onclick = () => selectVisualOption(transferFromContainer, method);
-          transferFromContainer.appendChild(btn);
+        // Populate FROM payment methods with visual buttons using utility function
+        createPaymentChips(transferFromContainer, paymentMethods, '', updateTransferFlow);
+        
+        // Populate TO payment methods with visual buttons using utility function
+        createPaymentChips(transferToContainer, paymentMethods, '', (method) => {
+          // Check if same account is selected
+          const fromValue = getSelectedValue(transferFromContainer);
+          const toValue = getSelectedValue(transferToContainer);
+          if (fromValue && toValue && fromValue === toValue) {
+            showToast('⚠️ Cannot select the same account', 'error');
+            const toBtn = transferToContainer.querySelector('.visual-option.selected');
+            if (toBtn) toBtn.classList.remove('selected');
+          }
         });
         
-        // Populate TO payment methods with visual buttons
-        paymentMethods.forEach(method => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'visual-option';
-          btn.dataset.value = method;
-          const icon = getPaymentIcon(method);
-          btn.innerHTML = `<div style="font-size: 28px; margin-bottom: 6px;">${icon}</div><div style="font-size: 11px; font-weight: 600; color: #374151; line-height: 1.2;">${method}</div>`;
-          btn.onclick = () => selectVisualOption(transferToContainer, method);
-          transferToContainer.appendChild(btn);
-        });
-        
-        setTimeout(() => {
-          const amountInput = singleEntry.querySelector('#amountInput');
-          if (amountInput) amountInput.focus();
-        }, 100);
+        focusAmountInput(singleEntry);
       }
     }
 
-    incomeBtn.addEventListener('click', () => openTransactionModal('income'));
-    expenseBtn.addEventListener('click', () => openTransactionModal('expense'));
-    transferBtn.addEventListener('click', () => openTransactionModal('transfer'));
+    // Add null checks and error handling for buttons
+    if (incomeBtn) {
+      incomeBtn.addEventListener('click', () => openTransactionModal('income'));
+    }
+    
+    if (expenseBtn) {
+      expenseBtn.addEventListener('click', () => openTransactionModal('expense'));
+    }
+    
+    if (transferBtn) {
+      transferBtn.addEventListener('click', () => openTransactionModal('transfer'));
+    }
 
     closeTransactionModal.addEventListener('click', () => {
       transactionModal.classList.remove('show');
@@ -6262,12 +6817,9 @@
         for (const entry of entries) {
           const amount = entry.querySelector('[data-field="amount"]').value;
           const description = entry.querySelector('[data-field="description"]').value;
-          const envelopeBtn = entry.querySelector('[data-field="envelope"] .visual-option.selected');
-          const paymentBtn = entry.querySelector('[data-field="payment"] .visual-option.selected');
-          const expenseTypeBtn = entry.querySelector('[data-field="expenseType"] .visual-option.selected');
-          const envelope = envelopeBtn ? envelopeBtn.dataset.value : '';
-          const payment = paymentBtn ? paymentBtn.dataset.value : '';
-          const expenseType = expenseTypeBtn ? expenseTypeBtn.dataset.value : '';
+          const envelope = getSelectedValue(entry.querySelector('[data-field="envelope"]'));
+          const payment = getSelectedValue(entry.querySelector('[data-field="payment"]'));
+          const expenseType = getSelectedValue(entry.querySelector('[data-field="expenseType"]'));
           
           const dateInput = entry.querySelector('[data-field="date"]');
           const selectedDateVal = dateInput ? dateInput.value : '';
@@ -6275,7 +6827,7 @@
 
           if (amount && description && envelope && payment && expenseType) {
             const transactionData = {
-              id: Date.now() + successCount,
+              id: `EXP-${Date.now()}-${successCount}`,
               type: 'expense',
               amount,
               description,
@@ -6334,21 +6886,28 @@
         const description = document.getElementById('descriptionInput').value;
         const transferFromContainer = document.getElementById('transferFromSelector');
         const transferToContainer = document.getElementById('transferToSelector');
-        const fromBtn = transferFromContainer ? transferFromContainer.querySelector('.visual-option.selected') : null;
-        const toBtn = transferToContainer ? transferToContainer.querySelector('.visual-option.selected') : null;
-        const fromPayment = fromBtn ? fromBtn.dataset.value : '';
-        const toPayment = toBtn ? toBtn.dataset.value : '';
+        const fromPayment = getSelectedValue(transferFromContainer);
+        const toPayment = getSelectedValue(transferToContainer);
         
         const transferDateInput = document.getElementById('transactionDate');
         const transferDateVal = transferDateInput ? transferDateInput.value : '';
         const transferDate = transferDateVal ? new Date(transferDateVal).toISOString() : new Date().toISOString();
 
+        // Validation: Check if same account selected
+        if (fromPayment && toPayment && fromPayment === toPayment) {
+          showToast('Cannot transfer to the same account', 'error');
+          return;
+        }
+
         if (amount && fromPayment && toPayment) {
+          // Auto-generate description if empty
+          const finalDescription = description || `Transfer from ${fromPayment} to ${toPayment}`;
+          
           const transactionData = {
-            id: Date.now(),
+            id: `TRF-${Date.now()}`,
             type: 'transfer',
             amount,
-            description,
+            description: finalDescription,
             from: fromPayment,
             to: toPayment,
             date: transferDate
@@ -6366,27 +6925,26 @@
             updateRecentTransactions();
             updatePaymentBalances();
             updateEnvelopeBudget();
-            const message = `Transfer: ₹${amount} from ${fromPayment} to ${toPayment}`;
+            const message = `Moved ₹${amount} from ${fromPayment} to ${toPayment}`;
             showToast(message, 'success');
             transactionModal.classList.remove('show');
             expenseEntriesContainer.innerHTML = '';
             expenseEntryCount = 0;
           } catch (error) {
             console.error('Error adding transfer:', error);
-            showToast('Error adding transfer. Please try again.', 'error');
+            showToast('Error moving money. Please try again.', 'error');
           }
         } else {
           if (!amount) showToast('Please enter amount', 'error');
-          else if (!fromPayment) showToast('Please select "From" payment method', 'error');
-          else if (!toPayment) showToast('Please select "To" payment method', 'error');
+          else if (!fromPayment) showToast('Please select source account', 'error');
+          else if (!toPayment) showToast('Please select destination account', 'error');
         }
         
       } else if (activeType === 'income') {
         const amount = document.getElementById('amountInput').value;
         const description = document.getElementById('descriptionInput').value;
         const paymentContainer = document.getElementById('incomePaymentSelector');
-        const paymentBtn = paymentContainer ? paymentContainer.querySelector('.visual-option.selected') : null;
-        const payment = paymentBtn ? paymentBtn.dataset.value : '';
+        const payment = getSelectedValue(paymentContainer);
         
         const incomeDateInput = document.getElementById('transactionDate');
         const incomeDateVal = incomeDateInput ? incomeDateInput.value : '';
@@ -6394,7 +6952,7 @@
 
         if (amount && description && payment) {
           const transactionData = {
-            id: Date.now(),
+            id: `INC-${Date.now()}`,
             type: 'income',
             amount,
             description,

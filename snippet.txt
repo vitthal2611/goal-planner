@@ -1,0 +1,7 @@
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          bt          btn.className = 'pm-chip';
+          btn.dataset.value = method;
+          const icon = getPaymentIcon(method);
+          btn.innerHTML = `<span class="pm-chip-icon">${icon}</span><span
