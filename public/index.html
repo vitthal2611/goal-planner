@@ -6788,6 +6788,9 @@
     bottomFinanceTab.addEventListener('click', switchToFinance);
     bottomHabitTab.addEventListener('click', switchToHabit);
 
+    // Ensure Habit tab is active on page load
+    switchToHabit();
+
     // Habit tab switching
     const viewHabitsTab = document.getElementById('viewHabitsTab');
     const viewHabitsSection = document.getElementById('viewHabitsSection');
