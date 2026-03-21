@@ -466,8 +466,8 @@
 
         .modal-content {
           background: linear-gradient(to bottom, #ffffff, #fafbfc);
-          border-radius: 24px;
-          padding: 32px 28px;
+          border-radius: 20px;
+          padding: 20px 18px;
           max-width: 500px;
           width: 94%;
           max-height: 90vh;
@@ -480,8 +480,8 @@
         
         @media (max-width: 400px) {
           .modal-content {
-            padding: 24px 20px;
-            border-radius: 20px;
+            padding: 16px 14px;
+            border-radius: 16px;
             width: 96%;
           }
         }
@@ -551,20 +551,20 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 28px;
-          padding-bottom: 20px;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
           border-bottom: 2px solid #e5e7eb;
         }
         
         @media (max-width: 400px) {
           .modal-header {
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
           }
         }
 
         .modal-title {
-          font-size: 24px;
+          font-size: 20px;
           font-weight: 800;
           color: #0f172a;
           letter-spacing: -0.5px;
@@ -576,7 +576,7 @@
         
         @media (max-width: 400px) {
           .modal-title {
-            font-size: 22px;
+            font-size: 18px;
           }
         }
 
@@ -1071,17 +1071,17 @@
         .modal .quick-form {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
         }
 
         .modal .quick-form .form-group {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 5px;
         }
 
         .modal .quick-form .form-label {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
           color: #64748b;
           letter-spacing: 0;
@@ -1090,14 +1090,22 @@
         .amount-input-wrapper {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 12px 14px;
+          gap: 6px;
+          padding: 10px 12px;
           background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-          border-radius: 10px;
+          border-radius: 8px;
           border: 2px solid transparent;
           background-clip: padding-box;
           position: relative;
           box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+        }
+        
+        @media (max-width: 400px) {
+          .amount-input-wrapper {
+            padding: 8px 10px;
+            gap: 5px;
+          }
+        }
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -1401,9 +1409,9 @@
         }
         
         .visual-option {
-          padding: 12px 10px;
+          padding: 10px 8px;
           border: 2px solid #e5e7eb;
-          border-radius: 12px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #ffffff, #f9fafb);
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1412,7 +1420,7 @@
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          min-height: 75px;
+          min-height: 68px;
           position: relative;
           overflow: visible;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -1421,9 +1429,9 @@
         
         @media (max-width: 400px) {
           .visual-option {
-            padding: 10px 8px;
-            min-height: 70px;
-            border-radius: 10px;
+            padding: 8px 6px;
+            min-height: 64px;
+            border-radius: 8px;
           }
         }
         
@@ -1437,12 +1445,12 @@
           background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05));
           opacity: 0;
           transition: opacity 0.25s;
-          border-radius: 18px;
+          border-radius: 14px;
         }
         
         @media (max-width: 400px) {
           .visual-option::before {
-            border-radius: 16px;
+            border-radius: 12px;
           }
         }
         
@@ -1470,15 +1478,15 @@
           border-color: #3b82f6;
           border-width: 3px;
           background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-          box-shadow: 0 10px 32px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.15);
-          transform: translateY(-4px) scale(1.03);
-          padding: 17px 13px;
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px) scale(1.02);
+          padding: 13px 11px;
         }
         
         @media (max-width: 400px) {
           .visual-option.selected {
-            padding: 15px 11px;
-            transform: translateY(-3px) scale(1.02);
+            padding: 11px 9px;
+            transform: translateY(-2px) scale(1.01);
           }
         }
         
@@ -1486,30 +1494,30 @@
           content: '';
           position: absolute;
           inset: -2px;
-          border-radius: 20px;
+          border-radius: 16px;
           background: linear-gradient(135deg, #60a5fa, #3b82f6, #2563eb);
           opacity: 0.3;
-          filter: blur(10px);
+          filter: blur(8px);
           z-index: -1;
           animation: glowPulse 2s ease-in-out infinite;
         }
         
         @media (max-width: 400px) {
           .visual-option.selected::before {
-            border-radius: 18px;
-            filter: blur(8px);
+            border-radius: 14px;
+            filter: blur(6px);
           }
         }
         
         .visual-option.selected > div:first-child {
-          font-size: 26px !important;
+          font-size: 24px !important;
           filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
           animation: iconPulse 0.4s ease-out;
         }
         
         @media (max-width: 400px) {
           .visual-option.selected > div:first-child {
-            font-size: 24px !important;
+            font-size: 22px !important;
           }
         }
         
@@ -1556,20 +1564,20 @@
         
         /* ── Visual Option Content ── */
         .visual-option-icon {
-          font-size: 22px;
-          margin-bottom: 4px;
+          font-size: 20px;
+          margin-bottom: 3px;
           transition: transform 0.3s, filter 0.3s;
         }
         
         @media (max-width: 400px) {
           .visual-option-icon {
-            font-size: 20px;
-            margin-bottom: 3px;
+            font-size: 18px;
+            margin-bottom: 2px;
           }
         }
         
         .visual-option-label {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 600;
           color: #374151;
           line-height: 1.2;
@@ -1577,21 +1585,21 @@
         
         @media (max-width: 400px) {
           .visual-option-label {
-            font-size: 10px;
+            font-size: 9px;
           }
         }
 
         /* ── Payment Method Chips ── */
         .pm-chips {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
           gap: 8px;
           width: 100%;
         }
         
         @media (max-width: 400px) {
           .pm-chips {
-            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+            grid-template-columns: 1fr;
             gap: 6px;
           }
         }
@@ -1599,37 +1607,36 @@
         .pm-chip {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 12px 14px;
+          justify-content: flex-start;
+          gap: 6px;
+          padding: 10px 12px;
           border: 2px solid #e5e7eb;
-          border-radius: 12px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #ffffff, #f9fafb);
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           color: #374151;
           cursor: pointer;
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          white-space: nowrap;
           user-select: none;
           position: relative;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-          min-height: 48px;
-          text-align: center;
+          min-height: 44px;
+          text-align: left;
           -webkit-tap-highlight-color: transparent;
         }
         
         @media (max-width: 400px) {
           .pm-chip {
-            padding: 10px 12px;
-            font-size: 12px;
-            min-height: 44px;
-            gap: 6px;
+            padding: 8px 10px;
+            font-size: 11px;
+            min-height: 42px;
+            gap: 5px;
           }
         }
 
         .pm-chip .pm-chip-icon {
-          font-size: 18px;
+          font-size: 16px;
           line-height: 1;
           transition: transform 0.25s;
           flex-shrink: 0;
@@ -1637,7 +1644,7 @@
         
         @media (max-width: 400px) {
           .pm-chip .pm-chip-icon {
-            font-size: 16px;
+            font-size: 15px;
           }
         }
 
@@ -1668,16 +1675,16 @@
           border-width: 3px;
           background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
           color: #ffffff;
-          box-shadow: 0 8px 28px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.15);
-          transform: translateY(-3px) scale(1.02);
-          padding: 15px 17px;
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px) scale(1.01);
+          padding: 13px 15px;
           font-weight: 700;
         }
         
         @media (max-width: 400px) {
           .pm-chip.selected {
-            padding: 13px 15px;
-            transform: translateY(-2px) scale(1.02);
+            padding: 11px 13px;
+            transform: translateY(-1px) scale(1.01);
           }
         }
 
@@ -1751,10 +1758,10 @@
 
         .submit-btn {
           width: 100%;
-          padding: 18px 24px;
+          padding: 14px 20px;
           border: none;
-          border-radius: 16px;
-          font-size: 17px;
+          border-radius: 12px;
+          font-size: 16px;
           font-weight: 800;
           color: white;
           cursor: pointer;
@@ -1763,19 +1770,19 @@
           letter-spacing: 0.5px;
           position: relative;
           overflow: hidden;
-          min-height: 56px;
+          min-height: 48px;
           -webkit-tap-highlight-color: transparent;
-          margin-top: 28px;
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+          margin-top: 12px;
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
         
         @media (max-width: 400px) {
           .submit-btn {
-            padding: 16px 20px;
-            font-size: 16px;
-            border-radius: 14px;
-            min-height: 52px;
-            margin-top: 24px;
+            padding: 12px 18px;
+            font-size: 15px;
+            border-radius: 10px;
+            min-height: 44px;
+            margin-top: 10px;
           }
         }
 
@@ -6688,7 +6695,29 @@
     }
 
     /**
-     * Create payment method chips
+     * Calculate net balance for a payment method
+     * @param {string} method - Payment method name
+     * @returns {number} - Net balance
+     */
+    function getPaymentMethodBalance(method) {
+      let balance = 0;
+      
+      transactions.forEach(t => {
+        if (t.type === 'income' && t.payment === method) {
+          balance += parseFloat(t.amount);
+        } else if (t.type === 'expense' && t.payment === method) {
+          balance -= parseFloat(t.amount);
+        } else if (t.type === 'transfer') {
+          if (t.from === method) balance -= parseFloat(t.amount);
+          if (t.to === method) balance += parseFloat(t.amount);
+        }
+      });
+      
+      return balance;
+    }
+
+    /**
+     * Create payment method chips with balance display
      * @param {HTMLElement} container - Container element
      * @param {Array} methods - Array of payment method names
      * @param {string} selectedValue - Pre-selected value (optional)
@@ -6701,7 +6730,17 @@
         btn.className = 'pm-chip';
         btn.dataset.value = method;
         const icon = getPaymentIcon(method);
-        btn.innerHTML = `<span class="pm-chip-icon">${icon}</span><span>${method}</span>`;
+        const balance = getPaymentMethodBalance(method);
+        const balanceText = balance >= 0 
+          ? `₹${balance.toLocaleString('en-IN')}` 
+          : `-₹${Math.abs(balance).toLocaleString('en-IN')}`;
+        const balanceColor = balance >= 0 ? '#10b981' : '#ef4444';
+        
+        btn.innerHTML = `
+          <span class="pm-chip-icon">${icon}</span>
+          <span style="flex: 1;">${method}</span>
+          <span style="font-size: 11px; font-weight: 700; color: ${balanceColor};">${balanceText}</span>
+        `;
         
         btn.onclick = () => {
           selectVisualOption(container, method);
