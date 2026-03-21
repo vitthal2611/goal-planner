@@ -1,0 +1,49 @@
+    function createExpenseEntry(index, preselectedEnvelope = null) {
+      const entry = document.createElement('div');
+      entry.className = 'expense-entry';
+      entry.dataset.index = index;
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      entry.innerHTML = `
+        <div class="expense-entry-header">
+          ${index > 0 ? '<button type="button" class="remove-expense-btn" onclick="removeExpenseEntry(' + index + ')" title="Remove">×</button>' : ''}
+        </div>
+        <div class="expense-entry-fields">
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <div class="amount-input-wrapper">
+              <span class="currency">₹</span>
+              <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" name="expense-amount-${index}" id="expense-amount-${index}" />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input type="text" class="description-input" placeholder="What's this for?" data-field="description" name="expense-description-${index}" id="expense-description-${index}" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" data-field="date" name="expense-date-${index}" id="expense-date-${index}" value="${todayStr}" class="date-input" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <div class="visual-selector" data-field="envelope" id="envelope-selector-${index}"></div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <div class="pm-chips" data-field="payment"></div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <div class="visual-selector expense-type-selector" data-field="expenseType"></div>
+          </div>
+        </div>
+      `;
+      
+      return entry;
+    }

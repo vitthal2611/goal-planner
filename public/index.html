@@ -1007,7 +1007,7 @@
 
         .quick-track-header {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: var(--space-sm);
           margin-bottom: 12px;
         }
@@ -1071,30 +1071,41 @@
         .modal .quick-form {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
+        }
+
+        .modal .quick-form .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .modal .quick-form .form-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
+          letter-spacing: 0;
         }
 
         .amount-input-wrapper {
           display: flex;
           align-items: center;
-          gap: 12px;
-          margin-bottom: 24px;
-          padding: 20px 24px;
+          gap: 8px;
+          padding: 12px 14px;
           background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-          border-radius: 20px;
-          border: 3px solid transparent;
+          border-radius: 10px;
+          border: 2px solid transparent;
           background-clip: padding-box;
           position: relative;
-          box-shadow: 0 6px 24px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         @media (max-width: 400px) {
           .amount-input-wrapper {
-            padding: 18px 20px;
-            border-radius: 18px;
-            gap: 10px;
-            margin-bottom: 20px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            gap: 6px;
           }
         }
         
@@ -1102,14 +1113,15 @@
           content: '';
           position: absolute;
           inset: 0;
-          border-radius: 20px;
-          padding: 3px;
+          border-radius: 10px;
+          padding: 2px;
           background: linear-gradient(135deg, #3b82f6, #2563eb, #1d4ed8);
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
           mask-composite: exclude;
           opacity: 0;
           transition: opacity 0.3s;
+          pointer-events: none;
         }
         
         @media (max-width: 400px) {
@@ -1134,18 +1146,20 @@
         }
 
         .currency {
-          font-size: 28px;
-          font-weight: 900;
+          font-size: 20px;
+          font-weight: 800;
           background: linear-gradient(135deg, #3b82f6, #1d4ed8);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           line-height: 1;
+          position: relative;
+          z-index: 1;
         }
         
         @media (max-width: 400px) {
           .currency {
-            font-size: 24px;
+            font-size: 18px;
           }
         }
 
@@ -1153,17 +1167,19 @@
           flex: 1;
           border: none;
           background: transparent;
-          font-size: 32px;
-          font-weight: 900;
+          font-size: 24px;
+          font-weight: 800;
           color: #1e3a8a;
           outline: none;
           width: 100%;
           letter-spacing: -0.5px;
+          position: relative;
+          z-index: 1;
         }
         
         @media (max-width: 400px) {
           .amount-input {
-            font-size: 28px;
+            font-size: 20px;
           }
         }
 
@@ -1180,32 +1196,31 @@
 
         .description-input {
           width: 100%;
-          padding: 16px 20px;
-          border: 2px solid #e5e7eb;
-          border-radius: 16px;
-          font-size: 15px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          padding: 10px 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 14px;
+          transition: all 0.2s;
           background: #ffffff;
           font-weight: 500;
           font-family: 'Inter', sans-serif;
           color: #1f2937;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
           -webkit-tap-highlight-color: transparent;
         }
         
         @media (max-width: 400px) {
           .description-input {
-            padding: 14px 18px;
+            padding: 9px 11px;
             font-size: 14px;
-            border-radius: 14px;
+            border-radius: 8px;
           }
         }
 
         .description-input:focus {
           outline: none;
           border-color: #3b82f6;
-          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-          transform: translateY(-1px);
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         @media (hover: none) {
@@ -1386,9 +1401,9 @@
         }
         
         .visual-option {
-          padding: 18px 14px;
+          padding: 12px 10px;
           border: 2px solid #e5e7eb;
-          border-radius: 18px;
+          border-radius: 12px;
           background: linear-gradient(135deg, #ffffff, #f9fafb);
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1397,7 +1412,7 @@
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          min-height: 110px;
+          min-height: 75px;
           position: relative;
           overflow: visible;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -1406,9 +1421,9 @@
         
         @media (max-width: 400px) {
           .visual-option {
-            padding: 16px 12px;
-            min-height: 100px;
-            border-radius: 16px;
+            padding: 10px 8px;
+            min-height: 70px;
+            border-radius: 10px;
           }
         }
         
@@ -1487,14 +1502,14 @@
         }
         
         .visual-option.selected > div:first-child {
-          font-size: 32px !important;
+          font-size: 26px !important;
           filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
           animation: iconPulse 0.4s ease-out;
         }
         
         @media (max-width: 400px) {
           .visual-option.selected > div:first-child {
-            font-size: 30px !important;
+            font-size: 24px !important;
           }
         }
         
@@ -1507,31 +1522,31 @@
         .visual-option.selected::after {
           content: '✓';
           position: absolute;
-          top: -12px;
-          right: -12px;
-          width: 28px;
-          height: 28px;
+          top: -8px;
+          right: -8px;
+          width: 24px;
+          height: 24px;
           background: linear-gradient(135deg, #10b981, #059669);
           color: white;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 15px;
+          font-size: 13px;
           font-weight: bold;
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
-          border: 3px solid white;
+          border: 2px solid white;
           animation: checkmarkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
           z-index: 10;
         }
         
         @media (max-width: 400px) {
           .visual-option.selected::after {
-            width: 26px;
-            height: 26px;
-            font-size: 14px;
-            top: -10px;
-            right: -10px;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            top: -7px;
+            right: -7px;
           }
         }
         
@@ -1541,15 +1556,15 @@
         
         /* ── Visual Option Content ── */
         .visual-option-icon {
-          font-size: 28px;
-          margin-bottom: 6px;
+          font-size: 22px;
+          margin-bottom: 4px;
           transition: transform 0.3s, filter 0.3s;
         }
         
         @media (max-width: 400px) {
           .visual-option-icon {
-            font-size: 26px;
-            margin-bottom: 4px;
+            font-size: 20px;
+            margin-bottom: 3px;
           }
         }
         
@@ -1569,15 +1584,15 @@
         /* ── Payment Method Chips ── */
         .pm-chips {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
-          gap: 14px;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 8px;
           width: 100%;
         }
         
         @media (max-width: 400px) {
           .pm-chips {
-            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+            gap: 6px;
           }
         }
 
@@ -1585,12 +1600,12 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          padding: 16px 18px;
+          gap: 8px;
+          padding: 12px 14px;
           border: 2px solid #e5e7eb;
-          border-radius: 16px;
+          border-radius: 12px;
           background: linear-gradient(135deg, #ffffff, #f9fafb);
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           color: #374151;
           cursor: pointer;
@@ -1599,22 +1614,22 @@
           user-select: none;
           position: relative;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-          min-height: 56px;
+          min-height: 48px;
           text-align: center;
           -webkit-tap-highlight-color: transparent;
         }
         
         @media (max-width: 400px) {
           .pm-chip {
-            padding: 14px 16px;
-            font-size: 13px;
-            min-height: 52px;
-            gap: 8px;
+            padding: 10px 12px;
+            font-size: 12px;
+            min-height: 44px;
+            gap: 6px;
           }
         }
 
         .pm-chip .pm-chip-icon {
-          font-size: 22px;
+          font-size: 18px;
           line-height: 1;
           transition: transform 0.25s;
           flex-shrink: 0;
@@ -1622,7 +1637,7 @@
         
         @media (max-width: 400px) {
           .pm-chip .pm-chip-icon {
-            font-size: 20px;
+            font-size: 16px;
           }
         }
 
@@ -1828,48 +1843,44 @@
         }
 
         .expense-entry {
-          background: linear-gradient(135deg, #ffffff, #fafbfc);
-          border: 2px solid #e5e7eb;
-          border-radius: 16px;
-          padding: 20px;
-          margin-bottom: 16px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
           position: relative;
-          transition: all 0.3s;
+          transition: all 0.2s;
         }
 
         .expense-entry:hover {
-          border-color: #3b82f6;
-          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+          border-color: #cbd5e1;
+          box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
         }
 
         .expense-entry-header {
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-end;
           align-items: center;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
+          min-height: 28px;
         }
 
         .expense-entry-number {
-          font-size: 14px;
-          font-weight: 700;
-          color: #3b82f6;
-          background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-          padding: 6px 12px;
-          border-radius: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
         }
 
         .remove-expense-btn {
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           border: none;
-          background: linear-gradient(135deg, #fee2e2, #fecaca);
-          color: #dc2626;
-          border-radius: 8px;
+          background: #f1f5f9;
+          color: #64748b;
+          border-radius: 6px;
           cursor: pointer;
           font-size: 18px;
-          font-weight: 700;
+          font-weight: 400;
           transition: all 0.2s;
           display: flex;
           align-items: center;
@@ -1877,15 +1888,62 @@
         }
 
         .remove-expense-btn:hover {
-          background: linear-gradient(135deg, #fecaca, #fca5a5);
-          transform: scale(1.1) rotate(90deg);
-          box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+          background: #fee2e2;
+          color: #dc2626;
+          transform: scale(1.05);
         }
 
         .expense-entry-fields {
           display: flex;
           flex-direction: column;
           gap: 12px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .form-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
+          letter-spacing: 0;
+        }
+
+        .date-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #1f2937;
+          background: #ffffff;
+          outline: none;
+          transition: all 0.2s;
+          font-family: 'Inter', sans-serif;
+          cursor: pointer;
+        }
+
+        .date-input:hover {
+          border-color: #cbd5e1;
+        }
+
+        .date-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .visual-selector {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+          gap: 6px;
+        }
+
+        .expense-type-selector {
+          grid-template-columns: repeat(3, 1fr);
         }
 
         .add-another-btn {
@@ -2144,10 +2202,41 @@
           border-radius: 10px;
           padding: 10px;
           transition: box-shadow 0.2s;
+          position: relative;
         }
 
         .envelope-item:hover {
           box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .envelope-add-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 2px solid #3b82f6;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          color: white;
+          font-size: 20px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+          z-index: 10;
+        }
+
+        .envelope-add-btn:hover {
+          transform: scale(1.1) rotate(90deg);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+        }
+
+        .envelope-add-btn:active {
+          transform: scale(0.95) rotate(90deg);
         }
 
         .envelope-header {
@@ -3821,10 +3910,6 @@
                 <span class="icon">↓</span>
                 <span>Income</span>
             </button>
-            <button class="type-btn expense" id="expenseBtn">
-                <span class="icon">↑</span>
-                <span>Expense</span>
-            </button>
             <button class="type-btn transfer" id="transferBtn">
                 <span class="icon">⇄</span>
                 <span>Move Money</span>
@@ -5378,6 +5463,7 @@
 
         return `
           <div class="envelope-item">
+            <button class="envelope-add-btn" onclick="openExpenseForEnvelope('${envelope.replace(/'/g, "\\'")}'); event.stopPropagation();" title="Add expense to ${envelope}">+</button>
             <div class="envelope-header">
               <span class="envelope-name" title="${envelope}">${envelope}</span>
               <span class="envelope-pct-badge" style="background:${color}">${Math.round(percentage)}%</span>
@@ -6181,7 +6267,7 @@
     const addAnotherExpenseBtn = document.getElementById('addAnotherExpenseBtn');
     let expenseEntryCount = 0;
 
-    function createExpenseEntry(index) {
+    function createExpenseEntry(index, preselectedEnvelope = null) {
       const entry = document.createElement('div');
       entry.className = 'expense-entry';
       entry.dataset.index = index;
@@ -6190,30 +6276,36 @@
 
       entry.innerHTML = `
         <div class="expense-entry-header">
-          <div class="expense-entry-number">Expense #${index + 1}</div>
-          ${index > 0 ? '<button type="button" class="remove-expense-btn" onclick="removeExpenseEntry(' + index + ')">×</button>' : ''}
+          ${index > 0 ? '<button type="button" class="remove-expense-btn" onclick="removeExpenseEntry(' + index + ')" title="Remove">×</button>' : ''}
         </div>
         <div class="expense-entry-fields">
-          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
-            <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" name="expense-amount-${index}" id="expense-amount-${index}" />
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <div class="amount-input-wrapper">
+              <span class="currency">₹</span>
+              <input type="number" inputmode="decimal" class="amount-input" placeholder="0" data-field="amount" name="expense-amount-${index}" id="expense-amount-${index}" />
+            </div>
           </div>
-          <input type="text" class="description-input" placeholder="What's this for?" data-field="description" name="expense-description-${index}" id="expense-description-${index}" style="margin-bottom: 16px;" />
+          
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input type="text" class="description-input" placeholder="What's this for?" data-field="description" name="expense-description-${index}" id="expense-description-${index}" />
+          </div>
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">� Date</div>
-            <input type="date" data-field="date" name="expense-date-${index}" id="expense-date-${index}" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+            <input type="date" data-field="date" name="expense-date-${index}" id="expense-date-${index}" value="${todayStr}" class="date-input" />
           </div>
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📁 Category</div>
-            <div class="visual-selector" data-field="envelope" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;"></div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <div class="visual-selector" data-field="envelope" id="envelope-selector-${index}"></div>
           </div>
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment</div>
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
             <div class="pm-chips" data-field="payment"></div>
           </div>
-          <div>
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Type</div>
-            <div class="visual-selector" data-field="expenseType" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <div class="visual-selector expense-type-selector" data-field="expenseType"></div>
           </div>
         </div>
       `;
@@ -6229,46 +6321,67 @@
 
       if (type === 'income') {
         entry.innerHTML = `
-          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
-            <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" id="amountInput" name="income-amount" placeholder="0" class="amount-input" />
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <div class="amount-input-wrapper">
+              <span class="currency">₹</span>
+              <input type="number" inputmode="decimal" id="amountInput" name="income-amount" placeholder="0" class="amount-input" />
+            </div>
           </div>
-          <input type="text" id="descriptionInput" name="income-description" placeholder="What's this for?" class="description-input" style="margin-bottom: 16px;" />
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
-            <input type="date" id="transactionDate" name="income-date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+          
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input type="text" id="descriptionInput" name="income-description" placeholder="What's this for?" class="description-input" />
           </div>
-          <div>
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💳 Payment Method</div>
+          
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="transactionDate" name="income-date" value="${todayStr}" class="date-input" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
             <div class="pm-chips" id="incomePaymentSelector"></div>
           </div>
         `;
       } else if (type === 'transfer') {
         entry.innerHTML = `
-          <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 14px; border-radius: 12px; margin-bottom: 16px; border: 2px solid #93c5fd;">
-            <div style="font-size: 13px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">💡 Moving money between your accounts</div>
-            <div style="font-size: 12px; color: #3b82f6;">This doesn't affect your total balance</div>
+          <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; border: 2px solid #93c5fd;">
+            <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 2px;">💡 Moving money between accounts</div>
+            <div style="font-size: 11px; color: #3b82f6;">This doesn't affect your total balance</div>
           </div>
-          <div class="amount-input-wrapper" style="margin-bottom: 16px;">
-            <span class="currency">₹</span>
-            <input type="number" inputmode="decimal" id="amountInput" name="transfer-amount" placeholder="0" class="amount-input" />
+          
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <div class="amount-input-wrapper">
+              <span class="currency">₹</span>
+              <input type="number" inputmode="decimal" id="amountInput" name="transfer-amount" placeholder="0" class="amount-input" />
+            </div>
           </div>
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date</div>
-            <input type="date" id="transactionDate" name="transfer-date" value="${todayStr}" style="width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; color:#1f2937; background:white; outline:none; transition:all 0.2s;" />
+          
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="transactionDate" name="transfer-date" value="${todayStr}" class="date-input" />
           </div>
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📤 From Account</div>
+          
+          <div class="form-group">
+            <label class="form-label">From Account</label>
             <div class="pm-chips" id="transferFromSelector"></div>
           </div>
-          <div style="display: flex; justify-content: center; margin: -8px 0 8px 0;">
-            <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 8px 16px; border-radius: 20px; font-size: 18px; font-weight: 700; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">↓</div>
+          
+          <div style="display: flex; justify-content: center; margin: 8px 0;">
+            <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 6px 14px; border-radius: 16px; font-size: 16px; font-weight: 700; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">↓</div>
           </div>
-          <div>
-            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📥 To Account</div>
+          
+          <div class="form-group">
+            <label class="form-label">To Account</label>
             <div class="pm-chips" id="transferToSelector"></div>
           </div>
-          <input type="text" id="descriptionInput" name="transfer-description" placeholder="Note (optional)" class="description-input" style="margin-top: 16px; font-size: 14px; color: #6b7280;" />
+          
+          <div class="form-group">
+            <label class="form-label">Note (optional)</label>
+            <input type="text" id="descriptionInput" name="transfer-description" placeholder="Add a note" class="description-input" />
+          </div>
         `;
       } else {
         entry.innerHTML = `
@@ -6321,12 +6434,12 @@
       }
     }
 
-    function addExpenseEntry() {
+    function addExpenseEntry(preselectedEnvelope = null) {
       // Get previous entry values if exists
-      let previousEnvelope = '';
+      let previousEnvelope = preselectedEnvelope || '';
       let previousPayment = '';
       
-      if (expenseEntryCount > 0) {
+      if (expenseEntryCount > 0 && !preselectedEnvelope) {
         const previousEntry = document.querySelector(`.expense-entry[data-index="${expenseEntryCount - 1}"]`);
         if (previousEntry) {
           previousEnvelope = getSelectedValue(previousEntry.querySelector('[data-field="envelope"]'));
@@ -6334,15 +6447,34 @@
         }
       }
       
-      const entry = createExpenseEntry(expenseEntryCount);
+      const entry = createExpenseEntry(expenseEntryCount, preselectedEnvelope);
       expenseEntriesContainer.appendChild(entry);
+      
+      // If envelope is preselected, replace the selector with a display-only field
+      if (preselectedEnvelope) {
+        const envelopeContainer = entry.querySelector('#envelope-selector-' + expenseEntryCount);
+        if (envelopeContainer) {
+          const icon = getEnvelopeIcon(preselectedEnvelope);
+          envelopeContainer.outerHTML = `
+            <div>
+              <div style="padding: 14px 16px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; border-radius: 12px; font-size: 15px; font-weight: 700; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                <span>${icon}</span>
+                <span>${preselectedEnvelope}</span>
+              </div>
+              <input type="hidden" data-field="envelope" value="${preselectedEnvelope}" />
+            </div>
+          `;
+        }
+      }
       
       // Populate visual selectors
       const envelopeContainer = entry.querySelector('[data-field="envelope"]');
       const paymentContainer = entry.querySelector('[data-field="payment"]');
       
-      // Populate envelopes with visual buttons using utility function
-      createVisualOptions(envelopeContainer, envelopes, previousEnvelope, getEnvelopeIcon);
+      // Only populate envelope selector if not preselected (if it's a visual selector, not hidden input)
+      if (envelopeContainer && envelopeContainer.classList.contains('visual-selector')) {
+        createVisualOptions(envelopeContainer, envelopes, previousEnvelope, getEnvelopeIcon);
+      }
       
       // Populate payment methods using utility function
       createPaymentChips(paymentContainer, paymentMethods, previousPayment);
@@ -6366,7 +6498,8 @@
     }
     
     function selectVisualOption(container, value) {
-      container.querySelectorAll('.visual-option').forEach(btn => btn.classList.remove('selected'));
+      // Remove selected class from both visual-option and pm-chip elements
+      container.querySelectorAll('.visual-option, .pm-chip').forEach(btn => btn.classList.remove('selected'));
       const selected = container.querySelector(`[data-value="${value}"]`);
       if (selected) selected.classList.add('selected');
     }
@@ -6641,12 +6774,19 @@
     }
 
     /**
-     * Get selected value from a visual option container
+     * Get selected value from a visual option container or hidden input
      * @param {HTMLElement} container - Container element
      * @returns {string} - Selected value or empty string
      */
     function getSelectedValue(container) {
       if (!container) return '';
+      
+      // Check if it's a hidden input (for preselected values)
+      if (container.tagName === 'INPUT' && container.type === 'hidden') {
+        return container.value || '';
+      }
+      
+      // Check for visual option selection
       const selectedBtn = container.querySelector('.visual-option.selected');
       return selectedBtn ? selectedBtn.dataset.value : '';
     }
@@ -6664,7 +6804,7 @@
       addExpenseEntry();
     });
 
-    function openTransactionModal(type) {
+    function openTransactionModal(type, preselectedEnvelope = null) {
       activeType = type;
       transactionModal.classList.add('show');
       expenseEntriesContainer.innerHTML = '';
@@ -6683,11 +6823,11 @@
         focusAmountInput(singleEntry);
         
       } else if (type === 'expense') {
-        setupModalForType('expense', 'Add Expenses', 'Add Expense');
-        addAnotherExpenseBtn.style.display = 'flex';
+        setupModalForType('expense', 'Add Expense', 'Add Expense');
+        addAnotherExpenseBtn.style.display = 'none';
         
         // Add first expense entry
-        addExpenseEntry();
+        addExpenseEntry(preselectedEnvelope);
         
       } else if (type === 'transfer') {
         setupModalForType('transfer', 'Move Money', 'Move Money');
@@ -6735,13 +6875,14 @@
       incomeBtn.addEventListener('click', () => openTransactionModal('income'));
     }
     
-    if (expenseBtn) {
-      expenseBtn.addEventListener('click', () => openTransactionModal('expense'));
-    }
-    
     if (transferBtn) {
       transferBtn.addEventListener('click', () => openTransactionModal('transfer'));
     }
+
+    // Global function to open expense modal with preselected envelope
+    window.openExpenseForEnvelope = function(envelopeName) {
+      openTransactionModal('expense', envelopeName);
+    };
 
     closeTransactionModal.addEventListener('click', () => {
       transactionModal.classList.remove('show');
@@ -8398,6 +8539,7 @@
 
 </body>
 </html>
+
 
 
 
