@@ -164,9 +164,11 @@
     const envSection = envelopeName
       ? `<div class="ebs-type-header ebs-type-expense">
            <span>${getEnvelopeIcon(envelopeName)}</span><span>${envelopeName}</span>
+           <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
          </div>`
       : `<div class="ebs-type-header ebs-type-expense">
            <span>💸</span><span>Add Expense</span>
+           <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
          </div>`;
 
     const envChips = !envelopeName
@@ -243,6 +245,7 @@
     sheetContent.innerHTML = `
       <div class="ebs-type-header ebs-type-income">
         <span>💰</span><span>Add Income</span>
+        <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
       </div>
       <div class="ebs-body">
         <div class="ebs-amount-section">
@@ -289,6 +292,7 @@
     sheetContent.innerHTML = `
       <div class="ebs-type-header ebs-type-transfer">
         <span>🔄</span><span>Move Money</span>
+        <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
       </div>
       <div class="ebs-body">
         <div class="ebs-transfer-info">💡 Doesn't affect your total balance</div>
