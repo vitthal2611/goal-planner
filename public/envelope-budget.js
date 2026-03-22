@@ -73,7 +73,8 @@
       return;
     }
 
-    container.innerHTML = envelopes.map(envelope => {
+    // Calculate all envelope data
+    const envelopeData = envelopes.map(envelope => {
       let budgetAmount = 0, actualSpent = 0, needSpent = 0, wantSpent = 0, saveSpent = 0;
 
       if (selectedMonth === 'ALL') {
@@ -107,32 +108,96 @@
       }
 
       const percentage = budgetAmount > 0 ? (actualSpent / budgetAmount) * 100 : 0;
-      let color = '#22c55e';
-      if (percentage >= 100) color = '#ef4444';
-      else if (percentage >= 90) color = '#f59e0b';
-
       const remaining = budgetAmount - actualSpent;
-      const remainingText = remaining >= 0
-        ? `₹${remaining.toLocaleString('en-IN')} left`
-        : `₹${Math.abs(remaining).toLocaleString('en-IN')} over`;
+      const overAmount = remaining < 0 ? Math.abs(remaining) : 0;
+
+      // Smart color system: green → orange → red
+      let status = 'safe', color = '#10b981', bgColor = '#f0fdf4', borderColor = '#86efac';
+      if (percentage >= 100) {
+        status = 'over';
+        color = '#ef4444';
+        bgColor = '#fef2f2';
+        borderColor = '#fca5a5';
+      } else if (percentage >= 80) {
+        status = 'warning';
+        color = '#f59e0b';
+        bgColor = '#fffbeb';
+        borderColor = '#fcd34d';
+      }
+
+      return {
+        envelope, budgetAmount, actualSpent, remaining, overAmount, percentage, status, color, bgColor, borderColor,
+        needSpent, wantSpent, saveSpent
+      };
+    });
+
+    // Sort: over → warning → safe, then by overAmount desc
+    envelopeData.sort((a, b) => {
+      const statusOrder = { over: 0, warning: 1, safe: 2 };
+      if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+      return b.overAmount - a.overAmount;
+    });
+
+    // Insights banner
+    const totalOver = envelopeData.filter(e => e.status === 'over').reduce((s, e) => s + e.overAmount, 0);
+    const overCount = envelopeData.filter(e => e.status === 'over').length;
+    const warningCount = envelopeData.filter(e => e.status === 'warning').length;
+    const topOverspend = envelopeData.find(e => e.status === 'over');
+
+    let insightHTML = '';
+    if (overCount > 0) {
+      insightHTML = `
+        <div class="env-insight env-insight--alert">
+          <div class="env-insight-icon">⚠️</div>
+          <div class="env-insight-text">
+            <div class="env-insight-title">₹${totalOver.toLocaleString('en-IN')} overspent</div>
+            <div class="env-insight-sub">${overCount} envelope${overCount > 1 ? 's' : ''} over budget${topOverspend ? ` · Top: ${topOverspend.envelope}` : ''}</div>
+          </div>
+        </div>`;
+    } else if (warningCount > 0) {
+      insightHTML = `
+        <div class="env-insight env-insight--warning">
+          <div class="env-insight-icon">⚡</div>
+          <div class="env-insight-text">
+            <div class="env-insight-title">${warningCount} envelope${warningCount > 1 ? 's' : ''} near limit</div>
+            <div class="env-insight-sub">Watch your spending closely</div>
+          </div>
+        </div>`;
+    } else {
+      insightHTML = `
+        <div class="env-insight env-insight--safe">
+          <div class="env-insight-icon">✅</div>
+          <div class="env-insight-text">
+            <div class="env-insight-title">All envelopes on track</div>
+            <div class="env-insight-sub">Great job managing your budget!</div>
+          </div>
+        </div>`;
+    }
+
+    // Render cards
+    const cardsHTML = envelopeData.map(e => {
+      const safeEnv = e.envelope.replace(/'/g, "\\'");
+      const statusLabel = e.status === 'over' ? `₹${e.overAmount.toLocaleString('en-IN')} over`
+                        : e.status === 'warning' ? `₹${e.remaining.toLocaleString('en-IN')} left`
+                        : `₹${e.remaining.toLocaleString('en-IN')} left`;
 
       const chips = [
-        needSpent > 0 ? `<span class="nws-chip need">🎯 ₹${needSpent.toLocaleString('en-IN')}</span>` : '',
-        wantSpent > 0 ? `<span class="nws-chip want">🎉 ₹${wantSpent.toLocaleString('en-IN')}</span>` : '',
-        saveSpent > 0 ? `<span class="nws-chip save">💰 ₹${saveSpent.toLocaleString('en-IN')}</span>` : '',
+        e.needSpent > 0 ? `<span class="nws-chip need">🎯 ₹${e.needSpent.toLocaleString('en-IN')}</span>` : '',
+        e.wantSpent > 0 ? `<span class="nws-chip want">🎉 ₹${e.wantSpent.toLocaleString('en-IN')}</span>` : '',
+        e.saveSpent > 0 ? `<span class="nws-chip save">💰 ₹${e.saveSpent.toLocaleString('en-IN')}</span>` : '',
       ].filter(Boolean).join('');
 
-      const safeEnv = envelope.replace(/'/g, "\\'");
       return `
-        <div class="envelope-item" data-envelope="${safeEnv}"
+        <div class="envelope-item envelope-item--${e.status}" data-envelope="${safeEnv}"
+             style="border-color:${e.borderColor};background:${e.bgColor}"
              oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
           <div class="envelope-header">
-            <span class="envelope-name" title="${envelope}">${envelope}</span>
-            <span class="envelope-pct-badge" style="background:${color}">${Math.round(percentage)}%</span>
+            <span class="envelope-name" title="${e.envelope}">${e.envelope}</span>
+            <span class="envelope-status" style="color:${e.color}">${statusLabel}</span>
           </div>
-          <div class="envelope-amounts">₹${actualSpent.toLocaleString('en-IN')} / ₹${budgetAmount.toLocaleString('en-IN')} &nbsp;·&nbsp; ${remainingText}</div>
+          <div class="envelope-amounts">₹${e.actualSpent.toLocaleString('en-IN')} / ₹${e.budgetAmount.toLocaleString('en-IN')}</div>
           <div class="envelope-bar">
-            <div class="envelope-progress" style="width:${Math.min(percentage, 100)}%;background:${color}"></div>
+            <div class="envelope-progress" style="width:${Math.min(e.percentage, 100)}%;background:${e.color}"></div>
           </div>
           ${chips ? `<div class="nws-chips">${chips}</div>` : ''}
           <div class="env-action-strip" id="eas-${safeEnv.replace(/\s+/g,'_')}">
@@ -142,6 +207,8 @@
           </div>
         </div>`;
     }).join('');
+
+    container.innerHTML = insightHTML + cardsHTML;
   }
 
   // ── Filter Chips ──────────────────────────────────────────────
