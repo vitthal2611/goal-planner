@@ -144,12 +144,27 @@
 
   function renderExpenseQuick(envelopeName) {
     const methods = (typeof paymentMethods !== 'undefined' ? paymentMethods : []).slice(0, 6);
-    const icon = getEnvelopeIcon(envelopeName);
+    const envelopes = typeof window.envelopes !== 'undefined' ? window.envelopes
+                    : (() => { try { return JSON.parse(localStorage.getItem('envelopes') || '[]'); } catch { return []; } })();
+
+    const headerHTML = envelopeName
+      ? `<div class="ebs-type-header ebs-type-expense"><span>${getEnvelopeIcon(envelopeName)}</span><span>${envelopeName}</span></div>`
+      : `<div class="ebs-pm-row ebs-env-picker" id="ebsEnvRow">
+           ${envelopes.map(e => `<button type="button" class="ebs-pm-chip" data-method="${e}"
+             onclick="EnvelopeBottomSheet._selectPM(this,'ebsEnvRow');EnvelopeBottomSheet._setEnv(this.dataset.method)">
+             <span>${getEnvelopeIcon(e)}</span> ${e}</button>`).join('')}
+         </div>`;
+
     sheetContent.innerHTML = `
-      <div class="ebs-type-header ebs-type-expense">
-        <span>${icon}</span>
-        <span>${envelopeName}</span>
+      <div class="ebs-type-header ebs-type-expense" style="${envelopeName ? '' : 'display:none'}">
+        <span>${getEnvelopeIcon(envelopeName || '')}</span><span>${envelopeName || ''}</span>
       </div>
+      ${!envelopeName ? `<label class="ebs-label">Envelope</label>
+        <div class="ebs-pm-row ebs-env-picker" id="ebsEnvRow">
+          ${envelopes.map(e => `<button type="button" class="ebs-pm-chip" data-method="${e}"
+            onclick="EnvelopeBottomSheet._selectPM(this,'ebsEnvRow');EnvelopeBottomSheet._setEnv(this.dataset.method)">
+            <span>${getEnvelopeIcon(e)}</span> ${e}</button>`).join('')}
+        </div>` : ''}
       ${amountRowHTML()}
       <div class="ebs-pm-row" id="ebsPMRow">${pmChipsHTML(methods, 'ebsPMRow')}</div>
       <div class="ebs-nws-row">
@@ -166,12 +181,20 @@
 
   function renderExpenseFull(envelopeName) {
     const methods = typeof paymentMethods !== 'undefined' ? paymentMethods : [];
-    const icon = getEnvelopeIcon(envelopeName);
+    const envelopes = typeof window.envelopes !== 'undefined' ? window.envelopes
+                    : (() => { try { return JSON.parse(localStorage.getItem('envelopes') || '[]'); } catch { return []; } })();
+
+    const envSection = envelopeName
+      ? `<div class="ebs-type-header ebs-type-expense"><span>${getEnvelopeIcon(envelopeName)}</span><span>${envelopeName}</span></div>`
+      : `<label class="ebs-label">Envelope</label>
+         <div class="ebs-pm-row ebs-env-picker" id="ebsEnvRow">
+           ${envelopes.map(e => `<button type="button" class="ebs-pm-chip" data-method="${e}"
+             onclick="EnvelopeBottomSheet._selectPM(this,'ebsEnvRow');EnvelopeBottomSheet._setEnv(this.dataset.method)">
+             <span>${getEnvelopeIcon(e)}</span> ${e}</button>`).join('')}
+         </div>`;
+
     sheetContent.innerHTML = `
-      <div class="ebs-type-header ebs-type-expense">
-        <span>${icon}</span>
-        <span>${envelopeName}</span>
-      </div>
+      ${envSection}
       ${amountRowHTML()}
       <label class="ebs-label">Note (optional)</label>
       <input id="ebsNote" class="ebs-text-input" type="text" placeholder="What was this for?" maxlength="100" />
@@ -285,6 +308,16 @@
     setTimeout(() => { const inp = el('ebsAmount'); if (inp) inp.focus(); }, 350);
   }
 
+  function _setEnv(name) {
+    currentEnvelope = name;
+    // Update the hidden header tag to show selected envelope
+    const header = sheetContent.querySelector('.ebs-type-header');
+    if (header) {
+      header.style.display = 'flex';
+      header.innerHTML = `<span>${getEnvelopeIcon(name)}</span><span>${name}</span>`;
+    }
+  }
+
   function _selectPM(btn, rowId) {
     const row = el(rowId) || sheetContent.querySelector(`[id="${rowId}"]`);
     if (row) row.querySelectorAll('.ebs-pm-chip').forEach(b => b.classList.remove('selected'));
@@ -394,6 +427,11 @@
         // expense
         const pmBtn  = sheetContent.querySelector('#ebsPMRow .ebs-pm-chip.selected');
         const nwsBtn = sheetContent.querySelector('.ebs-nws-btn.selected');
+        if (!currentEnvelope) {
+          if (typeof showToast === 'function') showToast('Please select an envelope', 'error');
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Expense'; }
+          return;
+        }
         tx = {
           id: `EXP-${Date.now()}`,
           type: 'expense',
@@ -481,8 +519,10 @@
     // FAB buttons
     const incomeFab   = el('incomeBtnFab');
     const transferFab = el('transferBtnFab');
+    const expenseFab  = el('expenseBtnFab');
     if (incomeFab)   incomeFab.addEventListener('click',   () => open('income'));
     if (transferFab) transferFab.addEventListener('click', () => open('transfer'));
+    if (expenseFab)  expenseFab.addEventListener('click',  () => open('expense'));
 
     // Header quick-track buttons (hidden on mobile but wired anyway)
     const incomeBtn   = el('incomeBtn');
@@ -492,6 +532,6 @@
   }
 
   // ── Public API ────────────────────────────────────────────────
-  window.EnvelopeBottomSheet = { init, open, close, _selectPM, _selectNWS, _expand, _submit };
+  window.EnvelopeBottomSheet = { init, open, close, _selectPM, _selectNWS, _expand, _submit, _setEnv };
 
 })();

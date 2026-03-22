@@ -126,7 +126,6 @@
       return `
         <div class="envelope-item" data-envelope="${safeEnv}"
              oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
-          <button class="envelope-add-btn" onclick="openExpenseForEnvelope('${safeEnv}'); event.stopPropagation();" title="Add expense to ${envelope}">+</button>
           <div class="envelope-header">
             <span class="envelope-name" title="${envelope}">${envelope}</span>
             <span class="envelope-pct-badge" style="background:${color}">${Math.round(percentage)}%</span>

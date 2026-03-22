@@ -34,36 +34,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.envelope-add-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #3b82f6;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  font-size: 20px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  z-index: 10;
-}
-
-.envelope-add-btn:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-}
-
-.envelope-add-btn:active {
-  transform: scale(0.95) rotate(90deg);
-}
-
 .envelope-header {
   display: flex;
   justify-content: space-between;
