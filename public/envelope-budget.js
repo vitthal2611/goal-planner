@@ -111,34 +111,46 @@
       const remaining = budgetAmount - actualSpent;
       const overAmount = remaining < 0 ? Math.abs(remaining) : 0;
 
-      // Smart color system: green → orange → red
-      let status = 'safe', color = '#10b981', bgColor = '#f0fdf4', borderColor = '#86efac';
+      // Severity levels for overspending
+      let severity = 'none', severityLabel = '';
+      if (overAmount > 5000) { severity = 'critical'; severityLabel = 'Critical'; }
+      else if (overAmount >= 500) { severity = 'moderate'; severityLabel = 'Moderate'; }
+      else if (overAmount > 0) { severity = 'minor'; severityLabel = 'Minor'; }
+
+      // Smart color system: green → orange → red with severity
+      let status = 'safe', statusLabel = 'On track', color = '#10b981', barHeight = '6px';
       if (percentage >= 100) {
         status = 'over';
-        color = '#ef4444';
-        bgColor = '#fef2f2';
-        borderColor = '#fca5a5';
+        statusLabel = 'Over budget';
+        if (severity === 'critical') { color = '#dc2626'; barHeight = '8px'; }
+        else if (severity === 'moderate') { color = '#ef4444'; barHeight = '7px'; }
+        else { color = '#fb923c'; barHeight = '6px'; }
       } else if (percentage >= 80) {
         status = 'warning';
+        statusLabel = 'Near limit';
         color = '#f59e0b';
-        bgColor = '#fffbeb';
-        borderColor = '#fcd34d';
       }
 
       return {
-        envelope, budgetAmount, actualSpent, remaining, overAmount, percentage, status, color, bgColor, borderColor,
-        needSpent, wantSpent, saveSpent
+        envelope, budgetAmount, actualSpent, remaining, overAmount, percentage, status, statusLabel, color, barHeight,
+        severity, severityLabel, needSpent, wantSpent, saveSpent
       };
     });
 
-    // Sort: over → warning → safe, then by overAmount desc
+    // Sort: critical → moderate → minor → warning → safe
     envelopeData.sort((a, b) => {
+      const severityOrder = { critical: 0, moderate: 1, minor: 2, none: 3 };
       const statusOrder = { over: 0, warning: 1, safe: 2 };
-      if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+      if (a.status !== b.status) return statusOrder[a.status] - statusOrder[b.status];
+      if (a.severity !== b.severity) return severityOrder[a.severity] - severityOrder[b.severity];
       return b.overAmount - a.overAmount;
     });
 
-    // Insights banner
+    // Split into problem vs safe
+    const problemEnvelopes = envelopeData.filter(e => e.status === 'over' || e.status === 'warning');
+    const safeEnvelopes = envelopeData.filter(e => e.status === 'safe');
+
+    // Insights banner with CTA
     const totalOver = envelopeData.filter(e => e.status === 'over').reduce((s, e) => s + e.overAmount, 0);
     const overCount = envelopeData.filter(e => e.status === 'over').length;
     const warningCount = envelopeData.filter(e => e.status === 'warning').length;
@@ -146,12 +158,18 @@
 
     let insightHTML = '';
     if (overCount > 0) {
+      const topName = topOverspend.envelope.replace(/'/g, "\\'");
       insightHTML = `
         <div class="env-insight env-insight--alert">
-          <div class="env-insight-icon">⚠️</div>
-          <div class="env-insight-text">
-            <div class="env-insight-title">₹${totalOver.toLocaleString('en-IN')} overspent</div>
-            <div class="env-insight-sub">${overCount} envelope${overCount > 1 ? 's' : ''} over budget${topOverspend ? ` · Top: ${topOverspend.envelope}` : ''}</div>
+          <div class="env-insight-main">
+            <div class="env-insight-icon">⚠️</div>
+            <div class="env-insight-text">
+              <div class="env-insight-title">Overspent ₹${totalOver.toLocaleString('en-IN')}</div>
+              <div class="env-insight-sub">Top issue: ${topOverspend.envelope} (₹${topOverspend.overAmount.toLocaleString('en-IN')})</div>
+            </div>
+          </div>
+          <div class="env-insight-actions">
+            <button class="env-insight-btn" onclick="EnvelopeActions.viewDetails('${topName}')">Fix Now</button>
           </div>
         </div>`;
     } else if (warningCount > 0) {
@@ -174,32 +192,26 @@
         </div>`;
     }
 
-    // Render cards
-    const cardsHTML = envelopeData.map(e => {
+    // Render problem cards
+    const problemCardsHTML = problemEnvelopes.map(e => {
       const safeEnv = e.envelope.replace(/'/g, "\\'");
-      const statusLabel = e.status === 'over' ? `₹${e.overAmount.toLocaleString('en-IN')} over`
-                        : e.status === 'warning' ? `₹${e.remaining.toLocaleString('en-IN')} left`
-                        : `₹${e.remaining.toLocaleString('en-IN')} left`;
-
-      const chips = [
-        e.needSpent > 0 ? `<span class="nws-chip need">🎯 ₹${e.needSpent.toLocaleString('en-IN')}</span>` : '',
-        e.wantSpent > 0 ? `<span class="nws-chip want">🎉 ₹${e.wantSpent.toLocaleString('en-IN')}</span>` : '',
-        e.saveSpent > 0 ? `<span class="nws-chip save">💰 ₹${e.saveSpent.toLocaleString('en-IN')}</span>` : '',
-      ].filter(Boolean).join('');
+      const statusText = e.status === 'over' ? `₹${e.overAmount.toLocaleString('en-IN')} over`
+                       : `₹${e.remaining.toLocaleString('en-IN')} left`;
 
       return `
-        <div class="envelope-item envelope-item--${e.status}" data-envelope="${safeEnv}"
-             style="border-color:${e.borderColor};background:${e.bgColor}"
+        <div class="envelope-item envelope-item--${e.status} envelope-item--${e.severity}" data-envelope="${safeEnv}"
              oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
           <div class="envelope-header">
-            <span class="envelope-name" title="${e.envelope}">${e.envelope}</span>
-            <span class="envelope-status" style="color:${e.color}">${statusLabel}</span>
+            <span class="envelope-name">${e.envelope}</span>
+            <span class="envelope-badge envelope-badge--${e.status}">${e.statusLabel}</span>
           </div>
           <div class="envelope-amounts">₹${e.actualSpent.toLocaleString('en-IN')} / ₹${e.budgetAmount.toLocaleString('en-IN')}</div>
-          <div class="envelope-bar">
+          <div class="envelope-status-row">
+            <span class="envelope-status-text" style="color:${e.color}">${statusText}</span>
+          </div>
+          <div class="envelope-bar" style="height:${e.barHeight}">
             <div class="envelope-progress" style="width:${Math.min(e.percentage, 100)}%;background:${e.color}"></div>
           </div>
-          ${chips ? `<div class="nws-chips">${chips}</div>` : ''}
           <div class="env-action-strip" id="eas-${safeEnv.replace(/\s+/g,'_')}">
             <button class="env-action-btn env-action-add"      onclick="EnvelopeActions.addExpense('${safeEnv}')">➕<span>Add</span></button>
             <button class="env-action-btn env-action-details"  onclick="EnvelopeActions.viewDetails('${safeEnv}')">👁<span>Details</span></button>
@@ -208,7 +220,35 @@
         </div>`;
     }).join('');
 
-    container.innerHTML = insightHTML + cardsHTML;
+    // Positive feedback section (collapsible)
+    let safeSection = '';
+    if (safeEnvelopes.length > 0) {
+      const safeCardsHTML = safeEnvelopes.map(e => {
+        const safeEnv = e.envelope.replace(/'/g, "\\'");
+        return `
+          <div class="envelope-item envelope-item--safe-compact" data-envelope="${safeEnv}"
+               oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
+            <div class="envelope-header">
+              <span class="envelope-name">${e.envelope}</span>
+              <span class="envelope-safe-amount">₹${e.remaining.toLocaleString('en-IN')} left</span>
+            </div>
+            <div class="envelope-bar" style="height:4px">
+              <div class="envelope-progress" style="width:${Math.min(e.percentage, 100)}%;background:${e.color}"></div>
+            </div>
+          </div>`;
+      }).join('');
+
+      safeSection = `
+        <div class="env-safe-section" id="envSafeSection">
+          <button class="env-safe-toggle" onclick="document.getElementById('envSafeList').classList.toggle('env-safe-list--open');this.classList.toggle('env-safe-toggle--open')">
+            <span>✔ ${safeEnvelopes.length} categor${safeEnvelopes.length > 1 ? 'ies' : 'y'} within budget</span>
+            <span class="env-safe-arrow">›</span>
+          </button>
+          <div class="env-safe-list" id="envSafeList">${safeCardsHTML}</div>
+        </div>`;
+    }
+
+    container.innerHTML = insightHTML + problemCardsHTML + safeSection;
   }
 
   // ── Filter Chips ──────────────────────────────────────────────
