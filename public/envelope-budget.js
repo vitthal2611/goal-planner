@@ -32,6 +32,17 @@
     try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
   }
 
+  // Helper to get envelope category
+  function getEnvelopeCategory(envelopeName) {
+    const envelopes = fromStorage('envelopes');
+    // Handle old format (array of strings)
+    const envList = envelopes.length > 0 && typeof envelopes[0] === 'string'
+      ? envelopes.map(name => ({ name, category: 'need' }))
+      : envelopes;
+    const env = envList.find(e => e.name === envelopeName);
+    return env ? env.category : 'need';
+  }
+
   function filterTransactionsByPeriod(txList, selectedMonth, selectedYear) {
     if (selectedMonth === 'ALL') {
       return txList.filter(t => {
@@ -69,42 +80,50 @@
     // Update NWS bar
     if (window.NWS) NWS.updateNWSSummary(filteredTransactions);
 
-    if (envelopes.length === 0) {
+    // Handle old format (array of strings) and convert to objects
+    const envList = envelopes.length > 0 && typeof envelopes[0] === 'string'
+      ? envelopes.map(name => ({ name, category: 'need' }))
+      : envelopes;
+
+    if (envList.length === 0) {
       container.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;">No envelopes available.</div>';
       return;
     }
 
     // Calculate all envelope data
-    const envelopeData = envelopes.map(envelope => {
+    const envelopeData = envList.map(envelope => {
+      const envelopeName = envelope.name;
       let budgetAmount = 0, actualSpent = 0, needSpent = 0, wantSpent = 0, saveSpent = 0;
 
       if (selectedMonth === 'ALL') {
         budgetAmount = budgets
-          .filter(b => b.envelope === envelope && b.month.startsWith(selectedYear))
+          .filter(b => b.envelope === envelopeName && b.month.startsWith(selectedYear))
           .reduce((sum, b) => sum + parseFloat(b.amount || 0), 0);
 
         transactions
-          .filter(t => t.type === 'expense' && t.envelope === envelope && t.date &&
+          .filter(t => t.type === 'expense' && t.envelope === envelopeName && t.date &&
             (() => { try { return new Date(t.date).getFullYear().toString() === selectedYear; } catch { return false; } })())
           .forEach(t => {
             const amt = parseFloat(t.amount || 0);
             actualSpent += amt;
-            if (t.expenseType === 'need') needSpent += amt;
-            else if (t.expenseType === 'want') wantSpent += amt;
-            else if (t.expenseType === 'save') saveSpent += amt;
+            const category = getEnvelopeCategory(t.envelope);
+            if (category === 'need') needSpent += amt;
+            else if (category === 'want') wantSpent += amt;
+            else if (category === 'save') saveSpent += amt;
           });
       } else {
-        const budget = budgets.find(b => b.envelope === envelope && b.month === selectedMonth);
+        const budget = budgets.find(b => b.envelope === envelopeName && b.month === selectedMonth);
         budgetAmount = budget ? parseFloat(budget.amount) : 0;
 
         filteredTransactions
-          .filter(t => t.type === 'expense' && t.envelope === envelope)
+          .filter(t => t.type === 'expense' && t.envelope === envelopeName)
           .forEach(t => {
             const amt = parseFloat(t.amount || 0);
             actualSpent += amt;
-            if (t.expenseType === 'need') needSpent += amt;
-            else if (t.expenseType === 'want') wantSpent += amt;
-            else if (t.expenseType === 'save') saveSpent += amt;
+            const category = getEnvelopeCategory(t.envelope);
+            if (category === 'need') needSpent += amt;
+            else if (category === 'want') wantSpent += amt;
+            else if (category === 'save') saveSpent += amt;
           });
       }
 
@@ -133,7 +152,7 @@
       }
 
       return {
-        envelope, budgetAmount, actualSpent, remaining, overAmount, percentage, status, statusLabel, color, barHeight,
+        envelope: envelopeName, budgetAmount, actualSpent, remaining, overAmount, percentage, status, statusLabel, color, barHeight,
         severity, severityLabel, needSpent, wantSpent, saveSpent
       };
     });
@@ -259,24 +278,30 @@
     if (!container) return;
 
     const envelopes = fromStorage('envelopes');
-    if (envelopes.length === 0) { container.innerHTML = ''; return; }
+    // Handle old format (array of strings)
+    const envList = envelopes.length > 0 && typeof envelopes[0] === 'string'
+      ? envelopes.map(name => ({ name, category: 'need' }))
+      : envelopes;
+      
+    if (envList.length === 0) { container.innerHTML = ''; return; }
 
-    const hasMore = envelopes.length > 6;
-    const displayEnvelopes = showAllChips ? envelopes : envelopes.slice(0, 6);
+    const hasMore = envList.length > 6;
+    const displayEnvelopes = showAllChips ? envList : envList.slice(0, 6);
 
     const chips = ['ALL', ...displayEnvelopes].map(envelope => {
-      const isActive = selectedEnvelopeFilter === envelope;
-      const label = envelope === 'ALL' ? 'All' : envelope;
+      const envName = envelope === 'ALL' ? 'ALL' : envelope.name;
+      const isActive = selectedEnvelopeFilter === envName;
+      const label = envelope === 'ALL' ? 'All' : envelope.name;
       return `
         <button
-          onclick="filterByEnvelope('${envelope}')"
+          onclick="filterByEnvelope('${envName}')"
           class="env-filter-chip ${isActive ? 'env-filter-chip--active' : ''}"
         >${label}</button>`;
     }).join('');
 
     const moreBtn = hasMore
       ? `<button class="env-filter-chip env-filter-chip--more" onclick="EnvelopeBudget._toggleChips()">
-          ${showAllChips ? 'Show Less' : `+${envelopes.length - 6} More`}
+          ${showAllChips ? 'Show Less' : `+${envList.length - 6} More`}
          </button>`
       : '';
 
@@ -300,24 +325,30 @@
     const budgets        = fromStorage('budgets');
     const defaultBudgets = fromStorageObj('defaultBudgets');
 
+    // Handle old format (array of strings)
+    const envList = envelopes.length > 0 && typeof envelopes[0] === 'string'
+      ? envelopes.map(name => ({ name, category: 'need' }))
+      : envelopes;
+
     if (!selectedMonth) {
       listContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;background:linear-gradient(135deg,#f0f9ff,#ffffff);border-radius:12px;border:2px dashed #bfdbfe;">📅 Select a month to set budgets</div>';
       return;
     }
-    if (envelopes.length === 0) {
+    if (envList.length === 0) {
       listContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;background:linear-gradient(135deg,#fef3c7,#ffffff);border-radius:12px;border:2px dashed #fbbf24;">⚠️ No envelopes available. Add envelopes first.</div>';
       return;
     }
 
-    listContainer.innerHTML = envelopes.map(envelope => {
-      const existing = budgets.find(b => b.envelope === envelope && b.month === selectedMonth);
-      const val = existing ? existing.amount : (defaultBudgets[envelope] || '');
+    listContainer.innerHTML = envList.map(envelope => {
+      const envName = envelope.name;
+      const existing = budgets.find(b => b.envelope === envName && b.month === selectedMonth);
+      const val = existing ? existing.amount : (defaultBudgets[envName] || '');
       return `
         <div class="budget-envelope-item">
-          <div class="budget-envelope-name">${envelope}</div>
+          <div class="budget-envelope-name">${envName}</div>
           <input type="number" class="budget-input" placeholder="Enter amount"
-            value="${val}" data-envelope="${envelope}" inputmode="decimal" />
-          <button class="save-budget-btn" onclick="saveBudget('${envelope}')">Save</button>
+            value="${val}" data-envelope="${envName}" inputmode="decimal" />
+          <button class="save-budget-btn" onclick="saveBudget('${envName}')">Save</button>
         </div>`;
     }).join('');
   }

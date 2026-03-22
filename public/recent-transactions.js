@@ -71,11 +71,28 @@
       ? `${t.from}→${t.to} ₹${parseFloat(t.amount).toLocaleString('en-IN')}`
       : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
     
-    // Color-coded NWS tags
+    // Get envelopes with categories
+    const envelopes = (() => { 
+      try { 
+        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+        if (envs.length > 0 && typeof envs[0] === 'string') {
+          return envs.map(name => ({ name, category: 'need' }));
+        }
+        return envs;
+      } catch { return []; }
+    })();
+    
+    const getEnvelopeCategory = (envelopeName) => {
+      const env = envelopes.find(e => e.name === envelopeName);
+      return env ? env.category : null;
+    };
+    
+    // Color-coded NWS tags based on envelope category
     const nwsColors = { need: '#6366f1', want: '#f59e0b', save: '#10b981' };
     const nwsIcons = { need: '🧠', want: '🎯', save: '💰' };
-    const typeTag = t.expenseType
-      ? `<span class="tx-tag tx-tag-nws" style="background:${nwsColors[t.expenseType]}20;color:${nwsColors[t.expenseType]}">${nwsIcons[t.expenseType]} ${t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)}</span>`
+    const category = t.type === 'expense' && t.envelope ? getEnvelopeCategory(t.envelope) : null;
+    const typeTag = category
+      ? `<span class="tx-tag tx-tag-nws" style="background:${nwsColors[category]}20;color:${nwsColors[category]}">${nwsIcons[category]} ${category.charAt(0).toUpperCase() + category.slice(1)}</span>`
       : '';
     
     const envelopeTag = t.envelope ? `<span class="tx-tag">${t.envelope}</span>` : '';
@@ -135,13 +152,32 @@
 
     // Calculate monthly summary
     let totalSpent = 0, needSpent = 0, wantSpent = 0, saveSpent = 0;
+    
+    // Get envelopes with categories
+    const envelopes = (() => { 
+      try { 
+        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+        // Handle old format (array of strings)
+        if (envs.length > 0 && typeof envs[0] === 'string') {
+          return envs.map(name => ({ name, category: 'need' }));
+        }
+        return envs;
+      } catch { return []; }
+    })();
+    
+    const getEnvelopeCategory = (envelopeName) => {
+      const env = envelopes.find(e => e.name === envelopeName);
+      return env ? env.category : 'need';
+    };
+    
     filtered.forEach(t => {
       if (t.type === 'expense') {
         const amt = parseFloat(t.amount || 0);
         totalSpent += amt;
-        if (t.expenseType === 'need') needSpent += amt;
-        else if (t.expenseType === 'want') wantSpent += amt;
-        else if (t.expenseType === 'save') saveSpent += amt;
+        const category = getEnvelopeCategory(t.envelope);
+        if (category === 'need') needSpent += amt;
+        else if (category === 'want') wantSpent += amt;
+        else if (category === 'save') saveSpent += amt;
       }
     });
 

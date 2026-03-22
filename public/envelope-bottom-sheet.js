@@ -21,7 +21,6 @@
 
   // Smart defaults (remember last selections)
   let lastPaymentMethod = null;
-  let lastExpenseType = 'need';
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
@@ -175,11 +174,16 @@
       ? `<div class="ebs-section">
            <label class="ebs-section-label">Category</label>
            <div class="ebs-chip-row" id="ebsEnvRow">
-             ${envelopes.map(e => `
-               <button type="button" class="ebs-chip" data-method="${e}"
+             ${envelopes.map(e => {
+               const categoryIcons = { need: '🧠', want: '🎯', save: '💰' };
+               return `
+               <button type="button" class="ebs-chip" data-method="${e.name}" data-category="${e.category}"
                  onclick="EnvelopeBottomSheet._selectChip(this,'ebsEnvRow');EnvelopeBottomSheet._setEnv(this.dataset.method)">
-                 <span class="ebs-chip-icon">${getEnvelopeIcon(e)}</span> ${e}
-               </button>`).join('')}
+                 <span class="ebs-chip-icon">${getEnvelopeIcon(e.name)}</span> 
+                 <span>${e.name}</span>
+                 <span style="font-size: 10px; opacity: 0.7;">${categoryIcons[e.category]}</span>
+               </button>`;
+             }).join('')}
            </div>
          </div>`
       : '';
@@ -197,18 +201,6 @@
         </div>
 
         ${envChips}
-
-        <div class="ebs-section">
-          <label class="ebs-section-label">Type</label>
-          <div class="ebs-nws-segment">
-            <button type="button" class="ebs-nws-btn ${lastExpenseType === 'need' ? 'selected' : ''}" data-type="need" 
-                    onclick="EnvelopeBottomSheet._selectNWS(this)">🧠 Need</button>
-            <button type="button" class="ebs-nws-btn ${lastExpenseType === 'want' ? 'selected' : ''}" data-type="want" 
-                    onclick="EnvelopeBottomSheet._selectNWS(this)">🎯 Want</button>
-            <button type="button" class="ebs-nws-btn ${lastExpenseType === 'save' ? 'selected' : ''}" data-type="save" 
-                    onclick="EnvelopeBottomSheet._selectNWS(this)">💰 Save</button>
-          </div>
-        </div>
 
         <div class="ebs-section">
           <label class="ebs-section-label">Payment Method</label>
@@ -373,12 +365,6 @@
     }
   }
 
-  function _selectNWS(btn) {
-    sheetContent.querySelectorAll('.ebs-nws-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    lastExpenseType = btn.dataset.type;
-  }
-
   // ── Submit ────────────────────────────────────────────────────
 
   function _submit() {
@@ -451,7 +437,6 @@
       } else {
         // expense
         const pmBtn  = sheetContent.querySelector('#ebsPMRow .ebs-chip.selected');
-        const nwsBtn = sheetContent.querySelector('.ebs-nws-btn.selected');
         if (!currentEnvelope) {
           if (typeof showToast === 'function') showToast('Please select a category', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Expense'; }
@@ -464,7 +449,6 @@
           description: note || currentEnvelope,
           envelope: currentEnvelope,
           payment: pmBtn ? pmBtn.dataset.method : '',
-          expenseType: nwsBtn ? nwsBtn.dataset.type : 'need',
           date: new Date(dateVal).toISOString(),
         };
         _saveAndRefresh(tx, `✅ ₹${amount.toLocaleString('en-IN')} added to ${currentEnvelope}`);
@@ -556,6 +540,6 @@
   }
 
   // ── Public API ────────────────────────────────────────────────
-  window.EnvelopeBottomSheet = { init, open, close, _selectChip, _selectNWS, _submit, _setEnv, _addQuick };
+  window.EnvelopeBottomSheet = { init, open, close, _selectChip, _submit, _setEnv, _addQuick };
 
 })();

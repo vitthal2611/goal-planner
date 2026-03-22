@@ -3206,7 +3206,12 @@
                 <div class="add-payment-form">
                     <input type="text" id="newEnvelope" class="add-payment-input" placeholder="e.g., Food, Transport, Shopping">
                     <div class="add-payment-row">
-                        <input type="number" id="defaultBudget" class="add-payment-input" placeholder="Default budget (optional)" inputmode="decimal">
+                        <select id="envelopeCategory" class="add-payment-input" style="flex: 1;">
+                            <option value="need">🧠 Need</option>
+                            <option value="want">🎯 Want</option>
+                            <option value="save">💰 Save</option>
+                        </select>
+                        <input type="number" id="defaultBudget" class="add-payment-input" placeholder="Budget (optional)" inputmode="decimal" style="flex: 1;">
                         <button class="add-btn" id="addEnvelopeBtn">+ Add</button>
                     </div>
                 </div>
@@ -3622,8 +3627,25 @@
 
     // downloadReport — handled by data-manager.js
 
-    // Envelopes array
+    // Envelopes array - now stores {name, category} objects
     let envelopes = JSON.parse(localStorage.getItem('envelopes')) || [];
+    
+    // Migrate old envelope format (array of strings) to new format (array of objects)
+    if (envelopes.length > 0 && typeof envelopes[0] === 'string') {
+      envelopes = envelopes.map(name => ({ name, category: 'need' })); // Default to 'need'
+      localStorage.setItem('envelopes', JSON.stringify(envelopes));
+    }
+
+    // Helper function to get envelope category
+    function getEnvelopeCategory(envelopeName) {
+      const env = envelopes.find(e => e.name === envelopeName);
+      return env ? env.category : 'need'; // Default to 'need' if not found
+    }
+
+    // Helper function to get envelope names (for backward compatibility)
+    function getEnvelopeNames() {
+      return envelopes.map(e => e.name);
+    }
 
     // Default budgets for envelopes - stores {envelope, defaultBudget}
     let defaultBudgets = JSON.parse(localStorage.getItem('defaultBudgets')) || {};
@@ -3690,7 +3712,7 @@
       
       if (confirm(confirmMsg)) {
         transactions = transactions.filter(t => t.envelope !== name);
-        envelopes = envelopes.filter(env => env !== name);
+        envelopes = envelopes.filter(env => env.name !== name);
         delete defaultBudgets[name];
         budgets = budgets.filter(b => b.envelope !== name);
         updateEnvelopesList();
@@ -3783,10 +3805,15 @@
         listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af; background: linear-gradient(135deg, #f9fafb, #ffffff); border-radius: 12px; border: 2px dashed #e5e7eb;">📁 No envelopes yet. Create categories for your expenses!</div>';
         return;
       }
+      const categoryIcons = { need: '🧠', want: '🎯', save: '💰' };
       listContainer.innerHTML = envelopes.map(env => `
         <div class="payment-method-item">
-          <div class="payment-method-name" style="&::before { content: '📁'; }">${env}</div>
-          <button class="delete-btn" onclick="deleteEnvelope('${env}')">Delete</button>
+          <div class="payment-method-name" style="display: flex; align-items: center; gap: 8px;">
+            <span>📁</span>
+            <span>${env.name}</span>
+            <span style="font-size: 11px; padding: 2px 8px; background: #f3f4f6; border-radius: 10px; color: #6b7280;">${categoryIcons[env.category]} ${env.category}</span>
+          </div>
+          <button class="delete-btn" onclick="deleteEnvelope('${env.name}')">Delete</button>
         </div>
       `).join('');
       EnvelopeBudget.updateFilterChips();
@@ -4074,25 +4101,28 @@
     addEnvelopeBtn.addEventListener('click', async () => {
       const envelopeName = newEnvelope.value.trim();
       const budget = defaultBudget.value.trim();
+      const category = document.getElementById('envelopeCategory').value;
+      
       if (envelopeName) {
-        if (!envelopes.includes(envelopeName)) {
+        if (!envelopes.find(e => e.name === envelopeName)) {
           try {
-            // Add to local array first
-            envelopes.push(envelopeName);
+            // Add to local array as object with category
+            envelopes.push({ name: envelopeName, category });
             if (budget) {
               defaultBudgets[envelopeName] = budget;
             }
             
-            // Use safe Firebase operation - never overrides array
+            // Use safe Firebase operation
             if (typeof SafeFirebaseOps !== 'undefined') {
-              await SafeFirebaseOps.addPaymentMethod(envelopeName); // Using same method for envelopes
+              await SafeFirebaseOps.addPaymentMethod(envelopeName);
             }
             
             updateEnvelopesList();
             updateEnvelopeDropdowns();
             syncToCloud();
-            const budgetMsg = budget ? ` with default budget ₹${budget}` : '';
-            showToast(`${envelopeName}${budgetMsg} added!`, 'success');
+            const categoryLabel = category === 'need' ? '🧠 Need' : category === 'want' ? '🎯 Want' : '💰 Save';
+            const budgetMsg = budget ? ` with budget ₹${budget}` : '';
+            showToast(`${envelopeName} (${categoryLabel})${budgetMsg} added!`, 'success');
             newEnvelope.value = '';
             defaultBudget.value = '';
           } catch (error) {
