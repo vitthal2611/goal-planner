@@ -17,7 +17,6 @@
 
   // ── State ─────────────────────────────────────────────────────
   let visibleCount = 10;
-  let showAllChips = false;
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }

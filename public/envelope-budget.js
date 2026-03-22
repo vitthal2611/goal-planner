@@ -19,6 +19,7 @@
 
   // ── Shared state ──────────────────────────────────────────────
   let selectedEnvelopeFilter = 'ALL';
+  let showAllChips = false;
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
@@ -260,11 +261,10 @@
     const envelopes = fromStorage('envelopes');
     if (envelopes.length === 0) { container.innerHTML = ''; return; }
 
-    // Show top 6 + More button
-    const topEnvelopes = envelopes.slice(0, 6);
     const hasMore = envelopes.length > 6;
+    const displayEnvelopes = showAllChips ? envelopes : envelopes.slice(0, 6);
 
-    const chips = ['ALL', ...topEnvelopes].map(envelope => {
+    const chips = ['ALL', ...displayEnvelopes].map(envelope => {
       const isActive = selectedEnvelopeFilter === envelope;
       const label = envelope === 'ALL' ? 'All' : envelope;
       return `
@@ -275,10 +275,17 @@
     }).join('');
 
     const moreBtn = hasMore
-      ? `<button class="env-filter-chip env-filter-chip--more" onclick="EnvelopeBudget._toggleChips()">+${envelopes.length - 6} More</button>`
+      ? `<button class="env-filter-chip env-filter-chip--more" onclick="EnvelopeBudget._toggleChips()">
+          ${showAllChips ? 'Show Less' : `+${envelopes.length - 6} More`}
+         </button>`
       : '';
 
     container.innerHTML = `<div class="env-filter-scroll">${chips}${moreBtn}</div>`;
+  }
+
+  function toggleChips() {
+    showAllChips = !showAllChips;
+    updateFilterChips();
   }
 
   // ── Budget List (Settings panel) ──────────────────────────────
@@ -348,7 +355,7 @@
 
   // ── Public API ────────────────────────────────────────────────
 
-  window.EnvelopeBudget = { update, updateFilterChips, updateBudgetList, generateMonthOptions, getFilter, init, _toggleChips: () => {} };
+  window.EnvelopeBudget = { update, updateFilterChips, updateBudgetList, generateMonthOptions, getFilter, init, _toggleChips: toggleChips };
 
   // Global helpers called from inline onclick attributes
   window.filterByEnvelope = function (envelope) {
