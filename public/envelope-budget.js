@@ -124,7 +124,8 @@
 
       const safeEnv = envelope.replace(/'/g, "\\'");
       return `
-        <div class="envelope-item">
+        <div class="envelope-item" data-envelope="${safeEnv}"
+             oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
           <button class="envelope-add-btn" onclick="openExpenseForEnvelope('${safeEnv}'); event.stopPropagation();" title="Add expense to ${envelope}">+</button>
           <div class="envelope-header">
             <span class="envelope-name" title="${envelope}">${envelope}</span>
@@ -135,6 +136,11 @@
             <div class="envelope-progress" style="width:${Math.min(percentage, 100)}%;background:${color}"></div>
           </div>
           ${chips ? `<div class="nws-chips">${chips}</div>` : ''}
+          <div class="env-action-strip" id="eas-${safeEnv.replace(/\s+/g,'_')}">
+            <button class="env-action-btn env-action-add"      onclick="EnvelopeActions.addExpense('${safeEnv}')">➕<span>Add</span></button>
+            <button class="env-action-btn env-action-details"  onclick="EnvelopeActions.viewDetails('${safeEnv}')">👁<span>Details</span></button>
+            <button class="env-action-btn env-action-history"  onclick="EnvelopeActions.viewHistory('${safeEnv}')">📊<span>History</span></button>
+          </div>
         </div>`;
     }).join('');
   }

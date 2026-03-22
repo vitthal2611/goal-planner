@@ -2829,7 +2829,9 @@
     <script src="transaction-modal.js"></script>
     <link rel="stylesheet" href="envelope-budget.css">
     <link rel="stylesheet" href="envelope-bottom-sheet.css">
+    <link rel="stylesheet" href="envelope-actions.css">
     <script src="envelope-bottom-sheet.js"></script>
+    <script src="envelope-actions.js"></script>
     <script src="envelope-budget.js"></script>
     <link rel="stylesheet" href="recent-transactions.css">
     <script src="recent-transactions.js"></script>
@@ -4141,6 +4143,9 @@
 
     // Envelope bottom sheet — mobile-first quick-add from envelope cards
     if (typeof EnvelopeBottomSheet !== 'undefined') EnvelopeBottomSheet.init();
+
+    // Envelope quick actions (long-press / swipe-left context menu)
+    if (typeof EnvelopeActions !== 'undefined') EnvelopeActions.init();
 
     // ── Finance / Habit tab switching ─────────────────────────────
     const financeTab       = document.getElementById('financeTab');
