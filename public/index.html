@@ -2579,80 +2579,18 @@
           background: #dc2626;
         }
 
-        /* ── FAB Bar (Desktop Only) ── */
+        /* ── FAB Bar (Hidden - using bottom nav instead) ── */
         .fab-bar {
-          position: fixed;
-          bottom: 20px;
-          right: 16px;
-          z-index: 200;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 12px;
-          padding-bottom: env(safe-area-inset-bottom, 0px);
-        }
-
-        /* Hide FAB on mobile (using bottom nav instead) */
-        @media (max-width: 480px) {
-          .fab-bar {
-            display: none;
-          }
-        }
-
-        /* Individual FAB buttons */
-        .fab-button {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 14px 20px;
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 28px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          color: #111827;
-          transition: all 0.2s;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .fab-button:active {
-          transform: scale(0.95);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .fab-button-icon {
-          font-size: 20px;
-          line-height: 1;
-        }
-
-        /* Expense button - green (primary action) */
-        .fab-button--expense {
-          background: linear-gradient(135deg, #10b981, #059669);
-          color: #ffffff;
-          box-shadow: 0 6px 20px rgba(16,185,129,0.4);
-          border: none;
-        }
-
-        .fab-button--expense:active {
-          box-shadow: 0 3px 12px rgba(16,185,129,0.3);
-        }
-
-        /* FAB backdrop - not needed anymore */
-        .fab-backdrop {
           display: none;
         }
 
-        /* push page content up — less now since FAB is floating */
+        /* push page content up for bottom nav */
         .quick-track {
-          padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+          padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
         }
 
         /* Bottom Navigation */
         .bottom-nav {
-          display: none;
           position: fixed;
           bottom: 0;
           left: 0;
@@ -2743,10 +2681,6 @@
         }
 
         @media (max-width: 480px) {
-          .bottom-nav {
-            display: block;
-          }
-
           .quick-track {
             padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
             padding-left: 12px;
