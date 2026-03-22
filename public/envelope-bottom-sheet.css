@@ -272,12 +272,12 @@
   padding: 13px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -343,12 +343,18 @@
 
 /* ── Submit button colour variants ───────────────────────── */
 
+/* expense and income both use green — red reserved for values only */
+.ebs-submit-expense {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+}
+
 .ebs-submit-income {
   background: linear-gradient(135deg, #10b981, #059669) !important;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
 }
 
 .ebs-submit-transfer {
-  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35) !important;
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35) !important;
 }
