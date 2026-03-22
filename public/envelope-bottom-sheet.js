@@ -516,7 +516,7 @@
     // Envelope card + button → expense sheet
     window.openExpenseForEnvelope = (name) => open('expense', name);
 
-    // FAB buttons (always visible, no toggle needed)
+    // FAB buttons (desktop - always visible, no toggle needed)
     const incomeFab   = el('incomeBtnFab');
     const transferFab = el('transferBtnFab');
     const expenseFab  = el('expenseBtnFab');
@@ -524,6 +524,15 @@
     if (incomeFab)   incomeFab.addEventListener('click',   () => open('income'));
     if (transferFab) transferFab.addEventListener('click', () => open('transfer'));
     if (expenseFab)  expenseFab.addEventListener('click',  () => open('expense'));
+
+    // Bottom nav action buttons (mobile)
+    const bottomExpense  = el('bottomExpenseBtn');
+    const bottomIncome   = el('bottomIncomeBtn');
+    const bottomTransfer = el('bottomTransferBtn');
+
+    if (bottomExpense)  bottomExpense.addEventListener('click',  () => open('expense'));
+    if (bottomIncome)   bottomIncome.addEventListener('click',   () => open('income'));
+    if (bottomTransfer) bottomTransfer.addEventListener('click', () => open('transfer'));
 
     // Header quick-track buttons (hidden on mobile but wired anyway)
     const incomeBtn   = el('incomeBtn');

@@ -2579,7 +2579,7 @@
           background: #dc2626;
         }
 
-        /* ── FAB 3-Button Bar ── */
+        /* ── FAB Bar (Desktop Only) ── */
         .fab-bar {
           position: fixed;
           bottom: 20px;
@@ -2592,10 +2592,10 @@
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        /* On mobile, sit above the bottom-nav */
+        /* Hide FAB on mobile (using bottom nav instead) */
         @media (max-width: 480px) {
           .fab-bar {
-            bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+            display: none;
           }
         }
 
@@ -2670,8 +2670,9 @@
           display: flex;
           justify-content: space-around;
           align-items: center;
-          max-width: 480px;
+          max-width: 600px;
           margin: 0 auto;
+          padding: 0 8px;
         }
 
         .bottom-nav-item {
@@ -2679,7 +2680,7 @@
           flex-direction: column;
           align-items: center;
           gap: 4px;
-          padding: 8px 20px;
+          padding: 8px 12px;
           border: none;
           background: transparent;
           cursor: pointer;
@@ -2688,8 +2689,9 @@
           font-size: 11px;
           font-weight: 600;
           font-family: 'Inter', sans-serif;
-          min-width: 64px;
+          min-width: 56px;
           letter-spacing: 0.3px;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .bottom-nav-item .icon {
@@ -2700,13 +2702,49 @@
           color: #3b82f6;
         }
 
+        /* Action buttons in bottom nav */
+        .bottom-nav-action {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          padding: 8px 12px;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #111827;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'Inter', sans-serif;
+          min-width: 56px;
+          letter-spacing: 0.3px;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .bottom-nav-action .icon {
+          font-size: 24px;
+        }
+
+        .bottom-nav-action:active {
+          transform: scale(0.9);
+        }
+
+        /* Expense action - green highlight */
+        .bottom-nav-action--expense .icon {
+          background: linear-gradient(135deg, #10b981, #059669);
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+
         @media (max-width: 480px) {
           .bottom-nav {
             display: block;
-          }
-
-          .app-tabs {
-            display: none;
           }
 
           .quick-track {
@@ -2882,8 +2920,8 @@
             <button id="nextYear"></button>
         </div>
         <div class="app-tabs">
-            <button class="app-tab active" id="habitTab">Habit</button>
-            <button class="app-tab" id="financeTab">Finance</button>
+            <button class="app-tab active" id="financeTab">Finance</button>
+            <button class="app-tab" id="habitTab">Habits</button>
         </div>
         <button class="profile-btn" id="profileBtn" aria-label="Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3428,16 +3466,20 @@
   </button>
 </div>
 
-<!-- Bottom Navigation (Mobile Only) -->
+<!-- Bottom Navigation (Mobile Only - Action Buttons) -->
 <div class="bottom-nav">
   <div class="bottom-nav-content">
-    <button class="bottom-nav-item active" id="bottomFinanceTab">
-      <span class="icon">💰</span>
-      <span>Finance</span>
+    <button class="bottom-nav-action" id="bottomExpenseBtn">
+      <span class="icon">💸</span>
+      <span>Expense</span>
     </button>
-    <button class="bottom-nav-item" id="bottomHabitTab">
-      <span class="icon">✅</span>
-      <span>Habits</span>
+    <button class="bottom-nav-action bottom-nav-action--expense" id="bottomIncomeBtn">
+      <span class="icon">💰</span>
+      <span>Income</span>
+    </button>
+    <button class="bottom-nav-action" id="bottomTransferBtn">
+      <span class="icon">🔄</span>
+      <span>Transfer</span>
     </button>
   </div>
 </div>
@@ -4157,16 +4199,14 @@
     const habitTab         = document.getElementById('habitTab');
     const financeContent   = document.getElementById('financeContent');
     const habitContent     = document.getElementById('habitContent');
-    const bottomFinanceTab = document.getElementById('bottomFinanceTab');
-    const bottomHabitTab   = document.getElementById('bottomHabitTab');
+    const bottomNav        = document.querySelector('.bottom-nav');
 
     function switchToFinance() {
       if (financeTab)       financeTab.classList.add('active');
       if (habitTab)         habitTab.classList.remove('active');
       if (financeContent)   financeContent.classList.add('active');
       if (habitContent)     habitContent.classList.remove('active');
-      if (bottomFinanceTab) bottomFinanceTab.classList.add('active');
-      if (bottomHabitTab)   bottomHabitTab.classList.remove('active');
+      if (bottomNav)        bottomNav.style.display = 'block';
     }
 
     function switchToHabit() {
@@ -4174,17 +4214,14 @@
       if (financeTab)       financeTab.classList.remove('active');
       if (habitContent)     habitContent.classList.add('active');
       if (financeContent)   financeContent.classList.remove('active');
-      if (bottomHabitTab)   bottomHabitTab.classList.add('active');
-      if (bottomFinanceTab) bottomFinanceTab.classList.remove('active');
+      if (bottomNav)        bottomNav.style.display = 'none';
     }
 
-    if (financeTab)       financeTab.addEventListener('click', switchToFinance);
-    if (habitTab)         habitTab.addEventListener('click', switchToHabit);
-    if (bottomFinanceTab) bottomFinanceTab.addEventListener('click', switchToFinance);
-    if (bottomHabitTab)   bottomHabitTab.addEventListener('click', switchToHabit);
+    if (financeTab) financeTab.addEventListener('click', switchToFinance);
+    if (habitTab)   habitTab.addEventListener('click', switchToHabit);
 
-    // Start on Habit tab
-    switchToHabit();
+    // Start on Finance tab
+    switchToFinance();
 
     NWS.init();
     RecentTransactions.init();
