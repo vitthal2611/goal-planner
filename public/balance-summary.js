@@ -62,49 +62,56 @@
 
     totalIncomeEl.textContent  = `₹${income.toLocaleString('en-IN')}`;
     totalExpenseEl.textContent = `₹${expense.toLocaleString('en-IN')}`;
+
+    // ── Net balance banner ────────────────────────────────────
+    const banner = el('netBalanceBanner');
+    if (banner) {
+      const net = income - expense;
+      const absNet = Math.abs(net);
+      const fmt = `₹${absNet.toLocaleString('en-IN')}`;
+
+      let cls, icon, amount, msg;
+
+      if (income === 0 && expense === 0) {
+        banner.className = 'net-balance-banner';
+        banner.innerHTML = '';
+        return;
+      } else if (net > 0) {
+        cls    = 'positive';
+        icon   = '🟢';
+        amount = `+${fmt}`;
+        msg    = net / (income || 1) >= 0.2
+          ? 'Great job — you\'re saving well this month!'
+          : 'You\'re in the green. Keep it up!';
+      } else if (net < 0) {
+        cls    = 'negative';
+        icon   = '🔴';
+        amount = `-${fmt}`;
+        msg    = expense > income * 1.5
+          ? 'Spending is significantly over income!'
+          : 'You are overspending this month.';
+      } else {
+        cls    = 'neutral';
+        icon   = '⚪';
+        amount = `₹0`;
+        msg    = 'Income and expenses are balanced.';
+      }
+
+      banner.className = `net-balance-banner ${cls}`;
+      banner.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>${icon}</span>
+          <span class="net-balance-amount">Net ${amount}</span>
+        </div>
+        <span class="net-balance-msg">${msg}</span>
+      `;
+    }
   }
 
   // ── Init: collapse toggle + switch view ───────────────────────
 
   function init() {
-    const balanceHeader         = el('balanceHeader');
-    const balanceSummaryEl      = el('balanceSummary');
-    const balanceToggleIcon     = el('balanceToggleIcon');
-    const balanceSummaryWrapper = el('balanceSummaryWrapper');
-    const paymentBalancesWrapper= el('paymentBalancesWrapper');
-    const toggleViewBtn         = el('toggleViewBtn');
-    const toggleViewBtn2        = el('toggleViewBtn2');
-    const paymentHeader         = el('paymentHeader');
-    const paymentBalancesEl     = el('paymentBalances');
-    const toggleIcon            = el('toggleIcon');
-
-    // Collapse / expand income-expense panel
-    if (balanceHeader) {
-      balanceHeader.addEventListener('click', e => {
-        if (e.target.id === 'toggleViewBtn') return;
-        balanceSummaryEl.classList.toggle('collapsed');
-        balanceToggleIcon.classList.toggle('collapsed');
-      });
-    }
-
-    // Collapse / expand payment methods panel
-    if (paymentHeader) {
-      paymentHeader.addEventListener('click', e => {
-        if (e.target.id === 'toggleViewBtn2') return;
-        paymentBalancesEl.classList.toggle('collapsed');
-        toggleIcon.classList.toggle('collapsed');
-      });
-    }
-
-    // Switch between Income/Expense view and Payment Methods view
-    function switchView() {
-      const showingBalance = balanceSummaryWrapper.style.display !== 'none';
-      balanceSummaryWrapper.style.display  = showingBalance ? 'none'  : 'block';
-      paymentBalancesWrapper.style.display = showingBalance ? 'block' : 'none';
-    }
-
-    if (toggleViewBtn)  toggleViewBtn.addEventListener('click',  switchView);
-    if (toggleViewBtn2) toggleViewBtn2.addEventListener('click', switchView);
+    // collapse and switch-view removed — both panels always visible
   }
 
   // ── Public API ────────────────────────────────────────────────

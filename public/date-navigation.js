@@ -1,121 +1,136 @@
 /**
  * date-navigation.js
- * Handles year/month dropdown generation and navigation for the Finance tab.
- * Depends on: yearSelect, monthSelect, prevYear, nextYear, prevMonth, nextMonth (DOM elements)
- * Calls: updateBalanceSummary, updatePaymentBalances, updateRecentTransactions, updateEnvelopeBudget (globals)
+ * Single ← Month Year → date picker.
+ * Hidden yearSelect / monthSelect are kept in sync so all other modules
+ * (balance-summary, envelope-budget, etc.) continue to work unchanged.
  */
 
 (function () {
-  // ── Element refs ──────────────────────────────────────────────
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
   function el(id) { return document.getElementById(id); }
 
-  // ── Dropdown generators ───────────────────────────────────────
+  // ── Internal state ────────────────────────────────────────────
+  let currentYear;
+  let currentMonth; // 1-12, or 0 = "All Months"
+
+  // ── Sync hidden selects so downstream modules stay happy ──────
+
+  function syncSelects() {
+    const yearSelect  = el('yearSelect');
+    const monthSelect = el('monthSelect');
+    if (!yearSelect || !monthSelect) return;
+
+    // Rebuild year options if needed
+    if (!yearSelect.querySelector(`option[value="${currentYear}"]`)) {
+      generateYearDropdown();
+    }
+    yearSelect.value = currentYear;
+
+    // Rebuild month options for this year
+    generateMonthDropdown();
+
+    if (currentMonth === 0) {
+      monthSelect.value = 'ALL';
+    } else {
+      monthSelect.value = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    }
+  }
+
+  // ── Label renderer ────────────────────────────────────────────
+
+  function updateLabel() {
+    const label = el('dateNavLabel');
+    if (!label) return;
+    label.textContent = currentMonth === 0
+      ? `All  ${currentYear}`
+      : `${MONTHS[currentMonth - 1]} ${currentYear}`;
+  }
+
+  // ── Navigation ────────────────────────────────────────────────
+
+  function stepMonth(delta) {
+    if (currentMonth === 0) {
+      // "All Months" → step year
+      currentYear += delta;
+    } else {
+      currentMonth += delta;
+      if (currentMonth < 1)  { currentYear--; currentMonth = 12; }
+      if (currentMonth > 12) { currentYear++; currentMonth = 1;  }
+    }
+    syncSelects();
+    updateLabel();
+    refreshAll();
+  }
+
+  // ── Dropdown generators (kept for compatibility) ──────────────
 
   function generateYearDropdown() {
     const yearSelect = el('yearSelect');
     if (!yearSelect) return;
-    const currentYear = new Date().getFullYear();
-    const options = [];
-    for (let year = currentYear - 2; year <= currentYear + 5; year++) {
-      options.push(`<option value="${year}">${year}</option>`);
+    const base = new Date().getFullYear();
+    const opts = [];
+    for (let y = base - 5; y <= base + 5; y++) {
+      opts.push(`<option value="${y}">${y}</option>`);
     }
-    yearSelect.innerHTML = options.join('');
+    yearSelect.innerHTML = opts.join('');
     yearSelect.value = currentYear;
   }
 
   function generateMonthDropdown() {
-    const yearSelect  = el('yearSelect');
     const monthSelect = el('monthSelect');
-    if (!yearSelect || !monthSelect) return;
-
-    const selectedYear = yearSelect.value;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const options = ['<option value="ALL">All Months</option>'];
-
-    for (let i = 0; i < 12; i++) {
-      const monthValue = `${selectedYear}-${String(i + 1).padStart(2, '0')}`;
-      options.push(`<option value="${monthValue}">${months[i]} ${selectedYear}</option>`);
+    if (!monthSelect) return;
+    const opts = ['<option value="ALL">All Months</option>'];
+    for (let i = 1; i <= 12; i++) {
+      const val = `${currentYear}-${String(i).padStart(2, '0')}`;
+      opts.push(`<option value="${val}">${MONTHS[i-1]} ${currentYear}</option>`);
     }
-
-    monthSelect.innerHTML = options.join('');
-
-    // Default to current month when viewing current year
-    const currentYear  = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    if (parseInt(selectedYear) === currentYear) {
-      monthSelect.value = `${selectedYear}-${String(currentMonth).padStart(2, '0')}`;
-    }
+    monthSelect.innerHTML = opts.join('');
   }
 
-  // ── Refresh helper — calls all dependent update functions ─────
+  // ── Refresh all dependent modules ─────────────────────────────
 
   function refreshAll() {
-    if (typeof updateBalanceSummary    === 'function') updateBalanceSummary();
-    if (typeof updatePaymentBalances   === 'function') updatePaymentBalances();
-    if (typeof updateRecentTransactions=== 'function') updateRecentTransactions();
-    if (typeof updateEnvelopeBudget    === 'function') updateEnvelopeBudget();
+    if (typeof updateBalanceSummary     === 'function') updateBalanceSummary();
+    if (typeof updatePaymentBalances    === 'function') updatePaymentBalances();
+    if (typeof updateRecentTransactions === 'function') updateRecentTransactions();
+    if (typeof updateEnvelopeBudget     === 'function') updateEnvelopeBudget();
   }
 
-  // ── Event listeners ───────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────
 
-  function initDateNavigation() {
-    const yearSelect  = el('yearSelect');
-    const monthSelect = el('monthSelect');
-    const prevYear    = el('prevYear');
-    const nextYear    = el('nextYear');
-    const prevMonth   = el('prevMonth');
-    const nextMonth   = el('nextMonth');
+  function init() {
+    const now = new Date();
+    currentYear  = now.getFullYear();
+    currentMonth = now.getMonth() + 1;
 
-    if (!yearSelect || !monthSelect) return;
+    generateYearDropdown();
+    syncSelects();
+    updateLabel();
 
-    // Year ‹ ›
-    prevYear.addEventListener('click', () => {
-      if (yearSelect.selectedIndex > 0) {
-        yearSelect.selectedIndex--;
-        generateMonthDropdown();
+    const prev = el('prevMonth');
+    const next = el('nextMonth');
+    if (prev) prev.addEventListener('click', () => stepMonth(-1));
+    if (next) next.addEventListener('click', () => stepMonth(+1));
+
+    // Clicking the label toggles "All Months" for the current year
+    const label = el('dateNavLabel');
+    if (label) {
+      label.addEventListener('click', () => {
+        currentMonth = currentMonth === 0 ? new Date().getMonth() + 1 : 0;
+        syncSelects();
+        updateLabel();
         refreshAll();
-      }
-    });
-
-    nextYear.addEventListener('click', () => {
-      if (yearSelect.selectedIndex < yearSelect.options.length - 1) {
-        yearSelect.selectedIndex++;
-        generateMonthDropdown();
-        refreshAll();
-      }
-    });
-
-    yearSelect.addEventListener('change', () => {
-      if (typeof recentTxVisibleCount !== 'undefined') recentTxVisibleCount = 10;
-      generateMonthDropdown();
-      refreshAll();
-    });
-
-    // Month ‹ ›
-    prevMonth.addEventListener('click', () => {
-      if (monthSelect.selectedIndex > 0) {
-        monthSelect.selectedIndex--;
-        refreshAll();
-      }
-    });
-
-    nextMonth.addEventListener('click', () => {
-      if (monthSelect.selectedIndex < monthSelect.options.length - 1) {
-        monthSelect.selectedIndex++;
-        refreshAll();
-      }
-    });
-
-    monthSelect.addEventListener('change', () => {
-      if (typeof recentTxVisibleCount !== 'undefined') recentTxVisibleCount = 10;
-      refreshAll();
-    });
+      });
+      label.title = 'Click to toggle All Months';
+    }
   }
 
   // ── Public API ────────────────────────────────────────────────
   window.DateNav = {
     generateYearDropdown,
     generateMonthDropdown,
-    init: initDateNavigation,
+    init,
   };
 })();

@@ -42,18 +42,18 @@
 }
 
 .recent-action-btn.report {
-  background: #d1fae5;
-  color: #065f46;
+  background: #f3f4f6;
+  color: #374151;
 }
 
-.recent-action-btn.report:hover { background: #a7f3d0; }
+.recent-action-btn.report:hover { background: #e5e7eb; }
 
 .recent-action-btn.danger {
-  background: #fee2e2;
+  background: #f3f4f6;
   color: #dc2626;
 }
 
-.recent-action-btn.danger:hover { background: #fecaca; }
+.recent-action-btn.danger:hover { background: #fee2e2; }
 
 /* ── Transaction list items ────────────────────────────────── */
 
@@ -80,9 +80,9 @@
   flex-shrink: 0;
 }
 
-.transaction-item.income .transaction-icon   { background: var(--color-success-light); }
-.transaction-item.expense .transaction-icon  { background: var(--color-danger-light); }
-.transaction-item.transfer .transaction-icon { background: #dbeafe; }
+.transaction-item.income .transaction-icon   { background: #f0fdf4; }
+.transaction-item.expense .transaction-icon  { background: #f9fafb; }
+.transaction-item.transfer .transaction-icon { background: #f0f9ff; }
 
 .transaction-details { flex: 1; min-width: 0; }
 
@@ -114,8 +114,9 @@
   color: #6b7280;
 }
 
-.tx-tag.need { background: #dbeafe; color: #1d4ed8; }
-.tx-tag.want { background: #fce7f3; color: #be185d; }
+/* all type tags neutral — only save gets green */
+.tx-tag.need { background: #ede9fe; color: #4f46e5; }
+.tx-tag.want { background: #f3f4f6; color: #6b7280; }
 .tx-tag.save { background: #d1fae5; color: #065f46; }
 
 .transaction-amount {

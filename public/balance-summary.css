@@ -29,29 +29,25 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  max-height: 200px;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.balance-summary.collapsed {
-  max-height: 0;
 }
 
 .balance-item {
   padding: 10px;
   border-radius: 10px;
   text-align: center;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 }
 
-.balance-item.income  { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
-.balance-item.expense { background: linear-gradient(135deg, #fee2e2, #fecaca); }
-.balance-item.net     { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+/* semantic color only on the value text, not the whole card */
+.balance-item.income  { }
+.balance-item.expense { }
+.balance-item.net     { }
 
 .balance-label {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: #6b7280;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -60,11 +56,61 @@
 .balance-value {
   font-size: 20px;
   font-weight: 800;
-  color: #1f2937;
+  color: #111827;
 }
+
+.balance-item.income  .balance-value { color: #059669; }
+.balance-item.expense .balance-value { color: #dc2626; }
+/* net stays dark — positive/negative handled by JS if needed */
 
 /* Mobile overrides */
 @media (max-width: 480px) {
   .balance-summary { grid-template-columns: repeat(2, 1fr); }
   .balance-value   { font-size: 18px; }
+}
+
+/* ── Net Balance Banner ─────────────────────────────────────── */
+
+.net-balance-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+
+.net-balance-banner:empty { display: none; }
+
+.net-balance-banner.positive {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  color: #065f46;
+}
+
+.net-balance-banner.negative {
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+  color: #9f1239;
+}
+
+.net-balance-banner.neutral {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  color: #374151;
+}
+
+.net-balance-amount {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.net-balance-msg {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
 }
