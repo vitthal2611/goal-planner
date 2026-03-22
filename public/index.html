@@ -2828,6 +2828,8 @@
     <script src="drill-down.js"></script>
     <script src="transaction-modal.js"></script>
     <link rel="stylesheet" href="envelope-budget.css">
+    <link rel="stylesheet" href="envelope-bottom-sheet.css">
+    <script src="envelope-bottom-sheet.js"></script>
     <script src="envelope-budget.js"></script>
     <link rel="stylesheet" href="recent-transactions.css">
     <script src="recent-transactions.js"></script>
@@ -4136,6 +4138,9 @@
 
     // Transaction modal (Income / Expense / Move Money) — handled by transaction-modal.js
     TransactionModal.init();
+
+    // Envelope bottom sheet — mobile-first quick-add from envelope cards
+    if (typeof EnvelopeBottomSheet !== 'undefined') EnvelopeBottomSheet.init();
 
     // ── Finance / Habit tab switching ─────────────────────────────
     const financeTab       = document.getElementById('financeTab');

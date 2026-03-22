@@ -636,15 +636,9 @@
     expenseBtn                = el('expenseBtn');
     transferBtn               = el('transferBtn');
 
-    if (incomeBtn)   incomeBtn.addEventListener('click',   () => openTransactionModal('income'));
-    if (transferBtn) transferBtn.addEventListener('click', () => openTransactionModal('transfer'));
+    // Income / Transfer are now handled by EnvelopeBottomSheet (bottom sheet).
+    // Only wire the expense button here (used by the hidden quick-track header).
     if (expenseBtn)  expenseBtn.addEventListener('click',  () => openTransactionModal('expense'));
-
-    // FAB buttons
-    const incomeBtnFab   = el('incomeBtnFab');
-    const transferBtnFab = el('transferBtnFab');
-    if (incomeBtnFab)   incomeBtnFab.addEventListener('click',   () => openTransactionModal('income'));
-    if (transferBtnFab) transferBtnFab.addEventListener('click', () => openTransactionModal('transfer'));
 
     addAnotherExpenseBtn.addEventListener('click', () => addExpenseEntry());
 
@@ -653,8 +647,7 @@
 
     quickForm.addEventListener('submit', handleSubmit);
 
-    // Global hook for envelope cards to open expense modal
-    window.openExpenseForEnvelope = (envelopeName) => openTransactionModal('expense', envelopeName);
+    // openExpenseForEnvelope is registered by EnvelopeBottomSheet.init()
   }
 
   // ── Public API ────────────────────────────────────────────────
