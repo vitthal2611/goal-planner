@@ -1,0 +1,129 @@
+.quick-entry-bar {
+  position: sticky;
+  top: 60px;
+  z-index: 100;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  padding: 16px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.quick-entry-form {
+  display: grid;
+  grid-template-columns: 90px 80px 1fr 1fr 50px;
+  gap: 6px;
+  align-items: center;
+}
+
+.month-picker,
+.amount-quick-input,
+.quick-select {
+  padding: 12px 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.amount-quick-input:focus,
+.quick-select:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.amount-quick-input {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.quick-submit-btn {
+  padding: 10px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.quick-submit-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+@media (max-width: 640px) {
+  .quick-entry-bar {
+    top: 56px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .quick-entry-form {
+    grid-template-columns: 80px 70px 1fr 50px;
+    gap: 6px;
+  }
+
+  .month-picker,
+  .amount-quick-input,
+  .quick-select {
+    padding: 11px 8px;
+    font-size: 14px;
+  }
+
+  .quick-submit-btn {
+    height: 44px;
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 768px) {
+  .quick-entry-bar {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px;
+  }
+
+  .mode-selector {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .mode-btn {
+    padding: 12px 10px;
+    font-size: 14px;
+  }
+
+  .quick-entry-form {
+    grid-template-columns: 120px 1fr 1fr 60px;
+    gap: 8px;
+  }
+
+  .amount-quick-input,
+  .quick-select {
+    padding: 12px 10px;
+    font-size: 15px;
+  }
+
+  .quick-submit-btn {
+    height: 46px;
+    font-size: 22px;
+  }
+}

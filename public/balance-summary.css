@@ -1,0 +1,70 @@
+/* ── Income / Expense Balance Summary module styles ── */
+
+.balance-summary-wrapper {
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 10px;
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.balance-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 200px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.balance-summary.collapsed {
+  max-height: 0;
+}
+
+.balance-item {
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.balance-item.income  { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.balance-item.expense { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+.balance-item.net     { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+
+.balance-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+/* Mobile overrides */
+@media (max-width: 480px) {
+  .balance-summary { grid-template-columns: repeat(2, 1fr); }
+  .balance-value   { font-size: 18px; }
+}

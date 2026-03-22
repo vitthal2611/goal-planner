@@ -1,0 +1,118 @@
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.envelope-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.envelope-table thead {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.envelope-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.envelope-table th[style*="cursor: pointer"] {
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.envelope-table th[style*="cursor: pointer"]:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  opacity: 0.6;
+  font-size: 12px;
+}
+
+.envelope-table tbody tr {
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.2s;
+}
+
+.envelope-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.envelope-table td {
+  padding: 14px 12px;
+  font-size: 14px;
+  color: var(--gray-900);
+}
+
+.btn-expand,
+.btn-delete {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+
+.btn-expand:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.btn-expand:active,
+.btn-delete:active {
+  transform: scale(0.9);
+}
+
+.expanded-row {
+  background: var(--gray-50);
+}
+
+.transaction-details {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+@media (max-width: 768px) {
+  .envelope-table th,
+  .envelope-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .envelope-table th {
+    font-size: 10px;
+  }
+
+  .btn-expand,
+  .btn-delete {
+    padding: 4px 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .envelope-table th:nth-child(3),
+  .envelope-table td:nth-child(3) {
+    display: none;
+  }
+}

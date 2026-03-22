@@ -1,0 +1,111 @@
+/* ── Need / Want / Save module styles ── */
+
+.nws-bar {
+  display: flex;
+  align-items: stretch;
+  border-radius: 14px;
+  overflow: hidden;
+  gap: 6px;
+  background: transparent;
+}
+
+.nws-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px 7px;
+  gap: 1px;
+  border-radius: 12px;
+}
+
+.nws-divider { display: none; }
+
+/* Need — deep indigo tint */
+.nws-need {
+  background: linear-gradient(160deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1.5px solid #c7d2fe;
+}
+.nws-need .nws-label  { color: #6366f1; }
+.nws-need .nws-pct    { color: #3730a3; }
+.nws-need .nws-amt    { color: #6366f1; }
+.nws-need .nws-track  { background: #c7d2fe; }
+
+/* Want — warm rose/pink */
+.nws-want {
+  background: linear-gradient(160deg, #fff1f2 0%, #ffe4e6 100%);
+  border: 1.5px solid #fecdd3;
+}
+.nws-want .nws-label  { color: #f43f5e; }
+.nws-want .nws-pct    { color: #be123c; }
+.nws-want .nws-amt    { color: #f43f5e; }
+.nws-want .nws-track  { background: #fecdd3; }
+
+/* Save — rich emerald */
+.nws-save {
+  background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1.5px solid #a7f3d0;
+}
+.nws-save .nws-label  { color: #10b981; }
+.nws-save .nws-pct    { color: #065f46; }
+.nws-save .nws-amt    { color: #10b981; }
+.nws-save .nws-track  { background: #a7f3d0; }
+
+.nws-icon { font-size: 14px; line-height: 1; }
+
+.nws-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.nws-pct {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.nws-amt {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.nws-track {
+  width: 80%;
+  height: 3px;
+  border-radius: 99px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.nws-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.nws-fill-need { background: #6366f1; }
+.nws-fill-want { background: #f43f5e; }
+.nws-fill-save { background: #10b981; }
+
+/* Chips used inside envelope rows */
+.nws-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.nws-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  text-transform: capitalize;
+}
+
+.nws-chip.need { background: #dbeafe; color: #1d4ed8; }
+.nws-chip.want { background: #fce7f3; color: #be185d; }
+.nws-chip.save { background: #d1fae5; color: #065f46; }

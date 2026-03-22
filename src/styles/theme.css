@@ -1,0 +1,183 @@
+:root {
+  /* Primary Colors - WCAG AA compliant */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #60a5fa;
+  --primary-dark: #1e40af;
+  
+  /* Success Colors */
+  --success: #10b981;
+  --success-hover: #059669;
+  --success-light: #34d399;
+  --success-dark: #047857;
+  
+  /* Danger Colors */
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --danger-light: #f87171;
+  --danger-dark: #b91c1c;
+  
+  /* Warning Colors */
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-light: #fbbf24;
+  --warning-dark: #b45309;
+  
+  /* Info Colors */
+  --info: #3b82f6;
+  --info-hover: #2563eb;
+  --info-light: #60a5fa;
+  --info-dark: #1e40af;
+  
+  /* Gray Scale - Enhanced contrast */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Semantic Tokens - Text */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-500);
+  --text-disabled: var(--gray-400);
+  --text-inverse: #ffffff;
+  
+  /* Semantic Tokens - Background */
+  --bg-primary: #ffffff;
+  --bg-secondary: var(--gray-50);
+  --bg-tertiary: var(--gray-100);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Semantic Tokens - Border */
+  --border-primary: var(--gray-200);
+  --border-secondary: var(--gray-300);
+  --border-focus: var(--primary);
+  --border-error: var(--danger);
+  
+  /* Semantic Tokens - Interactive */
+  --interactive-primary: var(--primary);
+  --interactive-primary-hover: var(--primary-hover);
+  --interactive-success: var(--success);
+  --interactive-success-hover: var(--success-hover);
+  --interactive-danger: var(--danger);
+  --interactive-danger-hover: var(--danger-hover);
+  
+  /* Focus Ring */
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  --focus-ring-success: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  --focus-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #60a5fa;
+    --primary-hover: #3b82f6;
+    --primary-light: #93c5fd;
+    --primary-dark: #2563eb;
+    
+    --success: #34d399;
+    --success-hover: #10b981;
+    --success-light: #6ee7b7;
+    --success-dark: #059669;
+    
+    --danger: #f87171;
+    --danger-hover: #ef4444;
+    --danger-light: #fca5a5;
+    --danger-dark: #dc2626;
+    
+    --warning: #fbbf24;
+    --warning-hover: #f59e0b;
+    --warning-light: #fcd34d;
+    --warning-dark: #d97706;
+    
+    --text-primary: var(--gray-50);
+    --text-secondary: var(--gray-400);
+    --text-tertiary: var(--gray-500);
+    --text-disabled: var(--gray-600);
+    --text-inverse: var(--gray-900);
+    
+    --bg-primary: var(--gray-900);
+    --bg-secondary: var(--gray-800);
+    --bg-tertiary: var(--gray-700);
+    --bg-overlay: rgba(0, 0, 0, 0.7);
+    
+    --border-primary: var(--gray-700);
+    --border-secondary: var(--gray-600);
+    
+    --focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.3);
+    --focus-ring-success: 0 0 0 3px rgba(52, 211, 153, 0.3);
+    --focus-ring-danger: 0 0 0 3px rgba(248, 113, 113, 0.3);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: #1e40af;
+    --success: #047857;
+    --danger: #b91c1c;
+    --warning: #b45309;
+    
+    --text-primary: #000000;
+    --text-secondary: #1f2937;
+    --border-primary: #374151;
+    --border-secondary: #1f2937;
+    
+    --focus-ring: 0 0 0 4px rgba(30, 64, 175, 0.5);
+  }
+}
+
+/* Focus Visible Styles */
+*:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+/* Remove default focus for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}

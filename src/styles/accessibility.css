@@ -1,0 +1,246 @@
+/* Accessibility Enhancements */
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--interactive-primary);
+  color: var(--text-inverse);
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  z-index: 9999;
+  font-weight: 600;
+}
+
+.skip-to-main:focus {
+  top: var(--space-sm);
+  left: var(--space-sm);
+}
+
+/* Enhanced Focus Indicators */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* Success state focus */
+.btn-add:focus-visible,
+.btn-add-income:focus-visible,
+.action-btn.primary:focus-visible {
+  box-shadow: var(--focus-ring-success);
+  outline-color: var(--success);
+}
+
+/* Danger state focus */
+.btn-delete:focus-visible,
+.btn-bulk-delete:focus-visible {
+  box-shadow: var(--focus-ring-danger);
+  outline-color: var(--danger);
+}
+
+/* Keyboard Navigation Indicators */
+.envelope-card:focus-within {
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.compact-envelope-card:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+  transform: scale(1.02);
+}
+
+/* Interactive Elements */
+.action-btn:focus-visible,
+.quick-amount-btn:focus-visible,
+.close-btn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Payment Method Cards */
+.payment-card:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+  transform: scale(1.02);
+}
+
+.payment-card.selected:focus-visible {
+  outline-color: var(--success);
+  box-shadow: var(--focus-ring-success);
+}
+
+/* Modal Focus Trap */
+.expense-modal-overlay:focus-within .expense-modal {
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* Table Row Focus */
+.table-row:focus-within {
+  background: var(--bg-tertiary);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* Checkbox Focus */
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus Visible Polyfill for older browsers */
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+/* High Contrast Mode Adjustments */
+@media (prefers-contrast: high) {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-width: 4px;
+    outline-offset: 3px;
+  }
+  
+  .envelope-card,
+  .compact-envelope-card,
+  .payment-card {
+    border-width: 2px;
+  }
+  
+  .notification {
+    border: 3px solid currentColor;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border-top-color: transparent;
+  }
+}
+
+/* Touch Target Sizes (minimum 44x44px) */
+@media (pointer: coarse) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  .action-btn,
+  .close-btn,
+  .btn-delete {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .compact-envelope-card {
+    min-height: 80px;
+  }
+}
+
+/* Color Contrast Helpers */
+.text-contrast-high {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.text-contrast-medium {
+  color: var(--text-secondary);
+}
+
+.bg-contrast-high {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Disabled State Accessibility */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  color: var(--text-disabled);
+}
+
+button:disabled:focus-visible {
+  outline-color: var(--text-disabled);
+  box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.2);
+}
+
+/* ARIA Live Regions */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Focus Management for Modals */
+.modal-open {
+  overflow: hidden;
+}
+
+.expense-modal:focus {
+  outline: none;
+}
+
+/* Keyboard Navigation Hints */
+[data-keyboard-hint]::after {
+  content: attr(data-keyboard-hint);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: var(--text-inverse);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+[data-keyboard-hint]:focus-visible::after {
+  opacity: 1;
+}

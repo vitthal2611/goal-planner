@@ -1,0 +1,103 @@
+.mobile-table {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-table {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .mobile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    border-left: 4px solid var(--primary);
+  }
+
+  .mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .mobile-date {
+    font-size: 12px;
+    color: var(--gray-600);
+    font-weight: 600;
+  }
+
+  .mobile-amount {
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .mobile-amount.income {
+    color: var(--success);
+  }
+
+  .mobile-amount.expense {
+    color: var(--danger);
+  }
+
+  .mobile-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-desc {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  .mobile-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mobile-envelope,
+  .mobile-payment {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .mobile-envelope {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+  }
+
+  .mobile-payment {
+    background: var(--gray-100);
+    color: var(--gray-700);
+  }
+
+  .mobile-delete {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .mobile-delete:active {
+    transform: scale(0.9);
+    background: rgba(239, 68, 68, 0.2);
+  }
+}
