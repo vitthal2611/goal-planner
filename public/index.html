@@ -3801,21 +3801,33 @@
     function updateEnvelopesList() {
       const listContainer = document.getElementById('envelopeList');
       if (!listContainer) return;
+      
+      // Ensure envelopes are in the new format
+      if (envelopes.length > 0 && typeof envelopes[0] === 'string') {
+        envelopes = envelopes.map(name => ({ name, category: 'need' }));
+        localStorage.setItem('envelopes', JSON.stringify(envelopes));
+      }
+      
       if (envelopes.length === 0) {
         listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af; background: linear-gradient(135deg, #f9fafb, #ffffff); border-radius: 12px; border: 2px dashed #e5e7eb;">📁 No envelopes yet. Create categories for your expenses!</div>';
         return;
       }
+      
       const categoryIcons = { need: '🧠', want: '🎯', save: '💰' };
-      listContainer.innerHTML = envelopes.map(env => `
+      listContainer.innerHTML = envelopes.map(env => {
+        // Safety check for old format
+        const envName = typeof env === 'string' ? env : env.name;
+        const envCategory = typeof env === 'string' ? 'need' : (env.category || 'need');
+        return `
         <div class="payment-method-item">
           <div class="payment-method-name" style="display: flex; align-items: center; gap: 8px;">
             <span>📁</span>
-            <span>${env.name}</span>
-            <span style="font-size: 11px; padding: 2px 8px; background: #f3f4f6; border-radius: 10px; color: #6b7280;">${categoryIcons[env.category]} ${env.category}</span>
+            <span>${envName}</span>
+            <span style="font-size: 11px; padding: 2px 8px; background: #f3f4f6; border-radius: 10px; color: #6b7280;">${categoryIcons[envCategory]} ${envCategory}</span>
           </div>
-          <button class="delete-btn" onclick="deleteEnvelope('${env.name}')">Delete</button>
-        </div>
-      `).join('');
+          <button class="delete-btn" onclick="deleteEnvelope('${envName}')">Delete</button>
+        </div>`;
+      }).join('');
       EnvelopeBudget.updateFilterChips();
     }
 
