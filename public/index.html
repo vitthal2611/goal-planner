@@ -427,6 +427,8 @@
           flex-direction: column;
           gap: 8px;
           margin-bottom: 12px;
+          position: relative;
+          z-index: 0;
         }
 
         .payment-method-item {
@@ -477,6 +479,230 @@
 
         .delete-btn:active {
           transform: translateY(0);
+        }
+
+        /* ── Envelope Profile Items (Settings) ──────────────────── */
+        .envelope-profile-item {
+          position: relative;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 14px;
+          background: linear-gradient(135deg, #fafafa, #ffffff);
+          border-radius: 10px;
+          border: 1.5px solid #e5e7eb;
+          transition: all 0.2s;
+          gap: 8px;
+          z-index: 1;
+        }
+
+        .envelope-profile-item.menu-active {
+          z-index: 999;
+        }
+
+        .envelope-profile-item:hover {
+          border-color: #8b5cf6;
+          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12);
+          transform: translateY(-1px);
+        }
+
+        .envelope-profile-main {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .envelope-profile-icon {
+          font-size: 18px;
+          flex-shrink: 0;
+        }
+
+        .envelope-profile-name {
+          font-size: 15px;
+          font-weight: 700;
+          color: #1f2937;
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .envelope-profile-badge {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 12px;
+          flex-shrink: 0;
+          white-space: nowrap;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .envelope-profile-menu {
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: #f3f4f6;
+          color: #6b7280;
+          border-radius: 8px;
+          font-size: 18px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .envelope-profile-menu:hover {
+          background: #e5e7eb;
+          color: #374151;
+        }
+
+        .envelope-profile-menu:active {
+          transform: scale(0.9);
+        }
+
+        .envelope-menu-dropdown {
+          position: absolute;
+          right: 8px;
+          top: 48px;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+          z-index: 1000;
+          min-width: 140px;
+          overflow: visible;
+          border: 1px solid #e5e7eb;
+        }
+
+        .envelope-menu-item {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 14px;
+          border: none;
+          background: white;
+          color: #374151;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s;
+          text-align: left;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .envelope-menu-item:hover {
+          background: #f9fafb;
+        }
+
+        .envelope-menu-item:active {
+          transform: scale(0.98);
+        }
+
+        .envelope-menu-icon {
+          font-size: 16px;
+        }
+
+        .envelope-menu-delete {
+          color: #dc2626;
+          border-top: 1px solid #f3f4f6;
+        }
+
+        .envelope-menu-delete:hover {
+          background: #fef2f2;
+        }
+
+        /* ── Inline Edit Form ──────────────────────────────────── */
+        .envelope-edit-form {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+        }
+
+        .envelope-edit-input {
+          flex: 1;
+          padding: 8px 12px;
+          border: 2px solid #8b5cf6;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1f2937;
+          background: white;
+          transition: all 0.2s;
+        }
+
+        .envelope-edit-input:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .envelope-edit-select {
+          padding: 8px 10px;
+          border: 2px solid #8b5cf6;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #1f2937;
+          background: white;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .envelope-edit-select:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .envelope-edit-save,
+        .envelope-edit-cancel {
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .envelope-edit-save {
+          background: #10b981;
+          color: white;
+        }
+
+        .envelope-edit-save:hover {
+          background: #059669;
+        }
+
+        .envelope-edit-save:active {
+          transform: scale(0.9);
+        }
+
+        .envelope-edit-cancel {
+          background: #f3f4f6;
+          color: #6b7280;
+        }
+
+        .envelope-edit-cancel:hover {
+          background: #e5e7eb;
+          color: #374151;
+        }
+
+        .envelope-edit-cancel:active {
+          transform: scale(0.9);
         }
 
         .add-payment-form {
@@ -3727,6 +3953,164 @@
           : `${name} deleted`;
         showToast(msg, 'error');
       }
+      closeAllEnvelopeMenus();
+    }
+
+    function toggleEnvelopeMenu(name, event) {
+      event.stopPropagation();
+      const menuId = 'menu-' + name.replace(/\s+/g, '_');
+      const menu = document.getElementById(menuId);
+      if (!menu) return;
+      
+      const card = menu.closest('.envelope-profile-item');
+      
+      // Close all other menus and remove active class
+      document.querySelectorAll('.envelope-menu-dropdown').forEach(m => {
+        if (m.id !== menuId) {
+          m.style.display = 'none';
+          const otherCard = m.closest('.envelope-profile-item');
+          if (otherCard) otherCard.classList.remove('menu-active');
+        }
+      });
+      
+      // Toggle current menu
+      const isOpen = menu.style.display === 'block';
+      menu.style.display = isOpen ? 'none' : 'block';
+      
+      // Add/remove active class for z-index management
+      if (card) {
+        if (isOpen) {
+          card.classList.remove('menu-active');
+        } else {
+          card.classList.add('menu-active');
+        }
+      }
+    }
+
+    function closeAllEnvelopeMenus() {
+      document.querySelectorAll('.envelope-menu-dropdown').forEach(m => {
+        m.style.display = 'none';
+        const card = m.closest('.envelope-profile-item');
+        if (card) card.classList.remove('menu-active');
+      });
+    }
+
+    function editEnvelope(name) {
+      closeAllEnvelopeMenus();
+      const env = envelopes.find(e => e.name === name);
+      if (!env) return;
+      
+      const card = document.querySelector(`.envelope-profile-item[data-envelope="${name.replace(/'/g, "\\'")}"]`);
+      if (!card) return;
+      
+      const categoryIcons = { need: '🟣', want: '🟢', save: '🔵' };
+      const categoryColors = { need: '#8b5cf6', want: '#10b981', save: '#3b82f6' };
+      
+      // Replace card with inline edit form
+      card.innerHTML = `
+        <div class="envelope-edit-form">
+          <span class="envelope-profile-icon">📁</span>
+          <input type="text" class="envelope-edit-input" value="${name}" id="edit-name-${name.replace(/\s+/g,'_')}" />
+          <select class="envelope-edit-select" id="edit-cat-${name.replace(/\s+/g,'_')}">
+            <option value="need" ${env.category === 'need' ? 'selected' : ''}>🟣 Need</option>
+            <option value="want" ${env.category === 'want' ? 'selected' : ''}>🟢 Want</option>
+            <option value="save" ${env.category === 'save' ? 'selected' : ''}>🔵 Save</option>
+          </select>
+          <button class="envelope-edit-save" onclick="saveEnvelopeEdit('${name.replace(/'/g, "\\'")}')">✔</button>
+          <button class="envelope-edit-cancel" onclick="updateEnvelopesList()">✖</button>
+        </div>
+      `;
+      
+      // Focus input
+      const input = document.getElementById('edit-name-' + name.replace(/\s+/g,'_'));
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    function saveEnvelopeEdit(oldName) {
+      const inputId = 'edit-name-' + oldName.replace(/\s+/g,'_');
+      const selectId = 'edit-cat-' + oldName.replace(/\s+/g,'_');
+      const input = document.getElementById(inputId);
+      const select = document.getElementById(selectId);
+      
+      if (!input || !select) return;
+      
+      const newName = input.value.trim();
+      const newCategory = select.value;
+      
+      if (!newName) {
+        showToast('Envelope name cannot be empty', 'error');
+        return;
+      }
+      
+      // Check if name already exists (and it's not the same envelope)
+      if (newName !== oldName && envelopes.some(e => e.name === newName)) {
+        showToast('Envelope name already exists', 'error');
+        return;
+      }
+      
+      // Update envelope
+      const env = envelopes.find(e => e.name === oldName);
+      if (env) {
+        env.name = newName;
+        env.category = newCategory;
+        
+        // Update related data if name changed
+        if (newName !== oldName) {
+          // Update transactions
+          transactions.forEach(t => {
+            if (t.envelope === oldName) t.envelope = newName;
+          });
+          
+          // Update budgets
+          budgets.forEach(b => {
+            if (b.envelope === oldName) b.envelope = newName;
+          });
+          
+          // Update default budgets
+          if (defaultBudgets[oldName]) {
+            defaultBudgets[newName] = defaultBudgets[oldName];
+            delete defaultBudgets[oldName];
+          }
+        }
+        
+        updateEnvelopesList();
+        updateEnvelopeDropdowns();
+        updateBalanceSummary();
+        updateRecentTransactions();
+        updatePaymentBalances();
+        updateEnvelopeBudget();
+        syncToCloud();
+        showToast(`✅ ${newName} updated`, 'success');
+      }
+    }
+
+    function deleteEnvelope(name) {
+      const relatedTransactions = transactions.filter(t => t.envelope === name);
+      
+      const confirmMsg = relatedTransactions.length > 0
+        ? `Delete ${name}? This will also delete ${relatedTransactions.length} associated transaction(s).`
+        : `Delete ${name}?`;
+      
+      if (confirm(confirmMsg)) {
+        transactions = transactions.filter(t => t.envelope !== name);
+        envelopes = envelopes.filter(env => env.name !== name);
+        delete defaultBudgets[name];
+        budgets = budgets.filter(b => b.envelope !== name);
+        updateEnvelopesList();
+        updateEnvelopeDropdowns();
+        updateBalanceSummary();
+        updateRecentTransactions();
+        updatePaymentBalances();
+        updateEnvelopeBudget();
+        syncToCloud();
+        const msg = relatedTransactions.length > 0
+          ? `${name} and ${relatedTransactions.length} transaction(s) deleted`
+          : `${name} deleted`;
+        showToast(msg, 'error');
+      }
     }
 
     function deleteBudget(envelope, month) {
@@ -3813,19 +4197,31 @@
         return;
       }
       
-      const categoryIcons = { need: '🧠', want: '🎯', save: '💰' };
+      const categoryIcons = { need: '🟣', want: '🟢', save: '🔵' };
+      const categoryColors = { need: '#8b5cf6', want: '#10b981', save: '#3b82f6' };
       listContainer.innerHTML = envelopes.map(env => {
         // Safety check for old format
         const envName = typeof env === 'string' ? env : env.name;
         const envCategory = typeof env === 'string' ? 'need' : (env.category || 'need');
+        const safeEnvName = envName.replace(/'/g, "\\'");
         return `
-        <div class="payment-method-item">
-          <div class="payment-method-name" style="display: flex; align-items: center; gap: 8px;">
-            <span>📁</span>
-            <span>${envName}</span>
-            <span style="font-size: 11px; padding: 2px 8px; background: #f3f4f6; border-radius: 10px; color: #6b7280;">${categoryIcons[envCategory]} ${envCategory}</span>
+        <div class="envelope-profile-item" data-envelope="${safeEnvName}">
+          <div class="envelope-profile-main">
+            <span class="envelope-profile-icon">📁</span>
+            <span class="envelope-profile-name">${envName}</span>
+            <span class="envelope-profile-badge" style="background: ${categoryColors[envCategory]}20; color: ${categoryColors[envCategory]}">
+              ${categoryIcons[envCategory]} ${envCategory}
+            </span>
           </div>
-          <button class="delete-btn" onclick="deleteEnvelope('${envName}')">Delete</button>
+          <button class="envelope-profile-menu" onclick="toggleEnvelopeMenu('${safeEnvName}', event)" aria-label="Options">⋮</button>
+          <div class="envelope-menu-dropdown" id="menu-${safeEnvName.replace(/\s+/g,'_')}" style="display: none;">
+            <button class="envelope-menu-item envelope-menu-edit" onclick="editEnvelope('${safeEnvName}')">
+              <span class="envelope-menu-icon">✏️</span> Edit
+            </button>
+            <button class="envelope-menu-item envelope-menu-delete" onclick="deleteEnvelope('${safeEnvName}')">
+              <span class="envelope-menu-icon">🗑</span> Delete
+            </button>
+          </div>
         </div>`;
       }).join('');
       EnvelopeBudget.updateFilterChips();
@@ -4051,6 +4447,13 @@
     profileModal.addEventListener('click', (e) => {
       if (e.target === profileModal) {
         profileModal.classList.remove('show');
+      }
+    });
+
+    // Close envelope menus when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.envelope-profile-menu') && !e.target.closest('.envelope-menu-dropdown')) {
+        closeAllEnvelopeMenus();
       }
     });
 

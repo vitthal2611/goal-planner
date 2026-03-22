@@ -86,7 +86,15 @@
       : envelopes;
 
     if (envList.length === 0) {
-      container.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;">No envelopes available.</div>';
+      container.innerHTML = `
+        <div class="envelope-empty-state">
+          <div class="envelope-empty-icon">📁</div>
+          <div class="envelope-empty-title">No envelopes yet</div>
+          <div class="envelope-empty-text">Start by adding your first category</div>
+          <button class="envelope-empty-btn" onclick="document.getElementById('profileBtn').click();document.getElementById('financeSetupTab').click();">
+            ➕ Add Envelope
+          </button>
+        </div>`;
       return;
     }
 
@@ -213,16 +221,28 @@
     }
 
     // Render problem cards
+    const categoryColors = { need: '#8b5cf6', want: '#10b981', save: '#3b82f6' };
+    const categoryIcons = { need: '🟣', want: '🟢', save: '🔵' };
+    
     const problemCardsHTML = problemEnvelopes.map(e => {
       const safeEnv = e.envelope.replace(/'/g, "\\'");
       const statusText = e.status === 'over' ? `₹${e.overAmount.toLocaleString('en-IN')} over`
                        : `₹${e.remaining.toLocaleString('en-IN')} left`;
+      
+      // Get envelope category for color coding
+      const env = envList.find(env => env.name === e.envelope);
+      const category = env ? env.category : 'need';
+      const categoryColor = categoryColors[category];
+      const categoryIcon = categoryIcons[category];
 
       return `
         <div class="envelope-item envelope-item--${e.status} envelope-item--${e.severity}" data-envelope="${safeEnv}"
              oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
           <div class="envelope-header">
-            <span class="envelope-name">${e.envelope}</span>
+            <div class="envelope-name-row">
+              <span class="envelope-name">${e.envelope}</span>
+              <span class="envelope-category-dot" style="background: ${categoryColor}" title="${category}"></span>
+            </div>
             <span class="envelope-badge envelope-badge--${e.status}">${e.statusLabel}</span>
           </div>
           <div class="envelope-amounts">₹${e.actualSpent.toLocaleString('en-IN')} / ₹${e.budgetAmount.toLocaleString('en-IN')}</div>
@@ -245,11 +265,18 @@
     if (safeEnvelopes.length > 0) {
       const safeCardsHTML = safeEnvelopes.map(e => {
         const safeEnv = e.envelope.replace(/'/g, "\\'");
+        const env = envList.find(env => env.name === e.envelope);
+        const category = env ? env.category : 'need';
+        const categoryColor = categoryColors[category];
+        
         return `
           <div class="envelope-item envelope-item--safe-compact" data-envelope="${safeEnv}"
                oncontextmenu="EnvelopeActions.show('${safeEnv}',this);return false;">
             <div class="envelope-header">
-              <span class="envelope-name">${e.envelope}</span>
+              <div class="envelope-name-row">
+                <span class="envelope-name">${e.envelope}</span>
+                <span class="envelope-category-dot" style="background: ${categoryColor}" title="${category}"></span>
+              </div>
               <span class="envelope-safe-amount">₹${e.remaining.toLocaleString('en-IN')} left</span>
             </div>
             <div class="envelope-bar" style="height:4px">

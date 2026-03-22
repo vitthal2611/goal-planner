@@ -55,7 +55,213 @@
 
 .recent-action-btn.danger:hover { background: #fee2e2; }
 
-/* ── Transaction list items ────────────────────────────────── */
+/* ── Transaction Table Layout ──────────────────────────────── */
+
+.tx-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -4px;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tx-table thead {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 10;
+}
+
+.tx-table th {
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.tx-table th:first-child { padding-left: 12px; }
+.tx-table th:last-child { padding-right: 12px; text-align: center; }
+
+.tx-table-row {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+
+.tx-table-row:hover {
+  background: #f9fafb;
+}
+
+.tx-table-row:last-child {
+  border-bottom: none;
+}
+
+.tx-table td {
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+.tx-table td:first-child { padding-left: 12px; }
+.tx-table td:last-child { padding-right: 12px; }
+
+.tx-table-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.tx-table-desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.tx-table-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.tx-table-name {
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tx-table-category {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.tx-table-type {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.tx-table-amount {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.tx-table-amount.income { color: #059669; }
+.tx-table-amount.expense { color: #dc2626; }
+.tx-table-amount.transfer { color: #2563eb; font-size: 12px; }
+
+.tx-table-actions {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tx-table-action-btn {
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tx-table-action-btn:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+}
+
+.tx-table-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .tx-table {
+    font-size: 12px;
+  }
+  
+  .tx-table th,
+  .tx-table td {
+    padding: 8px 6px;
+  }
+  
+  .tx-table th:first-child,
+  .tx-table td:first-child {
+    padding-left: 8px;
+  }
+  
+  .tx-table th:last-child,
+  .tx-table td:last-child {
+    padding-right: 8px;
+  }
+  
+  .tx-table-date {
+    font-size: 11px;
+    min-width: 60px;
+  }
+  
+  .tx-table-desc {
+    min-width: 100px;
+  }
+  
+  .tx-table-icon {
+    font-size: 14px;
+  }
+  
+  .tx-table-name {
+    font-size: 12px;
+  }
+  
+  .tx-table-category,
+  .tx-table-type {
+    font-size: 11px;
+  }
+  
+  .tx-table-amount {
+    font-size: 13px;
+    min-width: 70px;
+  }
+  
+  .tx-table-action-btn {
+    font-size: 13px;
+    padding: 3px 5px;
+  }
+}
+
+/* Extra compact for very small screens */
+@media (max-width: 480px) {
+  .tx-table th,
+  .tx-table td {
+    padding: 6px 4px;
+  }
+  
+  .tx-table-category {
+    display: none;
+  }
+  
+  .tx-table th:nth-child(3) {
+    display: none;
+  }
+}
+
+/* ── Old card styles (kept for backward compatibility) ────── */
 
 .transaction-item {
   display: flex;

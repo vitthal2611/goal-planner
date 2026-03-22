@@ -26,12 +26,7 @@
   }
 
   function getDateLabel(dateString) {
-    const now  = new Date();
     const date = new Date(dateString);
-    const diffDays = Math.floor((now - date) / 86400000);
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   }
 
@@ -87,27 +82,30 @@
       return env ? env.category : null;
     };
     
-    // Color-coded NWS tags based on envelope category
-    const nwsColors = { need: '#6366f1', want: '#f59e0b', save: '#10b981' };
-    const nwsIcons = { need: '🧠', want: '🎯', save: '💰' };
     const category = t.type === 'expense' && t.envelope ? getEnvelopeCategory(t.envelope) : null;
-    const typeTag = category
-      ? `<span class="tx-tag tx-tag-nws" style="background:${nwsColors[category]}20;color:${nwsColors[category]}">${nwsIcons[category]} ${category.charAt(0).toUpperCase() + category.slice(1)}</span>`
-      : '';
+    const categoryColors = { need: '#8b5cf6', want: '#10b981', save: '#3b82f6' };
+    const categoryColor = category ? categoryColors[category] : '#6b7280';
     
-    const envelopeTag = t.envelope ? `<span class="tx-tag">${t.envelope}</span>` : '';
-    const paymentTag = t.paymentMethod ? `<span class="tx-tag">${t.paymentMethod}</span>` : '';
+    const dateLabel = getDateLabel(t.date);
+    const description = t.description || 'Transfer';
+    const envelope = t.envelope || '-';
+    const categoryText = category ? category.charAt(0).toUpperCase() + category.slice(1) : '-';
     
     return `
-      <div class="transaction-item ${t.type}">
-        <div class="transaction-icon">${icon}</div>
-        <div class="transaction-details">
-          <div class="transaction-desc">${t.description || 'Transfer'}</div>
-          <div class="transaction-meta">${envelopeTag}${typeTag}${paymentTag}</div>
-        </div>
-        <div class="transaction-amount">${amount}</div>
-        <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Delete">🗑</button>
-      </div>`;
+      <tr class="tx-table-row ${t.type}">
+        <td class="tx-table-date">${dateLabel}</td>
+        <td class="tx-table-desc">
+          <span class="tx-table-icon">${icon}</span>
+          <span class="tx-table-name">${description}</span>
+        </td>
+        <td class="tx-table-category">${envelope}</td>
+        <td class="tx-table-type" style="color: ${categoryColor}">${categoryText}</td>
+        <td class="tx-table-amount ${t.type}">${amount}</td>
+        <td class="tx-table-actions">
+          <button class="tx-table-action-btn" onclick="editTransaction('${t.id}')" title="Edit">✏️</button>
+          <button class="tx-table-action-btn" onclick="deleteTransaction('${t.id}')" title="Delete">🗑️</button>
+        </td>
+      </tr>`;
   }
 
   // ── Core update ───────────────────────────────────────────────
@@ -150,60 +148,6 @@
       return;
     }
 
-    // Calculate monthly summary
-    let totalSpent = 0, needSpent = 0, wantSpent = 0, saveSpent = 0;
-    
-    // Get envelopes with categories
-    const envelopes = (() => { 
-      try { 
-        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
-        // Handle old format (array of strings)
-        if (envs.length > 0 && typeof envs[0] === 'string') {
-          return envs.map(name => ({ name, category: 'need' }));
-        }
-        return envs;
-      } catch { return []; }
-    })();
-    
-    const getEnvelopeCategory = (envelopeName) => {
-      const env = envelopes.find(e => e.name === envelopeName);
-      return env ? env.category : 'need';
-    };
-    
-    filtered.forEach(t => {
-      if (t.type === 'expense') {
-        const amt = parseFloat(t.amount || 0);
-        totalSpent += amt;
-        const category = getEnvelopeCategory(t.envelope);
-        if (category === 'need') needSpent += amt;
-        else if (category === 'want') wantSpent += amt;
-        else if (category === 'save') saveSpent += amt;
-      }
-    });
-
-    const summaryHTML = `
-      <div class="tx-summary">
-        <div class="tx-summary-title">This Period</div>
-        <div class="tx-summary-row">
-          <div class="tx-summary-item">
-            <div class="tx-summary-label">Total Spent</div>
-            <div class="tx-summary-value">₹${totalSpent.toLocaleString('en-IN')}</div>
-          </div>
-          <div class="tx-summary-item tx-summary-item--need">
-            <div class="tx-summary-label">🧠 Need</div>
-            <div class="tx-summary-value">₹${needSpent.toLocaleString('en-IN')}</div>
-          </div>
-          <div class="tx-summary-item tx-summary-item--want">
-            <div class="tx-summary-label">🎯 Want</div>
-            <div class="tx-summary-value">₹${wantSpent.toLocaleString('en-IN')}</div>
-          </div>
-          <div class="tx-summary-item tx-summary-item--save">
-            <div class="tx-summary-label">💰 Save</div>
-            <div class="tx-summary-value">₹${saveSpent.toLocaleString('en-IN')}</div>
-          </div>
-        </div>
-      </div>`;
-
     // Group by date
     const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
     const grouped = {};
@@ -221,13 +165,28 @@
       const remaining = visibleCount - count;
       const visible = txs.slice(0, remaining);
       
-      txHTML += `<div class="tx-date-group">
-        <div class="tx-date-label">${dateLabel}</div>
-        ${visible.map(renderItem).join('')}
-      </div>`;
-      
+      txHTML += visible.map(renderItem).join('');
       count += visible.length;
     }
+
+    const tableHTML = `
+      <div class="tx-table-wrapper">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${txHTML}
+          </tbody>
+        </table>
+      </div>`;
 
     const total = sorted.length;
     const remaining = total - count;
@@ -241,7 +200,7 @@
           ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>`
           : '');
 
-    listContainer.innerHTML = summaryHTML + txHTML + footer;
+    listContainer.innerHTML = tableHTML + footer;
   }
 
   // ── Init ──────────────────────────────────────────────────────
@@ -316,29 +275,56 @@
   // Globals called from inline onclick in rendered HTML
   window.deleteTransaction = function (transactionId) {
     const transactions = fromStorage('transactions');
-    const tx = transactions.find(t => t.id === transactionId);
-    if (!tx) return;
+    const tx = transactions.find(t => String(t.id) === String(transactionId));
+    if (!tx) {
+      if (typeof showToast === 'function') showToast('Transaction not found', 'error');
+      return;
+    }
 
-    if (typeof showDeleteConfirmation === 'function') {
-      showDeleteConfirmation(
-        'Delete Transaction?',
-        `Are you sure you want to delete "${tx.description || 'this transaction'}"?`,
-        () => {
-          const updated = transactions.filter(t => t.id !== transactionId);
-          localStorage.setItem('transactions', JSON.stringify(updated));
-          if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
-          if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
-          if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
-          if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
-          update();
-          if (typeof showToast === 'function') showToast('Transaction deleted', 'error');
-        }
-      );
+    const confirmMsg = `Delete "${tx.description || 'this transaction'}"?\n\nAmount: ₹${parseFloat(tx.amount).toLocaleString('en-IN')}\nDate: ${new Date(tx.date).toLocaleDateString('en-IN')}`;
+    
+    if (confirm(confirmMsg)) {
+      const updated = transactions.filter(t => String(t.id) !== String(transactionId));
+      localStorage.setItem('transactions', JSON.stringify(updated));
+      
+      // Update global array if available
+      if (typeof window.transactions !== 'undefined' && Array.isArray(window.transactions)) {
+        window.transactions = updated;
+      }
+      
+      if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+      if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+      if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+      if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+      update();
+      if (typeof showToast === 'function') showToast('Transaction deleted', 'error');
     }
   };
 
   window.loadMoreTransactions = () => { visibleCount += 10; update(); };
   window.loadAllTransactions = () => { visibleCount = Infinity; update(); };
   window.loadFewerTransactions = () => { visibleCount = 10; update(); };
+
+  window.editTransaction = function (transactionId) {
+    const transactions = fromStorage('transactions');
+    const tx = transactions.find(t => String(t.id) === String(transactionId));
+    if (!tx) {
+      if (typeof showToast === 'function') showToast('Transaction not found', 'error');
+      return;
+    }
+
+    // Open the appropriate bottom sheet based on transaction type
+    if (typeof EnvelopeBottomSheet !== 'undefined') {
+      if (tx.type === 'expense') {
+        EnvelopeBottomSheet.open('expense', tx.envelope, tx);
+      } else if (tx.type === 'income') {
+        EnvelopeBottomSheet.open('income', null, tx);
+      } else if (tx.type === 'transfer') {
+        EnvelopeBottomSheet.open('transfer', null, tx);
+      }
+    } else {
+      if (typeof showToast === 'function') showToast('Edit feature not available', 'error');
+    }
+  };
 
 })();

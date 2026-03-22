@@ -18,6 +18,7 @@
   let sheet, backdrop, handleBar, sheetContent;
   let currentType = 'expense';
   let currentEnvelope = null;
+  let editingTransaction = null; // Track if we're editing
 
   // Smart defaults (remember last selections)
   let lastPaymentMethod = null;
@@ -396,14 +397,17 @@
           return;
         }
         tx = {
-          id: `INC-${Date.now()}`,
+          id: editingTransaction ? editingTransaction.id : `INC-${Date.now()}`,
           type: 'income',
           amount: parseFloat(amount).toFixed(2),
           description: note || 'Income',
           payment: pmBtn.dataset.method,
           date: new Date(dateVal).toISOString(),
         };
-        _saveAndRefresh(tx, `✅ Income ₹${amount.toLocaleString('en-IN')} added`);
+        const msg = editingTransaction 
+          ? `✅ Income updated` 
+          : `✅ Income ₹${amount.toLocaleString('en-IN')} added`;
+        _saveAndRefresh(tx, msg);
 
       } else if (currentType === 'transfer') {
         const fromBtn = sheetContent.querySelector('#ebsFromRow .ebs-chip.selected');
@@ -424,7 +428,7 @@
           return;
         }
         tx = {
-          id: `TRF-${Date.now()}`,
+          id: editingTransaction ? editingTransaction.id : `TRF-${Date.now()}`,
           type: 'transfer',
           amount: parseFloat(amount).toFixed(2),
           description: note || `Transfer from ${fromBtn.dataset.method} to ${toBtn.dataset.method}`,
@@ -432,7 +436,10 @@
           to: toBtn.dataset.method,
           date: new Date(dateVal).toISOString(),
         };
-        _saveAndRefresh(tx, `✅ Moved ₹${amount.toLocaleString('en-IN')} → ${toBtn.dataset.method}`);
+        const msg = editingTransaction 
+          ? `✅ Transfer updated` 
+          : `✅ Moved ₹${amount.toLocaleString('en-IN')} → ${toBtn.dataset.method}`;
+        _saveAndRefresh(tx, msg);
 
       } else {
         // expense
@@ -443,7 +450,7 @@
           return;
         }
         tx = {
-          id: `EXP-${Date.now()}`,
+          id: editingTransaction ? editingTransaction.id : `EXP-${Date.now()}`,
           type: 'expense',
           amount: parseFloat(amount).toFixed(2),
           description: note || currentEnvelope,
@@ -451,7 +458,10 @@
           payment: pmBtn ? pmBtn.dataset.method : '',
           date: new Date(dateVal).toISOString(),
         };
-        _saveAndRefresh(tx, `✅ ₹${amount.toLocaleString('en-IN')} added to ${currentEnvelope}`);
+        const msg = editingTransaction 
+          ? `✅ Expense updated` 
+          : `✅ ₹${amount.toLocaleString('en-IN')} added to ${currentEnvelope}`;
+        _saveAndRefresh(tx, msg);
       }
 
     } catch (err) {
@@ -462,13 +472,33 @@
   }
 
   function _saveAndRefresh(tx, toastMsg) {
-    // Merge into global transactions array if available
-    if (typeof transactions !== 'undefined' && Array.isArray(transactions)) {
-      transactions.push(tx);
+    // If editing, update existing transaction
+    if (editingTransaction) {
+      const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      const index = transactions.findIndex(t => String(t.id) === String(editingTransaction.id));
+      
+      if (index !== -1) {
+        // Keep the same ID
+        tx.id = editingTransaction.id;
+        transactions[index] = tx;
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        
+        // Update global array if available
+        if (typeof window.transactions !== 'undefined' && Array.isArray(window.transactions)) {
+          const globalIndex = window.transactions.findIndex(t => String(t.id) === String(editingTransaction.id));
+          if (globalIndex !== -1) window.transactions[globalIndex] = tx;
+        }
+      }
     } else {
-      const stored = JSON.parse(localStorage.getItem('transactions') || '[]');
-      stored.unshift(tx);
-      localStorage.setItem('transactions', JSON.stringify(stored));
+      // Creating new transaction
+      // Merge into global transactions array if available
+      if (typeof transactions !== 'undefined' && Array.isArray(transactions)) {
+        transactions.push(tx);
+      } else {
+        const stored = JSON.parse(localStorage.getItem('transactions') || '[]');
+        stored.unshift(tx);
+        localStorage.setItem('transactions', JSON.stringify(stored));
+      }
     }
 
     if (typeof saveToLocalStorage       === 'function') saveToLocalStorage();
@@ -482,20 +512,71 @@
       SafeFirebaseOps.addTransaction(tx).catch(() => {});
     }
 
+    editingTransaction = null; // Reset editing state
     close();
   }
 
   // ── Open / Close ──────────────────────────────────────────────
 
-  function open(type, envelopeName) {
+  function open(type, envelopeName, existingTransaction) {
     buildSheetDOM();
     currentType     = type || 'expense';
     currentEnvelope = envelopeName || null;
+    editingTransaction = existingTransaction || null;
     sheet.classList.remove('ebs-sheet--expanded');
 
     if (currentType === 'income')        renderIncome();
     else if (currentType === 'transfer') renderTransfer();
     else                                 renderExpense(currentEnvelope || '');
+
+    // Pre-fill form if editing
+    if (editingTransaction) {
+      setTimeout(() => {
+        const amountEl = el('ebsAmount');
+        const noteEl = el('ebsNote');
+        const dateEl = el('ebsDate');
+        
+        if (amountEl) amountEl.value = editingTransaction.amount;
+        if (noteEl) noteEl.value = existingTransaction.description || '';
+        if (dateEl && existingTransaction.date) {
+          dateEl.value = new Date(existingTransaction.date).toISOString().split('T')[0];
+        }
+        
+        // Select payment method chip
+        if (existingTransaction.payment || existingTransaction.paymentMethod) {
+          const pm = existingTransaction.payment || existingTransaction.paymentMethod;
+          const pmChip = sheetContent.querySelector(`[data-method="${pm}"]`);
+          if (pmChip) _selectChip(pmChip, pmChip.dataset.row);
+        }
+        
+        // For transfers, select from/to
+        if (existingTransaction.from) {
+          const fromChip = sheetContent.querySelector(`#ebsFromRow [data-method="${existingTransaction.from}"]`);
+          if (fromChip) _selectChip(fromChip, 'ebsFromRow');
+        }
+        if (existingTransaction.to) {
+          const toChip = sheetContent.querySelector(`#ebsToRow [data-method="${existingTransaction.to}"]`);
+          if (toChip) _selectChip(toChip, 'ebsToRow');
+        }
+        
+        // For expenses, select envelope if not pre-selected
+        if (existingTransaction.envelope && !currentEnvelope) {
+          const envChip = sheetContent.querySelector(`#ebsEnvRow [data-method="${existingTransaction.envelope}"]`);
+          if (envChip) {
+            _selectChip(envChip, 'ebsEnvRow');
+            _setEnv(existingTransaction.envelope);
+          }
+        }
+        
+        // Update button text
+        const submitBtn = el('ebsSubmitBtn');
+        if (submitBtn) {
+          if (currentType === 'expense') submitBtn.textContent = 'Update Expense';
+          else if (currentType === 'income') submitBtn.textContent = 'Update Income';
+          else if (currentType === 'transfer') submitBtn.textContent = 'Update Transfer';
+        }
+      }, 100);
+    }
 
     requestAnimationFrame(() => {
       backdrop.classList.add('ebs-backdrop--visible');
