@@ -25,12 +25,30 @@
   function updateNWSSummary(filteredTransactions) {
     let needTotal = 0, wantTotal = 0, saveTotal = 0;
 
+    // Get envelopes with categories
+    const envelopes = (() => { 
+      try { 
+        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+        // Handle old format (array of strings)
+        if (envs.length > 0 && typeof envs[0] === 'string') {
+          return envs.map(name => ({ name, category: 'need' }));
+        }
+        return envs;
+      } catch { return []; }
+    })();
+    
+    const getEnvelopeCategory = (envelopeName) => {
+      const env = envelopes.find(e => e.name === envelopeName);
+      return env ? env.category : 'need';
+    };
+
     filteredTransactions.forEach(t => {
-      if (t.type === 'expense' && t.expenseType) {
+      if (t.type === 'expense' && t.envelope) {
         const amount = parseFloat(t.amount || 0);
-        if      (t.expenseType === 'need') needTotal += amount;
-        else if (t.expenseType === 'want') wantTotal += amount;
-        else if (t.expenseType === 'save') saveTotal += amount;
+        const category = getEnvelopeCategory(t.envelope);
+        if      (category === 'need') needTotal += amount;
+        else if (category === 'want') wantTotal += amount;
+        else if (category === 'save') saveTotal += amount;
       }
     });
 
@@ -66,9 +84,27 @@
     const selectedMonth = (document.getElementById('monthSelect') || {}).value || 'ALL';
     const selectedYear  = (document.getElementById('yearSelect')  || {}).value || String(new Date().getFullYear());
 
+    // Get envelopes with categories
+    const envelopes = (() => { 
+      try { 
+        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+        if (envs.length > 0 && typeof envs[0] === 'string') {
+          return envs.map(name => ({ name, category: 'need' }));
+        }
+        return envs;
+      } catch { return []; }
+    })();
+    
+    const getEnvelopeCategory = (envelopeName) => {
+      const env = envelopes.find(e => e.name === envelopeName);
+      return env ? env.category : null;
+    };
+
     const txs = (JSON.parse(localStorage.getItem('transactions') || '[]'))
       .filter(t => {
-        if (t.type !== 'expense' || t.expenseType !== type || !t.date) return false;
+        if (t.type !== 'expense' || !t.envelope || !t.date) return false;
+        const category = getEnvelopeCategory(t.envelope);
+        if (category !== type) return false;
         try {
           const d = new Date(t.date);
           if (selectedMonth === 'ALL') return d.getFullYear().toString() === selectedYear;
