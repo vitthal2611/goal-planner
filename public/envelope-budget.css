@@ -339,3 +339,59 @@
 .save-budget-btn:active {
   transform: translateY(0);
 }
+
+/* ── Filter Chips (Horizontal Scroll) ─────────────────────── */
+
+.env-filter-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.env-filter-scroll::-webkit-scrollbar { display: none; }
+
+.env-filter-chip {
+  padding: 6px 12px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.env-filter-chip:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.env-filter-chip--active {
+  border-color: #10b981;
+  border-width: 2px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.env-filter-chip--active:hover {
+  border-color: #059669;
+}
+
+.env-filter-chip--more {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+.env-filter-chip--more:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}

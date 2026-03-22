@@ -1,29 +1,23 @@
 /**
- * recent-transactions.js — Recent Transactions module
+ * recent-transactions.js — Recent Transactions module (Enhanced)
  *
  * Responsibilities:
- *  - RecentTransactions.update()  — render the filtered transaction list
+ *  - RecentTransactions.update()  — render grouped, filtered transaction list with summary
  *  - RecentTransactions.init()    — wire download report + delete-all buttons
  *
- * Globals exposed:
- *  - window.deleteTransaction(id)    — called from inline onclick in list items
- *  - window.loadMoreTransactions()   — called from inline onclick in footer
- *  - window.loadAllTransactions()    — called from inline onclick in footer
- *  - window.loadFewerTransactions()  — called from inline onclick in footer
- *
- * Depends on:
- *  - localStorage keys: transactions
- *  - window.EnvelopeBudget.getFilter()
- *  - DOM: recentTransactionsList, monthSelect, yearSelect
- *  - globals (main script): saveToLocalStorage, updateBalanceSummary,
- *    updatePaymentBalances, updateEnvelopeBudget, showToast,
- *    showDeleteConfirmation, downloadReport
+ * Enhancements:
+ *  - Monthly summary (Need/Want/Save breakdown)
+ *  - Date-grouped transactions
+ *  - Horizontal scrollable filter chips (top 6 + More)
+ *  - Consistent icon mapping
+ *  - Color-coded NWS tags
  */
 
 (function () {
 
   // ── State ─────────────────────────────────────────────────────
   let visibleCount = 10;
+  let showAllChips = false;
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
@@ -32,50 +26,68 @@
     try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
   }
 
-  function getTimeAgo(dateString) {
+  function getDateLabel(dateString) {
     const now  = new Date();
     const date = new Date(dateString);
-    const secs = Math.floor((now - date) / 1000);
-    if (secs < 60)     return 'Just now';
-    if (secs < 3600)   return `${Math.floor(secs / 60)} mins ago`;
-    if (secs < 86400)  return `${Math.floor(secs / 3600)} hours ago`;
-    if (secs < 172800) return 'Yesterday';
+    const diffDays = Math.floor((now - date) / 86400000);
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   }
 
-  function getIcon(type, description, expenseType) {
+  // Consistent icon mapping
+  function getIcon(type, envelope, description) {
     if (type === 'income')   return '💰';
     if (type === 'transfer') return '🔄';
-    if (expenseType === 'need') return '🎯';
-    if (expenseType === 'want') return '🎉';
-    if (expenseType === 'save') return '💰';
-    const d = (description || '').toLowerCase();
-    if (d.includes('food') || d.includes('lunch') || d.includes('dinner') || d.includes('breakfast')) return '🍔';
-    if (d.includes('transport') || d.includes('uber') || d.includes('taxi') || d.includes('bus'))     return '🚕';
-    if (d.includes('shopping') || d.includes('clothes'))     return '🛍️';
-    if (d.includes('entertainment') || d.includes('movie'))  return '🎬';
-    if (d.includes('grocery') || d.includes('groceries'))    return '🛒';
+    
+    const env = (envelope || '').toLowerCase();
+    const desc = (description || '').toLowerCase();
+    
+    // Envelope-based icons (priority)
+    if (env.includes('food') || env.includes('meal') || env.includes('restaurant')) return '🍔';
+    if (env.includes('grocery') || env.includes('groceries')) return '🛒';
+    if (env.includes('transport') || env.includes('travel') || env.includes('fuel')) return '🚗';
+    if (env.includes('insurance')) return '🛡️';
+    if (env.includes('emi') || env.includes('loan')) return '🏦';
+    if (env.includes('sip') || env.includes('invest') || env.includes('mutual')) return '📈';
+    if (env.includes('electric') || env.includes('gas') || env.includes('water') || env.includes('bill')) return '⚡';
+    if (env.includes('rent') || env.includes('house')) return '🏠';
+    if (env.includes('health') || env.includes('medical')) return '🏥';
+    if (env.includes('entertainment') || env.includes('movie')) return '🎬';
+    if (env.includes('shopping') || env.includes('cloth')) return '🛍️';
+    if (env.includes('education') || env.includes('school')) return '📚';
+    
+    // Description fallback
+    if (desc.includes('snack') || desc.includes('tea') || desc.includes('coffee')) return '☕';
+    if (desc.includes('uber') || desc.includes('taxi') || desc.includes('bus')) return '🚕';
+    
     return '💸';
   }
 
   function renderItem(t) {
-    const icon    = getIcon(t.type, t.description, t.expenseType);
-    const timeAgo = getTimeAgo(t.date);
-    const sign    = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
-    const amount  = t.type === 'transfer'
+    const icon = getIcon(t.type, t.envelope, t.description);
+    const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
+    const amount = t.type === 'transfer'
       ? `${t.from}→${t.to} ₹${parseFloat(t.amount).toLocaleString('en-IN')}`
       : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
-    const typeTag     = t.expenseType
-      ? `<span class="tx-tag ${t.expenseType}">${t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)}</span>`
+    
+    // Color-coded NWS tags
+    const nwsColors = { need: '#6366f1', want: '#f59e0b', save: '#10b981' };
+    const nwsIcons = { need: '🧠', want: '🎯', save: '💰' };
+    const typeTag = t.expenseType
+      ? `<span class="tx-tag tx-tag-nws" style="background:${nwsColors[t.expenseType]}20;color:${nwsColors[t.expenseType]}">${nwsIcons[t.expenseType]} ${t.expenseType.charAt(0).toUpperCase() + t.expenseType.slice(1)}</span>`
       : '';
-    const envelopeTag = t.envelope      ? `<span class="tx-tag">${t.envelope}</span>`      : '';
-    const paymentTag  = t.paymentMethod ? `<span class="tx-tag">${t.paymentMethod}</span>` : '';
+    
+    const envelopeTag = t.envelope ? `<span class="tx-tag">${t.envelope}</span>` : '';
+    const paymentTag = t.paymentMethod ? `<span class="tx-tag">${t.paymentMethod}</span>` : '';
+    
     return `
       <div class="transaction-item ${t.type}">
         <div class="transaction-icon">${icon}</div>
         <div class="transaction-details">
           <div class="transaction-desc">${t.description || 'Transfer'}</div>
-          <div class="transaction-meta">${timeAgo}${envelopeTag}${typeTag}${paymentTag}</div>
+          <div class="transaction-meta">${envelopeTag}${typeTag}${paymentTag}</div>
         </div>
         <div class="transaction-amount">${amount}</div>
         <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Delete">🗑</button>
@@ -89,9 +101,9 @@
     if (!listContainer) return;
 
     const monthSelect = el('monthSelect');
-    const yearSelect  = el('yearSelect');
+    const yearSelect = el('yearSelect');
     const selectedMonth = monthSelect ? monthSelect.value : 'ALL';
-    const selectedYear  = yearSelect  ? yearSelect.value  : String(new Date().getFullYear());
+    const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
     const envelopeFilter = window.EnvelopeBudget ? EnvelopeBudget.getFilter() : 'ALL';
 
     const transactions = fromStorage('transactions');
@@ -122,10 +134,68 @@
       return;
     }
 
-    const sorted    = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const total     = sorted.length;
-    const visible   = sorted.slice(0, visibleCount);
-    const remaining = total - visible.length;
+    // Calculate monthly summary
+    let totalSpent = 0, needSpent = 0, wantSpent = 0, saveSpent = 0;
+    filtered.forEach(t => {
+      if (t.type === 'expense') {
+        const amt = parseFloat(t.amount || 0);
+        totalSpent += amt;
+        if (t.expenseType === 'need') needSpent += amt;
+        else if (t.expenseType === 'want') wantSpent += amt;
+        else if (t.expenseType === 'save') saveSpent += amt;
+      }
+    });
+
+    const summaryHTML = `
+      <div class="tx-summary">
+        <div class="tx-summary-title">This Period</div>
+        <div class="tx-summary-row">
+          <div class="tx-summary-item">
+            <div class="tx-summary-label">Total Spent</div>
+            <div class="tx-summary-value">₹${totalSpent.toLocaleString('en-IN')}</div>
+          </div>
+          <div class="tx-summary-item tx-summary-item--need">
+            <div class="tx-summary-label">🧠 Need</div>
+            <div class="tx-summary-value">₹${needSpent.toLocaleString('en-IN')}</div>
+          </div>
+          <div class="tx-summary-item tx-summary-item--want">
+            <div class="tx-summary-label">🎯 Want</div>
+            <div class="tx-summary-value">₹${wantSpent.toLocaleString('en-IN')}</div>
+          </div>
+          <div class="tx-summary-item tx-summary-item--save">
+            <div class="tx-summary-label">💰 Save</div>
+            <div class="tx-summary-value">₹${saveSpent.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+      </div>`;
+
+    // Group by date
+    const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const grouped = {};
+    sorted.forEach(t => {
+      const label = getDateLabel(t.date);
+      if (!grouped[label]) grouped[label] = [];
+      grouped[label].push(t);
+    });
+
+    // Render grouped transactions
+    let txHTML = '';
+    let count = 0;
+    for (const [dateLabel, txs] of Object.entries(grouped)) {
+      if (count >= visibleCount) break;
+      const remaining = visibleCount - count;
+      const visible = txs.slice(0, remaining);
+      
+      txHTML += `<div class="tx-date-group">
+        <div class="tx-date-label">${dateLabel}</div>
+        ${visible.map(renderItem).join('')}
+      </div>`;
+      
+      count += visible.length;
+    }
+
+    const total = sorted.length;
+    const remaining = total - count;
 
     const footer = remaining > 0
       ? `<div class="tx-load-more">
@@ -136,14 +206,14 @@
           ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>`
           : '');
 
-    listContainer.innerHTML = visible.map(renderItem).join('') + footer;
+    listContainer.innerHTML = summaryHTML + txHTML + footer;
   }
 
   // ── Init ──────────────────────────────────────────────────────
 
   function init() {
-    const downloadBtn      = el('downloadReportBtn');
-    const deleteAllBtn     = el('deleteAllExpensesBtn');
+    const downloadBtn = el('downloadReportBtn');
+    const deleteAllBtn = el('deleteAllExpensesBtn');
 
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
@@ -154,9 +224,9 @@
     if (deleteAllBtn) {
       deleteAllBtn.addEventListener('click', () => {
         const monthSelect = el('monthSelect');
-        const yearSelect  = el('yearSelect');
+        const yearSelect = el('yearSelect');
         const selectedMonth = monthSelect ? monthSelect.value : 'ALL';
-        const selectedYear  = yearSelect  ? yearSelect.value  : String(new Date().getFullYear());
+        const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
         const envelopeFilter = window.EnvelopeBudget ? EnvelopeBudget.getFilter() : 'ALL';
         const isFiltered = envelopeFilter !== 'ALL';
 
@@ -178,7 +248,7 @@
           return;
         }
 
-        const periodLabel   = selectedMonth === 'ALL'
+        const periodLabel = selectedMonth === 'ALL'
           ? `year ${selectedYear}`
           : (monthSelect.options[monthSelect.selectedIndex] || {}).text || selectedMonth;
         const envelopeLabel = isFiltered ? ` in "${envelopeFilter}"` : '';
@@ -192,9 +262,9 @@
               const remaining = transactions.filter(t => !ids.has(t.id));
               localStorage.setItem('transactions', JSON.stringify(remaining));
               if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
-              if (typeof updateBalanceSummary  === 'function') updateBalanceSummary();
+              if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
               if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
-              if (typeof updateEnvelopeBudget  === 'function') updateEnvelopeBudget();
+              if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
               update();
               if (typeof showToast === 'function') showToast(`${toDelete.length} expense(s) deleted`, 'error');
             }
@@ -221,10 +291,10 @@
         () => {
           const updated = transactions.filter(t => t.id !== transactionId);
           localStorage.setItem('transactions', JSON.stringify(updated));
-          if (typeof saveToLocalStorage   === 'function') saveToLocalStorage();
-          if (typeof updateBalanceSummary  === 'function') updateBalanceSummary();
+          if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+          if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
           if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
-          if (typeof updateEnvelopeBudget  === 'function') updateEnvelopeBudget();
+          if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
           update();
           if (typeof showToast === 'function') showToast('Transaction deleted', 'error');
         }
@@ -232,8 +302,8 @@
     }
   };
 
-  window.loadMoreTransactions  = () => { visibleCount += 10;       update(); };
-  window.loadAllTransactions   = () => { visibleCount = Infinity;  update(); };
-  window.loadFewerTransactions = () => { visibleCount = 10;        update(); };
+  window.loadMoreTransactions = () => { visibleCount += 10; update(); };
+  window.loadAllTransactions = () => { visibleCount = Infinity; update(); };
+  window.loadFewerTransactions = () => { visibleCount = 10; update(); };
 
 })();

@@ -260,28 +260,25 @@
     const envelopes = fromStorage('envelopes');
     if (envelopes.length === 0) { container.innerHTML = ''; return; }
 
-    container.innerHTML = ['ALL', ...envelopes].map(envelope => {
+    // Show top 6 + More button
+    const topEnvelopes = envelopes.slice(0, 6);
+    const hasMore = envelopes.length > 6;
+
+    const chips = ['ALL', ...topEnvelopes].map(envelope => {
       const isActive = selectedEnvelopeFilter === envelope;
       const label = envelope === 'ALL' ? 'All' : envelope;
       return `
         <button
           onclick="filterByEnvelope('${envelope}')"
-          style="
-            padding: 6px 12px;
-            border: 2px solid ${isActive ? '#3b82f6' : '#e5e7eb'};
-            background: ${isActive ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'white'};
-            color: ${isActive ? 'white' : '#6b7280'};
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-          "
-          onmouseover="if('${isActive}' === 'false') { this.style.borderColor='#3b82f6'; this.style.color='#3b82f6'; }"
-          onmouseout="if('${isActive}' === 'false') { this.style.borderColor='#e5e7eb'; this.style.color='#6b7280'; }"
+          class="env-filter-chip ${isActive ? 'env-filter-chip--active' : ''}"
         >${label}</button>`;
     }).join('');
+
+    const moreBtn = hasMore
+      ? `<button class="env-filter-chip env-filter-chip--more" onclick="EnvelopeBudget._toggleChips()">+${envelopes.length - 6} More</button>`
+      : '';
+
+    container.innerHTML = `<div class="env-filter-scroll">${chips}${moreBtn}</div>`;
   }
 
   // ── Budget List (Settings panel) ──────────────────────────────
@@ -351,7 +348,7 @@
 
   // ── Public API ────────────────────────────────────────────────
 
-  window.EnvelopeBudget = { update, updateFilterChips, updateBudgetList, generateMonthOptions, getFilter, init };
+  window.EnvelopeBudget = { update, updateFilterChips, updateBudgetList, generateMonthOptions, getFilter, init, _toggleChips: () => {} };
 
   // Global helpers called from inline onclick attributes
   window.filterByEnvelope = function (envelope) {
