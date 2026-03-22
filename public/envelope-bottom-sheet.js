@@ -516,13 +516,36 @@
     // Envelope card + button → expense sheet
     window.openExpenseForEnvelope = (name) => open('expense', name);
 
-    // FAB buttons
+    // Speed-dial toggle
+    const fabPrimary  = el('fabPrimary');
+    const fabBar      = el('fabBar');
+    const fabBackdrop = el('fabBackdrop');
+
+    function openDial() {
+      fabBar.classList.add('fab-open');
+      fabBackdrop.classList.add('fab-backdrop--visible');
+    }
+    function closeDial() {
+      fabBar.classList.remove('fab-open');
+      fabBackdrop.classList.remove('fab-backdrop--visible');
+    }
+    function toggleDial() {
+      fabBar.classList.contains('fab-open') ? closeDial() : openDial();
+    }
+
+    if (fabPrimary)  fabPrimary.addEventListener('click', toggleDial);
+    if (fabBackdrop) fabBackdrop.addEventListener('click', closeDial);
+
+    // FAB option buttons
     const incomeFab   = el('incomeBtnFab');
     const transferFab = el('transferBtnFab');
     const expenseFab  = el('expenseBtnFab');
-    if (incomeFab)   incomeFab.addEventListener('click',   () => open('income'));
-    if (transferFab) transferFab.addEventListener('click', () => open('transfer'));
-    if (expenseFab)  expenseFab.addEventListener('click',  () => open('expense'));
+
+    function dialOpen(type) { closeDial(); open(type); }
+
+    if (incomeFab)   incomeFab.addEventListener('click',   () => dialOpen('income'));
+    if (transferFab) transferFab.addEventListener('click', () => dialOpen('transfer'));
+    if (expenseFab)  expenseFab.addEventListener('click',  () => dialOpen('expense'));
 
     // Header quick-track buttons (hidden on mobile but wired anyway)
     const incomeBtn   = el('incomeBtn');
