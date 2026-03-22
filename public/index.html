@@ -2599,70 +2599,94 @@
           }
         }
 
-        /* Speed-dial options (hidden by default) */
+        /* Speed-dial menu card (hidden by default) */
         .fab-options {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 8px;
           pointer-events: none;
-        }
-
-        .fab-option {
-          display: flex;
-          align-items: center;
-          gap: 10px;
           opacity: 0;
-          transform: translateY(12px) scale(0.9);
-          transition: opacity 0.2s ease, transform 0.2s ease;
-          pointer-events: none;
+          transform: translateY(16px) scale(0.95);
+          transform-origin: bottom right;
+          transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.2,0.64,1);
         }
 
-        .fab-option:nth-child(1) { transition-delay: 0.05s; }
-        .fab-option:nth-child(2) { transition-delay: 0.03s; }
-        .fab-option:nth-child(3) { transition-delay: 0.01s; }
-
-        .fab-bar.fab-open .fab-options { pointer-events: all; }
-        .fab-bar.fab-open .fab-option {
+        .fab-bar.fab-open .fab-options {
+          pointer-events: all;
           opacity: 1;
           transform: translateY(0) scale(1);
-          pointer-events: all;
         }
 
-        .fab-option-label {
+        /* The grouped card */
+        .fab-menu-card {
           background: #ffffff;
-          color: #374151;
-          font-size: 13px;
-          font-weight: 600;
-          padding: 6px 12px;
-          border-radius: 20px;
-          white-space: nowrap;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          border-radius: 16px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
           border: 1px solid #e5e7eb;
+          overflow: hidden;
+          min-width: 200px;
         }
 
-        .fab-option-btn {
-          width: 46px;
-          height: 46px;
-          border-radius: 50%;
-          border: 1.5px solid #e5e7eb;
-          background: #ffffff;
+        .fab-menu-header {
+          padding: 10px 14px 8px;
+          font-size: 11px;
+          font-weight: 700;
+          color: #9ca3af;
+          text-transform: uppercase;
+          letter-spacing: 0.6px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .fab-menu-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          border: none;
+          background: transparent;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          transition: background 0.12s;
+          -webkit-tap-highlight-color: transparent;
+          border-bottom: 1px solid #f9fafb;
+        }
+
+        .fab-menu-item:last-child { border-bottom: none; }
+        .fab-menu-item:active { background: #f3f4f6; }
+
+        .fab-menu-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
-          cursor: pointer;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-          transition: transform 0.15s, box-shadow 0.15s;
+          font-size: 16px;
           flex-shrink: 0;
-          -webkit-tap-highlight-color: transparent;
         }
 
-        .fab-option-btn:active { transform: scale(0.92); }
+        .fab-icon-expense  { background: #fef2f2; }
+        .fab-icon-income   { background: #f0fdf4; }
+        .fab-icon-transfer { background: #eff6ff; }
 
-        .fab-opt-expense { color: #6b7280; }
-        .fab-opt-income  { color: #6b7280; }
-        .fab-opt-transfer{ color: #6b7280; }
+        .fab-menu-text { flex: 1; }
+
+        .fab-menu-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #111827;
+          line-height: 1.2;
+        }
+
+        .fab-menu-sub {
+          font-size: 11px;
+          color: #9ca3af;
+          margin-top: 1px;
+        }
+
+        .fab-menu-arrow {
+          font-size: 14px;
+          color: #d1d5db;
+        }
 
         /* Primary FAB — green, positive action */
         .fab-primary {
@@ -2682,6 +2706,8 @@
           transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
           -webkit-tap-highlight-color: transparent;
           line-height: 1;
+          margin-top: 10px;
+          align-self: flex-end;
         }
 
         .fab-primary:active { transform: scale(0.93); }
@@ -3472,20 +3498,35 @@
 <!-- FAB backdrop (tap to close speed-dial) -->
 <div class="fab-backdrop" id="fabBackdrop"></div>
 
-<!-- Floating Action Button — Speed Dial -->
+<!-- Floating Action Button — grouped menu -->
 <div class="fab-bar" id="fabBar">
   <div class="fab-options" id="fabOptions">
-    <div class="fab-option">
-      <span class="fab-option-label">Expense</span>
-      <button class="fab-option-btn fab-opt-expense" id="expenseBtnFab" aria-label="Add Expense">↓</button>
-    </div>
-    <div class="fab-option">
-      <span class="fab-option-label">Income</span>
-      <button class="fab-option-btn fab-opt-income" id="incomeBtnFab" aria-label="Add Income">↑</button>
-    </div>
-    <div class="fab-option">
-      <span class="fab-option-label">Move Money</span>
-      <button class="fab-option-btn fab-opt-transfer" id="transferBtnFab" aria-label="Move Money">⇄</button>
+    <div class="fab-menu-card">
+      <div class="fab-menu-header">Add Transaction</div>
+      <button class="fab-menu-item" id="expenseBtnFab" aria-label="Add Expense">
+        <div class="fab-menu-icon fab-icon-expense">💸</div>
+        <div class="fab-menu-text">
+          <div class="fab-menu-title">Expense</div>
+          <div class="fab-menu-sub">Record a spend</div>
+        </div>
+        <span class="fab-menu-arrow">›</span>
+      </button>
+      <button class="fab-menu-item" id="incomeBtnFab" aria-label="Add Income">
+        <div class="fab-menu-icon fab-icon-income">💰</div>
+        <div class="fab-menu-text">
+          <div class="fab-menu-title">Income</div>
+          <div class="fab-menu-sub">Salary, freelance, etc.</div>
+        </div>
+        <span class="fab-menu-arrow">›</span>
+      </button>
+      <button class="fab-menu-item" id="transferBtnFab" aria-label="Move Money">
+        <div class="fab-menu-icon fab-icon-transfer">🔄</div>
+        <div class="fab-menu-text">
+          <div class="fab-menu-title">Transfer</div>
+          <div class="fab-menu-sub">Move between accounts</div>
+        </div>
+        <span class="fab-menu-arrow">›</span>
+      </button>
     </div>
   </div>
   <button class="fab-primary" id="fabPrimary" aria-label="Add Transaction">+</button>
