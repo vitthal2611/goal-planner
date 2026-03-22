@@ -29,44 +29,66 @@
 
         /* ── Design Tokens ── */
         :root {
-          --radius-sm: 10px;
-          --radius-md: 14px;
-          --radius-lg: 18px;
-          --radius-xl: 24px;
+          /* Radius scale — consistent across all cards */
+          --radius-sm:   10px;
+          --radius-md:   16px;
+          --radius-lg:   20px;
+          --radius-xl:   24px;
           --radius-pill: 999px;
 
+          /* Spacing */
           --space-xs: 6px;
           --space-sm: 10px;
-          --space-md: 14px;
+          --space-md: 16px;
           --space-lg: 20px;
           --space-xl: 28px;
 
-          --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-          --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-          --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+          /* Elevation — 3 levels only */
+          --shadow-card: 0 2px 8px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+          --shadow-md:   0 4px 16px rgba(0,0,0,0.10);
+          --shadow-lg:   0 8px 28px rgba(0,0,0,0.13);
 
-          --color-primary: #4f46e5;
+          /* ── Color System ── */
+          /* Primary: Indigo/Purple */
+          --color-primary:       #4f46e5;
+          --color-primary-dark:  #3730a3;
           --color-primary-light: #eef2ff;
-          --color-success: #10b981;
+          --color-primary-mid:   #c7d2fe;
+
+          /* Success: Green (income) */
+          --color-success:       #059669;
           --color-success-light: #d1fae5;
-          --color-danger: #ef4444;
-          --color-danger-light: #fee2e2;
-          --color-warning: #f59e0b;
+          --color-success-mid:   #6ee7b7;
+
+          /* Danger: Red (expense) */
+          --color-danger:        #dc2626;
+          --color-danger-light:  #fee2e2;
+          --color-danger-mid:    #fca5a5;
+
+          /* Warning: Amber */
+          --color-warning:       #d97706;
           --color-warning-light: #fef3c7;
 
-          --color-text: #111827;
+          /* Neutral */
+          --color-text:           #111827;
           --color-text-secondary: #6b7280;
-          --color-text-muted: #9ca3af;
-          --color-border: #e5e7eb;
-          --color-surface: #ffffff;
-          --color-bg: #f1f5f9;
+          --color-text-muted:     #9ca3af;
+          --color-border:         #e5e7eb;
+          --color-border-light:   #f3f4f6;
+          --color-surface:        #ffffff;
+          --color-bg:             #f1f5f9;
 
-          --font-xs: 11px;
-          --font-sm: 13px;
+          /* ── Typography scale — 3 levels ── */
+          --text-title:   700 18px/1.2 'Inter', sans-serif;   /* page/section titles */
+          --text-section: 700 11px/1   'Inter', sans-serif;   /* section labels (uppercase) */
+          --text-value:   800 20px/1   'Inter', sans-serif;   /* ₹ amounts */
+
+          --font-xs:   11px;
+          --font-sm:   13px;
           --font-base: 15px;
-          --font-md: 16px;
-          --font-lg: 18px;
-          --font-xl: 22px;
+          --font-md:   16px;
+          --font-lg:   18px;
+          --font-xl:   22px;
         }
 
         body {
@@ -130,7 +152,7 @@
           display: flex;
           align-items: center;
           gap: 5px;
-          padding: 6px 14px;
+          padding: 6px 16px;
           border: none;
           background: transparent;
           font-size: 13px;
@@ -138,7 +160,7 @@
           color: var(--color-text-secondary);
           cursor: pointer;
           border-radius: var(--radius-pill);
-          transition: background 0.18s, color 0.18s;
+          transition: background 0.18s, color 0.18s, font-size 0.18s;
           font-family: 'Inter', sans-serif;
           min-height: 34px;
           white-space: nowrap;
@@ -159,6 +181,9 @@
           background: var(--color-primary);
           color: #fff;
           font-weight: 700;
+          font-size: 14px;
+          letter-spacing: -0.2px;
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
         }
 
         .tab-content-section {
@@ -177,23 +202,26 @@
         }
 
         .profile-btn {
-          width: 36px;
-          height: 36px;
+          width: 34px;
+          height: 34px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
-          border: none;
-          color: white;
+          background: transparent;
+          border: 1.5px solid var(--color-border);
+          color: var(--color-text-secondary);
           font-size: 16px;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .profile-btn:hover {
-          transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+          border-color: var(--color-primary);
+          color: var(--color-primary);
+          background: var(--color-primary-light);
         }
 
         .profile-btn:active {
@@ -240,23 +268,22 @@
         }
 
         .modal-content {
-          background: linear-gradient(to bottom, #ffffff, #fafbfc);
-          border-radius: 20px;
-          padding: 20px 18px;
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          padding: 22px 20px;
           max-width: 500px;
           width: 94%;
           max-height: 90vh;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-          opacity: 1;
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          box-shadow: var(--shadow-lg);
+          border: 1px solid var(--color-border-light);
         }
-        
+
         @media (max-width: 400px) {
           .modal-content {
-            padding: 16px 14px;
-            border-radius: 16px;
+            padding: 18px 16px;
+            border-radius: var(--radius-md);
             width: 96%;
           }
         }
@@ -275,12 +302,12 @@
         }
 
         .modal-content::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
           border-radius: 10px;
         }
 
         .modal-content::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          background: var(--color-primary-dark);
         }
 
         .modal-tabs {
@@ -414,8 +441,8 @@
         }
 
         .payment-method-item:hover {
-          border-color: #3b82f6;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+          border-color: var(--color-primary);
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.12);
           transform: translateY(-1px);
         }
 
@@ -474,16 +501,16 @@
 
         .add-payment-input:focus {
           outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          border-color: var(--color-primary);
+          box-shadow: 0 0 0 3px var(--color-primary-light);
         }
 
         .add-btn {
           padding: 12px 20px;
           border: none;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
           color: white;
-          border-radius: 12px;
+          border-radius: var(--radius-md);
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
@@ -523,11 +550,11 @@
         }
 
         .toast.success {
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: linear-gradient(135deg, var(--color-success), #047857);
         }
 
         .toast.error {
-          background: linear-gradient(135deg, #ef4444, #dc2626);
+          background: linear-gradient(135deg, var(--color-danger), #b91c1c);
         }
 
         /* Date navigation toolbar */
@@ -580,10 +607,10 @@
         }
 
         .payment-balances-wrapper {
-          background: white;
-          padding: 12px;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          background: var(--color-surface);
+          padding: var(--space-md);
+          border-radius: var(--radius-md);
+          box-shadow: var(--shadow-card);
           margin-bottom: 10px;
         }
 
@@ -597,11 +624,11 @@
         }
 
         .payment-title {
-          font-size: 14px;
-          font-weight: 700;
-          color: #1f2937;
+          font: var(--text-section);
+          color: var(--color-text);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.6px;
+          margin-bottom: 10px;
         }
 
         .toggle-icon {
@@ -614,55 +641,106 @@
           transform: rotate(-90deg);
         }
 
+        /* ── Payment list layout ── */
         .payment-balances {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: var(--space-sm);
-          max-height: 200px;
-          overflow: hidden;
-          transition: max-height 0.3s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
         }
 
-        @media (min-width: 400px) {
-          .payment-balances {
-            grid-template-columns: repeat(4, 1fr);
-          }
+        .pm-group-label {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.7px;
+          color: #9ca3af;
+          padding: 8px 0 4px;
+          border-top: 1px solid #f3f4f6;
+          margin-top: 4px;
         }
 
-        .payment-balances {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
+        .pm-group-label:first-child {
+          border-top: none;
+          margin-top: 0;
+          padding-top: 0;
         }
 
         .payment-item {
-          padding: 10px;
-          border-radius: 10px;
-          text-align: center;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid #f9fafb;
+          background: none;
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+          border-top: none;
         }
 
-        /* removed per-method color variants — all neutral */
-        .payment-item.hdfc,
-        .payment-item.sbi,
-        .payment-item.cash,
-        .payment-item.transfer { background: #f9fafb; }
+        .payment-item:last-child { border-bottom: none; }
+
+        .pm-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: var(--radius-sm);
+          background: var(--color-primary-light);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+          flex-shrink: 0;
+        }
+
+        .pm-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .pm-name-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 4px;
+        }
 
         .payment-label {
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 600;
-          color: #374151;
-          margin-bottom: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 140px;
         }
 
         .payment-value {
-          font-size: 18px;
+          font-size: 13px;
           font-weight: 800;
-          color: #1f2937;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
+
+        .payment-value.positive { color: var(--color-success); }
+        .payment-value.negative { color: var(--color-danger); }
+        .payment-value.zero     { color: var(--color-text-muted); }
+
+        .pm-bar-track {
+          height: 4px;
+          border-radius: 999px;
+          background: #f3f4f6;
+          overflow: hidden;
+        }
+
+        .pm-bar-fill {
+          height: 100%;
+          border-radius: var(--radius-pill);
+          background: var(--color-primary);
+          transition: width 0.4s ease;
+        }
+
+        .pm-bar-fill.negative { background: var(--color-danger); }
+        .pm-bar-fill.zero     { background: var(--color-border); }
 
         .quick-track-header {
           display: grid;
@@ -2501,6 +2579,76 @@
           background: #dc2626;
         }
 
+        /* ── FAB Bar ── */
+        .fab-bar {
+          display: flex;
+          gap: 10px;
+          padding: 10px 16px;
+          background: rgba(255,255,255,0.96);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(229,231,235,0.7);
+          box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 99;
+          padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* On mobile, sit above the bottom-nav */
+        @media (max-width: 480px) {
+          .fab-bar {
+            bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: 10px;
+          }
+        }
+
+        .fab-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 13px 16px;
+          border: none;
+          border-radius: 14px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.15s, box-shadow 0.15s;
+          font-family: 'Inter', sans-serif;
+          letter-spacing: -0.2px;
+        }
+
+        .fab-btn:active { transform: scale(0.97); }
+
+        .fab-income {
+          background: linear-gradient(135deg, var(--color-success), #047857);
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+        }
+
+        .fab-income:hover {
+          box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45);
+        }
+
+        .fab-transfer {
+          background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        }
+
+        .fab-transfer:hover {
+          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+        }
+
+        /* push page content up so FAB doesn't overlap */
+        .quick-track {
+          padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        }
+
         /* Bottom Navigation */
         .bottom-nav {
           display: none;
@@ -2561,7 +2709,7 @@
           }
 
           .quick-track {
-            padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
             padding-left: 12px;
             padding-right: 12px;
           }
@@ -2574,8 +2722,8 @@
           }
 
           .profile-btn {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             font-size: 15px;
           }
 
@@ -2674,6 +2822,10 @@
     <script src="nws.js"></script>
     <link rel="stylesheet" href="balance-summary.css">
     <script src="balance-summary.js"></script>
+    <link rel="stylesheet" href="insights.css">
+    <script src="insights.js"></script>
+    <link rel="stylesheet" href="drill-down.css">
+    <script src="drill-down.js"></script>
     <script src="transaction-modal.js"></script>
     <link rel="stylesheet" href="envelope-budget.css">
     <script src="envelope-budget.js"></script>
@@ -2725,17 +2877,22 @@
             <button id="nextYear"></button>
         </div>
         <div class="app-tabs">
-            <button class="app-tab active" id="habitTab"><span class="tab-icon">🏃</span> Habit</button>
-            <button class="app-tab" id="financeTab"><span class="tab-icon">💰</span> Finance</button>
+            <button class="app-tab active" id="habitTab">Habit</button>
+            <button class="app-tab" id="financeTab">Finance</button>
         </div>
-        <button class="profile-btn" id="profileBtn">⚙️</button>
+        <button class="profile-btn" id="profileBtn" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
     </div>
 
     <div class="tab-content-section" id="financeContent">
 
         <!-- Need, Want, Save Summary -->
         <div class="nws-bar" style="margin-bottom: 10px;">
-            <div class="nws-item nws-need" onclick="NWS.openNWSModal('need')" style="cursor:pointer;">
+            <div class="nws-item nws-need" onclick="DrillDown.openNWS('need')" style="cursor:pointer;">
                 <span class="nws-icon">🎯</span>
                 <span class="nws-label">Need</span>
                 <span class="nws-pct" id="needPct">0%</span>
@@ -2743,7 +2900,7 @@
                 <div class="nws-track"><div class="nws-fill nws-fill-need" id="needBar"></div></div>
             </div>
             <div class="nws-divider"></div>
-            <div class="nws-item nws-want" onclick="NWS.openNWSModal('want')" style="cursor:pointer;">
+            <div class="nws-item nws-want" onclick="DrillDown.openNWS('want')" style="cursor:pointer;">
                 <span class="nws-icon">🎉</span>
                 <span class="nws-label">Want</span>
                 <span class="nws-pct" id="wantPct">0%</span>
@@ -2751,7 +2908,7 @@
                 <div class="nws-track"><div class="nws-fill nws-fill-want" id="wantBar"></div></div>
             </div>
             <div class="nws-divider"></div>
-            <div class="nws-item nws-save" onclick="NWS.openNWSModal('save')" style="cursor:pointer;">
+            <div class="nws-item nws-save" onclick="DrillDown.openNWS('save')" style="cursor:pointer;">
                 <span class="nws-icon">💰</span>
                 <span class="nws-label">Save</span>
                 <span class="nws-pct" id="savePct">0%</span>
@@ -2770,7 +2927,13 @@
                 <div class="balance-item expense">
                     <div class="balance-label">Expense</div>
                     <div class="balance-value" id="totalExpense">₹0</div>
+                    <div class="expense-ratio" id="expenseRatio"></div>
                 </div>
+            </div>
+            <!-- Visual comparison bar -->
+            <div class="balance-ratio-bar" id="balanceRatioBar" style="display:none;">
+                <div class="ratio-bar-income" id="ratioBarIncome"></div>
+                <div class="ratio-bar-expense" id="ratioBarExpense"></div>
             </div>
             <div class="net-balance-banner" id="netBalanceBanner"></div>
         </div>
@@ -2780,7 +2943,16 @@
             <div class="payment-balances" id="paymentBalances"></div>
         </div>
 
-        <div class="quick-track-header">
+        <!-- Insights -->
+        <div class="insights-wrapper" id="insightsWrapper">
+            <div class="insights-header">
+                <span class="insights-title">Insights</span>
+                <span class="insights-period" id="insightsPeriod"></span>
+            </div>
+            <div class="insights-list" id="insightsList"></div>
+        </div>
+
+        <div class="quick-track-header" style="display:none;">
             <button class="type-btn income" id="incomeBtn">
                 <span class="icon">↓</span>
                 <span>Income</span>
@@ -3009,6 +3181,18 @@
     </div>
 </div>
 
+<!-- Drill-Down Modal (NWS + Payment Methods) -->
+<div class="modal" id="drillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="ddTitle"></div>
+            <button class="close-btn" id="closeDrillModal">×</button>
+        </div>
+        <div class="dd-summary" id="ddSummary"></div>
+        <div id="ddBody"></div>
+    </div>
+</div>
+
 <div class="modal" id="profileModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -3221,6 +3405,18 @@
       <button id="csvConfirmImportBtn" style="flex:2; padding:16px; border:none; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(124,58,237,0.4);">✅ Import All</button>
     </div>
   </div>
+</div>
+
+<!-- Floating Action Buttons — Income & Move Money -->
+<div class="fab-bar" id="fabBar">
+  <button class="fab-btn fab-income" id="incomeBtnFab" aria-label="Add Income">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    <span>Income</span>
+  </button>
+  <button class="fab-btn fab-transfer" id="transferBtnFab" aria-label="Move Money">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    <span>Move Money</span>
+  </button>
 </div>
 
 <!-- Bottom Navigation (Mobile Only) -->
@@ -3621,74 +3817,104 @@
       // when creating expense entries. Keeping empty function for compatibility.
     }
 
-    function updateBalanceSummary() { BalanceSummary.update(); }
+    function updateBalanceSummary() {
+      BalanceSummary.update();
+      if (typeof Insights !== 'undefined') Insights.update();
+    }
 
     function updatePaymentBalances() {
       const container = document.getElementById('paymentBalances');
       if (!container) return;
       const selectedMonth = monthSelect.value;
-      const selectedYear = yearSelect.value;
-      
+      const selectedYear  = yearSelect.value;
+
       if (paymentMethods.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1/-1; padding: 16px; text-align: center; color: #6b7280;">No payment methods added yet.</div>';
+        container.innerHTML = '<div style="padding:16px 0;text-align:center;color:#9ca3af;font-size:13px;">No payment methods added yet.</div>';
         return;
       }
-      
-      // Filter transactions by selected month/year
-      let filteredTransactions = transactions;
-      
+
+      // Filter transactions
+      let filtered = transactions;
       if (selectedMonth === 'ALL') {
-        // Filter by year only
-        filteredTransactions = transactions.filter(t => {
+        filtered = transactions.filter(t => {
           if (!t.date) return false;
-          try {
-            const transactionYear = new Date(t.date).getFullYear().toString();
-            return transactionYear === selectedYear;
-          } catch (e) {
-            return false;
-          }
+          try { return new Date(t.date).getFullYear().toString() === selectedYear; } catch { return false; }
         });
       } else {
-        // Filter by specific month
-        filteredTransactions = transactions.filter(t => {
+        filtered = transactions.filter(t => {
           if (!t.date) return false;
           try {
-            const date = new Date(t.date);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const transactionMonth = `${year}-${month}`;
-            return transactionMonth === selectedMonth;
-          } catch (e) {
-            return false;
-          }
+            const d = new Date(t.date);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === selectedMonth;
+          } catch { return false; }
         });
       }
-      
-      container.innerHTML = paymentMethods.map((method, index) => {
-        // Calculate balance for this payment method
-        let balance = 0;
-        
-        filteredTransactions.forEach(t => {
-          if (t.type === 'income' && t.payment === method) {
-            balance += parseFloat(t.amount);
-          } else if (t.type === 'expense' && t.payment === method) {
-            balance -= parseFloat(t.amount);
-          } else if (t.type === 'transfer') {
-            if (t.from === method) balance -= parseFloat(t.amount);
-            if (t.to === method) balance += parseFloat(t.amount);
-          }
+
+      // Build per-method stats
+      const stats = paymentMethods.map(method => {
+        let balance = 0, usage = 0;
+        filtered.forEach(t => {
+          const amt = parseFloat(t.amount || 0);
+          if (t.type === 'income'   && t.payment === method) { balance += amt; usage += amt; }
+          if (t.type === 'expense'  && t.payment === method) { balance -= amt; usage += amt; }
+          if (t.type === 'transfer' && t.from    === method) { balance -= amt; usage += amt; }
+          if (t.type === 'transfer' && t.to      === method) { balance += amt; usage += amt; }
         });
-        
-        const colors = ['hdfc', 'sbi', 'cash', 'transfer'];
-        const colorClass = colors[index % colors.length];
-        
-        return `
-          <div class="payment-item ${colorClass}">
-            <div class="payment-label">${method}</div>
-            <div class="payment-value">₹${balance.toLocaleString('en-IN')}</div>
-          </div>
-        `;
-      }).join('');
+        return { method, balance, usage };
+      });
+
+      // Infer group from name
+      function inferGroup(name) {
+        const n = name.toLowerCase();
+        if (/credit|card|visa|master|amex|rupay/.test(n)) return 'Credit';
+        if (/upi|gpay|phonepe|paytm|bhim/.test(n))        return 'UPI';
+        if (/cash|wallet/.test(n))                         return 'Cash';
+        return 'Bank';
+      }
+
+      function groupIcon(g) {
+        return { Bank: '🏦', Credit: '💳', UPI: '📱', Cash: '💵' }[g] || '💰';
+      }
+
+      // Group and sort by usage desc within each group
+      const groupOrder = ['Bank', 'Credit', 'UPI', 'Cash'];
+      const groups = {};
+      stats.forEach(s => {
+        const g = inferGroup(s.method);
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(s);
+      });
+      Object.keys(groups).forEach(g => groups[g].sort((a, b) => b.usage - a.usage));
+
+      // Max usage across all methods for bar scaling
+      const maxUsage = Math.max(...stats.map(s => s.usage), 1);
+
+      let html = '';
+      groupOrder.forEach(g => {
+        if (!groups[g]) return;
+        html += `<div class="pm-group-label">${groupIcon(g)} ${g}</div>`;
+        groups[g].forEach(({ method, balance, usage }) => {
+          const barPct   = Math.round((usage / maxUsage) * 100);
+          const valClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero';
+          const barClass = balance < 0 ? 'negative' : balance === 0 ? 'zero' : '';
+          const sign     = balance > 0 ? '+' : '';
+          html += `
+            <div class="payment-item" style="cursor:pointer;" onclick="DrillDown.openPayment(${JSON.stringify(method)})">
+              <div class="pm-icon">${groupIcon(g)}</div>
+              <div class="pm-info">
+                <div class="pm-name-row">
+                  <span class="payment-label">${method}</span>
+                  <span class="payment-value ${valClass}">${sign}₹${Math.abs(balance).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="pm-bar-track">
+                  <div class="pm-bar-fill ${barClass}" style="width:${barPct}%"></div>
+                </div>
+              </div>
+            </div>`;
+        });
+      });
+
+      container.innerHTML = html;
     }
 
     function updateRecentTransactions() { RecentTransactions.update(); }
@@ -3903,6 +4129,7 @@
 
     // Balance summary & view toggle — handled by balance-summary.js
     BalanceSummary.init();
+    if (typeof DrillDown !== 'undefined') DrillDown.init();
 
     // Date navigation — delegated to date-navigation.js
     DateNav.init();

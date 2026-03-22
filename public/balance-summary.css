@@ -1,28 +1,20 @@
-/* ── Income / Expense Balance Summary module styles ── */
+/* -- Income / Expense Balance Summary -- */
 
 .balance-summary-wrapper {
-  background: white;
-  padding: 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--color-surface);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   margin-bottom: 10px;
-}
-
-.balance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  cursor: pointer;
-  user-select: none;
 }
 
 .balance-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
 }
 
 .balance-summary {
@@ -32,85 +24,180 @@
 }
 
 .balance-item {
-  padding: 10px;
-  border-radius: 10px;
+  padding: 14px 12px;
+  border-radius: var(--radius-sm);
   text-align: center;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
 }
 
-/* semantic color only on the value text, not the whole card */
-.balance-item.income  { }
-.balance-item.expense { }
-.balance-item.net     { }
-
 .balance-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
 }
 
 .balance-value {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-text);
 }
 
-.balance-item.income  .balance-value { color: #059669; }
-.balance-item.expense .balance-value { color: #dc2626; }
-/* net stays dark — positive/negative handled by JS if needed */
+.balance-item.income .balance-value { color: var(--color-success); }
+.balance-item.expense .balance-value { color: var(--color-danger); }
 
-/* Mobile overrides */
-@media (max-width: 480px) {
-  .balance-summary { grid-template-columns: repeat(2, 1fr); }
-  .balance-value   { font-size: 18px; }
+.expense-ratio {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-danger);
+  margin-top: 4px;
+  opacity: 0.8;
+  min-height: 14px;
 }
 
-/* ── Net Balance Banner ─────────────────────────────────────── */
+.balance-ratio-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 12px;
+  background: var(--color-border-light);
+}
+
+.ratio-bar-income {
+  height: 100%;
+  background: var(--color-success);
+  border-radius: 999px 0 0 999px;
+  transition: width 0.4s ease;
+}
+
+.ratio-bar-expense {
+  height: 100%;
+  background: var(--color-danger);
+  border-radius: 0 999px 999px 0;
+  transition: width 0.4s ease;
+}
 
 .net-balance-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
+  margin-top: 12px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .net-balance-banner:empty { display: none; }
 
-.net-balance-banner.positive {
-  background: #f0fdf4;
-  border: 1.5px solid #bbf7d0;
+.net-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid transparent;
+}
+
+.net-card.positive {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: var(--color-success-mid);
   color: #065f46;
 }
 
-.net-balance-banner.negative {
-  background: #fff1f2;
-  border: 1.5px solid #fecdd3;
+.net-card.negative {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  border-color: var(--color-danger-mid);
   color: #9f1239;
 }
 
-.net-balance-banner.neutral {
-  background: #f9fafb;
-  border: 1.5px solid #e5e7eb;
-  color: #374151;
+.net-card.neutral {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
 }
 
-.net-balance-amount {
-  font-size: 15px;
-  font-weight: 800;
+.net-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
-.net-balance-msg {
-  font-size: 12px;
+.net-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  opacity: 0.7;
+}
+
+.net-card-mom {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+
+.net-card-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.net-card-trend { font-size: 20px; line-height: 1; }
+
+.net-card-amount {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.net-card-goal { margin-top: 2px; }
+
+.net-card-goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.net-card-goal-label {
+  font-size: 11px;
   font-weight: 600;
-  opacity: 0.85;
+  opacity: 0.75;
 }
+
+.net-card-goal-edit {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.6;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font-family: inherit;
+}
+
+.net-card-goal-edit:hover { opacity: 1; }
+
+.net-goal-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.net-goal-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.net-goal-fill.over { opacity: 1; }

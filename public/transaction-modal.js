@@ -640,6 +640,12 @@
     if (transferBtn) transferBtn.addEventListener('click', () => openTransactionModal('transfer'));
     if (expenseBtn)  expenseBtn.addEventListener('click',  () => openTransactionModal('expense'));
 
+    // FAB buttons
+    const incomeBtnFab   = el('incomeBtnFab');
+    const transferBtnFab = el('transferBtnFab');
+    if (incomeBtnFab)   incomeBtnFab.addEventListener('click',   () => openTransactionModal('income'));
+    if (transferBtnFab) transferBtnFab.addEventListener('click', () => openTransactionModal('transfer'));
+
     addAnotherExpenseBtn.addEventListener('click', () => addExpenseEntry());
 
     closeTransactionModalBtn.addEventListener('click', closeModal);
