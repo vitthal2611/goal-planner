@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Clean Mobile UI Example</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mobile-clean.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Sticky Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="header-title">Transactions</h1>
+                <div class="header-actions">
+                    <button class="icon-btn" aria-label="Filter">🔍</button>
+                    <button class="icon-btn" aria-label="Settings">⚙️</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search transactions..."
+                    aria-label="Search"
+                >
+            </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chips">
+            <button class="chip active">All</button>
+            <button class="chip">Income</button>
+            <button class="chip">Expense</button>
+            <button class="chip">This Month</button>
+            <button class="chip">HDFC</button>
+        </div>
+
+        <!-- Stats Summary -->
+        <section class="content-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Income</div>
+                    <div class="stat-value success">₹45,000</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Expense</div>
+                    <div class="stat-value danger">₹32,550</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value">₹12,450</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Savings</div>
+                    <div class="stat-value success">₹8,900</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Transactions -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent</h2>
+                <button class="section-action">View All</button>
+            </div>
+
+            <div class="card-list">
+                <!-- Transaction Card 1 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🍔</div>
+                        <div class="card-main">
+                            <div class="card-title">Samruddhi Snacks</div>
+                            <div class="card-subtitle">
+                                <span>24 Dec</span>
+                                <span>•</span>
+                                <span>Eatout</span>
+                                <span>•</span>
+                                <span>HDFC</span>
+                            </div>
+                        </div>
+                        <div class="card-amount negative">-₹250</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Card 2 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">💰</div>
+                        <div class="card-main">
+                            <div class="card-title">Salary Credit</div>
+                            <div class="card-subtitle">
+                                <span>23 Dec</span>
+                                <span>•</span>
+                                <span>Income</span>
+                                <span>•</span>
+                                <span>HDFC</span>
+                            </div>
+                        </div>
+                        <div class="card-amount positive">+₹45,000</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Card 3 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🛒</div>
+                        <div class="card-main">
+                            <div class="card-title">Grocery Shopping</div>
+                            <div class="card-subtitle">
+                                <span>22 Dec</span>
+                                <span>•</span>
+                                <span>Groceries</span>
+                                <span>•</span>
+                                <span>Credit Card</span>
+                            </div>
+                        </div>
+                        <div class="card-amount negative">-₹1,850</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Card 4 with Footer -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">⛽</div>
+                        <div class="card-main">
+                            <div class="card-title">Petrol - Shell Station</div>
+                            <div class="card-subtitle">
+                                <span>21 Dec</span>
+                                <span>•</span>
+                                <span>Transport</span>
+                                <span>•</span>
+                                <span>HDFC</span>
+                            </div>
+                        </div>
+                        <div class="card-amount negative">-₹2,500</div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-meta">
+                            <span>Need</span>
+                            <span>•</span>
+                            <span>Recurring</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-action-btn" aria-label="Edit">✏️</button>
+                            <button class="card-action-btn" aria-label="Delete">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Card 5 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🎬</div>
+                        <div class="card-main">
+                            <div class="card-title">Netflix Subscription</div>
+                            <div class="card-subtitle">
+                                <span>20 Dec</span>
+                                <span>•</span>
+                                <span>Entertainment</span>
+                                <span>•</span>
+                                <span>Credit Card</span>
+                            </div>
+                        </div>
+                        <div class="card-amount negative">-₹649</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State Example (Hidden by default) -->
+        <section class="content-section hidden" id="loading-state">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+        </section>
+
+        <!-- Empty State Example (Hidden by default) -->
+        <section class="content-section hidden" id="empty-state">
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3 class="empty-title">No transactions yet</h3>
+                <p class="empty-text">Start tracking your finances by adding your first transaction</p>
+                <button class="btn btn-primary">Add Transaction</button>
+            </div>
+        </section>
+
+        <!-- Form Example (Hidden by default) -->
+        <section class="content-section hidden" id="form-example">
+            <h2 class="section-title mb-4">Add Transaction</h2>
+            
+            <form>
+                <div class="form-group">
+                    <label class="form-label" for="amount">Amount</label>
+                    <input 
+                        type="number" 
+                        id="amount" 
+                        class="form-input" 
+                        placeholder="Enter amount"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <input 
+                        type="text" 
+                        id="description" 
+                        class="form-input" 
+                        placeholder="What was this for?"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" class="form-select" required>
+                        <option value="">Select category</option>
+                        <option value="food">Food & Dining</option>
+                        <option value="transport">Transport</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="bills">Bills & Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="date">Date</label>
+                    <input 
+                        type="date" 
+                        id="date" 
+                        class="form-input"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="notes">Notes (Optional)</label>
+                    <textarea 
+                        id="notes" 
+                        class="form-textarea" 
+                        placeholder="Add any additional notes..."
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Save Transaction</button>
+            </form>
+        </section>
+
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" aria-label="Add new transaction">+</button>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-content">
+            <button class="nav-item active">
+                <span class="nav-item-icon">🏠</span>
+                <span>Home</span>
+            </button>
+            <button class="nav-item">
+                <span class="nav-item-icon">💰</span>
+                <span>Transactions</span>
+            </button>
+            <button class="nav-item">
+                <span class="nav-item-icon">📊</span>
+                <span>Insights</span>
+            </button>
+            <button class="nav-item">
+                <span class="nav-item-icon">⚙️</span>
+                <span>Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Simple demo interactions
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // FAB click
+        document.querySelector('.fab').addEventListener('click', function() {
+            alert('Add new transaction');
+        });
+
+        // Card click
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.closest('.card-action-btn')) {
+                    console.log('Card clicked');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
