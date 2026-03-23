@@ -68,6 +68,11 @@
     _set('wantPctCompact', `${wantP}%`);
     _set('savePctCompact', `${saveP}%`);
     
+    // Update inline view (sticky header)
+    _set('needPctInline', `${needP}%`);
+    _set('wantPctInline', `${wantP}%`);
+    _set('savePctInline', `${saveP}%`);
+    
     _width('needBar', needP);
     _width('wantBar', wantP);
     _width('saveBar', saveP);

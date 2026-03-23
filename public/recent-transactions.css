@@ -2482,3 +2482,394 @@
     min-height: 44px;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MAJOR UX OVERHAUL - MOBILE OPTIMIZED
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Sticky Header (Hides on Scroll) ──────────────────────────── */
+
+.tx-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nws-bar-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nws-inline-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nws-inline-icon {
+  font-size: 14px;
+}
+
+.nws-inline-pct {
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.nws-inline-divider {
+  color: #d1d5db;
+  margin: 0 4px;
+  font-weight: 300;
+}
+
+/* ── Simplified Header ────────────────────────────────────────── */
+
+.recent-header-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.recent-header-simple h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+}
+
+.recent-actions-simple {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.action-icon-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: scale(1.05);
+}
+
+.action-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Unified Filter Chips (Horizontal Scroll) ─────────────────── */
+
+.tx-filter-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 8px 4px;
+  margin-bottom: 12px;
+  scroll-behavior: smooth;
+}
+
+.tx-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-chip:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-color: #3b82f6;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.filter-chip-divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.filter-chip-select {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  min-height: 36px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.filter-chip-select:hover {
+  border-color: #d1d5db;
+  background-color: #f9fafb;
+}
+
+.filter-chip-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-chip-clear {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 2px solid #fca5a5;
+  background: #fef2f2;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.filter-chip-clear:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.filter-chip-clear:active {
+  transform: scale(0.95);
+}
+
+/* ── Ultra-Compact Transaction Cards ──────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Even more compact cards */
+  .tx-card {
+    padding: 8px 10px;
+    gap: 6px;
+    border-radius: 8px;
+  }
+  
+  .tx-card-header {
+    gap: 8px;
+  }
+  
+  .tx-card-icon {
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  
+  .tx-card-main {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .tx-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+  
+  .tx-card-meta {
+    font-size: 10px;
+    gap: 3px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  
+  .tx-card-category,
+  .tx-card-date,
+  .tx-card-payment {
+    font-size: 10px;
+  }
+  
+  .tx-card-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  
+  .tx-card-amount {
+    font-size: 15px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  
+  .tx-card.large-amount .tx-card-amount {
+    font-size: 17px;
+  }
+  
+  /* Hide search by default on mobile */
+  .tx-search-wrapper {
+    display: none;
+    margin-bottom: 8px;
+  }
+  
+  /* Simplified header */
+  .recent-header-simple {
+    margin-bottom: 8px;
+  }
+  
+  .recent-header-simple h3 {
+    font-size: 16px;
+  }
+  
+  .action-icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
+/* ── Tablet Adjustments ───────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tx-sticky-header {
+    padding: 10px 16px;
+  }
+  
+  .nws-bar-inline {
+    font-size: 13px;
+  }
+  
+  .filter-chip,
+  .filter-chip-select {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+/* ── Desktop: Full Layout ─────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  /* Hide sticky header on desktop */
+  .tx-sticky-header {
+    display: none;
+  }
+  
+  /* Show full header */
+  .recent-header-simple {
+    display: none;
+  }
+  
+  /* Show traditional layout */
+  .tx-filter-chips {
+    display: none;
+  }
+}
+
+/* ── Smooth Animations ────────────────────────────────────────── */
+
+.tx-sticky-header {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.filter-chip {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Scroll Shadows (Visual Feedback) ─────────────────────────── */
+
+.tx-filter-chips {
+  position: relative;
+}
+
+.tx-filter-chips::before,
+.tx-filter-chips::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tx-filter-chips::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,1), rgba(255,255,255,0));
+}
+
+.tx-filter-chips::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(255,255,255,1), rgba(255,255,255,0));
+}

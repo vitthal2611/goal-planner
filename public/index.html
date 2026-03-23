@@ -3384,94 +3384,43 @@
     <!-- Transactions Tab -->
     <div class="tab-content-section" id="transactionsContent">
         
-        <!-- Need, Want, Save Summary (Collapsible on Mobile) -->
-        <div class="nws-bar collapsed" id="nwsBar" onclick="toggleNWSBar()" style="margin-bottom: 10px;">
-            <!-- Collapsed View (Mobile Default) -->
-            <div class="nws-compact">
-                <span class="nws-compact-item">
-                    <span class="nws-compact-icon">🎯</span>
-                    <span class="nws-compact-label">Need</span>
-                    <span class="nws-compact-pct" id="needPctCompact">0%</span>
+        <!-- Sticky Header (Hides on Scroll) -->
+        <div class="tx-sticky-header" id="txStickyHeader">
+            <!-- Need, Want, Save Summary (Compact) -->
+            <div class="nws-bar-inline">
+                <span class="nws-inline-item">
+                    <span class="nws-inline-icon">🎯</span>
+                    <span class="nws-inline-pct" id="needPctInline">0%</span>
                 </span>
-                <span class="nws-compact-divider">|</span>
-                <span class="nws-compact-item">
-                    <span class="nws-compact-icon">🎉</span>
-                    <span class="nws-compact-label">Want</span>
-                    <span class="nws-compact-pct" id="wantPctCompact">0%</span>
+                <span class="nws-inline-divider">|</span>
+                <span class="nws-inline-item">
+                    <span class="nws-inline-icon">🎉</span>
+                    <span class="nws-inline-pct" id="wantPctInline">0%</span>
                 </span>
-                <span class="nws-compact-divider">|</span>
-                <span class="nws-compact-item">
-                    <span class="nws-compact-icon">💰</span>
-                    <span class="nws-compact-label">Save</span>
-                    <span class="nws-compact-pct" id="savePctCompact">0%</span>
+                <span class="nws-inline-divider">|</span>
+                <span class="nws-inline-item">
+                    <span class="nws-inline-icon">💰</span>
+                    <span class="nws-inline-pct" id="savePctInline">0%</span>
                 </span>
-                <span class="nws-expand-icon">↕</span>
-            </div>
-            
-            <!-- Expanded View -->
-            <div class="nws-expanded">
-                <div class="nws-item nws-need" onclick="event.stopPropagation(); DrillDown.openNWS('need')" style="cursor:pointer;">
-                    <span class="nws-icon">🎯</span>
-                    <span class="nws-label">Need</span>
-                    <span class="nws-pct" id="needPct">0%</span>
-                    <span class="nws-amt" id="needTotalTop">₹0</span>
-                    <div class="nws-track"><div class="nws-fill nws-fill-need" id="needBar"></div></div>
-                </div>
-                <div class="nws-divider"></div>
-                <div class="nws-item nws-want" onclick="event.stopPropagation(); DrillDown.openNWS('want')" style="cursor:pointer;">
-                    <span class="nws-icon">🎉</span>
-                    <span class="nws-label">Want</span>
-                    <span class="nws-pct" id="wantPct">0%</span>
-                    <span class="nws-amt" id="wantTotalTop">₹0</span>
-                    <div class="nws-track"><div class="nws-fill nws-fill-want" id="wantBar"></div></div>
-                </div>
-                <div class="nws-divider"></div>
-                <div class="nws-item nws-save" onclick="event.stopPropagation(); DrillDown.openNWS('save')" style="cursor:pointer;">
-                    <span class="nws-icon">💰</span>
-                    <span class="nws-label">Save</span>
-                    <span class="nws-pct" id="savePct">0%</span>
-                    <span class="nws-amt" id="saveTotalTop">₹0</span>
-                    <div class="nws-track"><div class="nws-fill nws-fill-save" id="saveBar"></div></div>
-                </div>
             </div>
         </div>
 
         <div class="recent-transactions">
-            <div class="recent-header">
-                <h3>Recent</h3>
-                <div class="recent-actions">
-                    <!-- Desktop: Show all buttons -->
-                    <button id="applyToExistingBtn" class="recent-action-btn apply-smart desktop-only" onclick="applyVendorMappingsFromTransactions()" title="Apply learned categories to uncategorized transactions">✨ Auto-Categorize</button>
-                    <button id="multiSelectBtn" class="recent-action-btn multi-select desktop-only" onclick="toggleMultiSelectMode()">☑️ Select</button>
-                    <button id="reviewAllBtn" class="recent-action-btn review desktop-only" onclick="openReviewAll()">🔍 Review</button>
-                    <button id="downloadReportBtn" class="recent-action-btn report desktop-only">📊 Report</button>
-                    
-                    <!-- Mobile: Compact menu -->
-                    <div class="recent-more-menu">
-                        <button id="recentMoreBtn" class="recent-more-btn">⋮</button>
-                        <div id="recentMoreDropdown" class="recent-more-dropdown">
-                            <button class="recent-more-item" onclick="applyVendorMappingsFromTransactions(); document.getElementById('recentMoreDropdown').classList.remove('show');">
-                                ✨ Auto-Categorize
-                            </button>
-                            <button class="recent-more-item" onclick="toggleMultiSelectMode(); document.getElementById('recentMoreDropdown').classList.remove('show');">
-                                ☑️ Multi-Select
-                            </button>
-                            <button class="recent-more-item" onclick="openReviewAll(); document.getElementById('recentMoreDropdown').classList.remove('show');">
-                                🔍 Review All
-                            </button>
-                            <button class="recent-more-item" onclick="downloadReport(); document.getElementById('recentMoreDropdown').classList.remove('show');">
-                                📊 Download Report
-                            </button>
-                            <button class="recent-more-item danger" id="deleteAllExpensesBtn">
-                                🗑️ Delete All Expenses
-                            </button>
-                        </div>
-                    </div>
+            <!-- Simplified Header -->
+            <div class="recent-header-simple">
+                <h3>Transactions</h3>
+                <div class="recent-actions-simple">
+                    <button class="action-icon-btn" id="txSearchToggleBtn" onclick="toggleSearch()" title="Search">
+                        🔍
+                    </button>
+                    <button class="action-icon-btn" id="txFilterToggleBtn" onclick="toggleFilters()" title="Filters">
+                        ⚙️
+                    </button>
                 </div>
             </div>
             
-            <!-- Search Bar -->
-            <div class="tx-search-wrapper">
+            <!-- Search Bar (Toggleable) -->
+            <div class="tx-search-wrapper" id="txSearchWrapper" style="display: none;">
                 <span class="tx-search-icon">🔎</span>
                 <input 
                     type="text" 
@@ -3483,20 +3432,21 @@
                 <button class="tx-search-clear" id="txSearchClear">×</button>
             </div>
             
-            <!-- Type Tabs + Filter Button -->
-            <div class="tx-filter-bar">
-                <div class="tx-type-tabs">
-                    <button class="tx-type-tab active" data-type="all">All</button>
-                    <button class="tx-type-tab" data-type="expense">Expense</button>
-                    <button class="tx-type-tab" data-type="income">Income</button>
-                    <button class="tx-type-tab" data-type="transfer">Transfer</button>
-                </div>
-                <select id="txPaymentFilter" class="tx-payment-filter">
-                    <option value="all">All Payments</option>
+            <!-- Unified Filter Chips (Horizontal Scroll) -->
+            <div class="tx-filter-chips" id="txFilterChips">
+                <button class="filter-chip active" data-type="all" onclick="filterByType('all')">All</button>
+                <button class="filter-chip" data-type="expense" onclick="filterByType('expense')">💸 Expense</button>
+                <button class="filter-chip" data-type="income" onclick="filterByType('income')">💰 Income</button>
+                <button class="filter-chip" data-type="transfer" onclick="filterByType('transfer')">🔄 Transfer</button>
+                <div class="filter-chip-divider"></div>
+                <select id="txPaymentFilterChip" class="filter-chip-select" onchange="filterByPayment(this.value)">
+                    <option value="all">All Accounts</option>
                 </select>
-                <button id="txFilterBtn" class="tx-filter-btn">
-                    <span id="txFilterBtnText">Category</span>
-                    <span class="tx-filter-badge" id="txFilterBadge" style="display:none;">1</span>
+                <select id="txCategoryFilterChip" class="filter-chip-select" onchange="filterByCategory(this.value)">
+                    <option value="all">All Categories</option>
+                </select>
+                <button class="filter-chip-clear" onclick="clearAllFilters()" style="display: none;">
+                    ✕ Clear
                 </button>
             </div>
             
@@ -5467,8 +5417,131 @@ Supports: CSV, Tab-separated, Excel copy-paste" style="width: 100%; min-height: 
       }
     }
     
-    // Make it globally accessible
+    // Toggle Search
+    function toggleSearch() {
+      const searchWrapper = document.getElementById('txSearchWrapper');
+      const searchInput = document.getElementById('txSearchInput');
+      if (searchWrapper) {
+        const isVisible = searchWrapper.style.display !== 'none';
+        searchWrapper.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible && searchInput) {
+          setTimeout(() => searchInput.focus(), 100);
+        }
+      }
+    }
+    
+    // Toggle Filters
+    function toggleFilters() {
+      const filterSheet = document.getElementById('txFilterSheet');
+      if (filterSheet) {
+        filterSheet.style.display = 'flex';
+      }
+    }
+    
+    // Filter by type (chips)
+    function filterByType(type) {
+      // Update active chip
+      document.querySelectorAll('.filter-chip[data-type]').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.type === type);
+      });
+      
+      // Update filter and refresh
+      if (typeof RecentTransactions !== 'undefined') {
+        // This will be handled by existing filter logic
+        const typeTab = document.querySelector(`.tx-type-tab[data-type="${type}"]`);
+        if (typeTab) typeTab.click();
+      }
+    }
+    
+    // Filter by payment
+    function filterByPayment(payment) {
+      const paymentFilter = document.getElementById('txPaymentFilter');
+      if (paymentFilter) {
+        paymentFilter.value = payment;
+        paymentFilter.dispatchEvent(new Event('change'));
+      }
+      updateClearButton();
+    }
+    
+    // Filter by category
+    function filterByCategory(category) {
+      // Trigger existing category filter
+      updateClearButton();
+    }
+    
+    // Clear all filters
+    function clearAllFilters() {
+      // Reset type
+      filterByType('all');
+      
+      // Reset payment
+      const paymentChip = document.getElementById('txPaymentFilterChip');
+      if (paymentChip) paymentChip.value = 'all';
+      filterByPayment('all');
+      
+      // Reset category
+      const categoryChip = document.getElementById('txCategoryFilterChip');
+      if (categoryChip) categoryChip.value = 'all';
+      
+      // Hide clear button
+      const clearBtn = document.querySelector('.filter-chip-clear');
+      if (clearBtn) clearBtn.style.display = 'none';
+    }
+    
+    // Update clear button visibility
+    function updateClearButton() {
+      const clearBtn = document.querySelector('.filter-chip-clear');
+      const paymentChip = document.getElementById('txPaymentFilterChip');
+      const categoryChip = document.getElementById('txCategoryFilterChip');
+      const activeType = document.querySelector('.filter-chip[data-type].active');
+      
+      const hasFilters = (paymentChip && paymentChip.value !== 'all') ||
+                        (categoryChip && categoryChip.value !== 'all') ||
+                        (activeType && activeType.dataset.type !== 'all');
+      
+      if (clearBtn) {
+        clearBtn.style.display = hasFilters ? 'inline-flex' : 'none';
+      }
+    }
+    
+    // Sticky header scroll behavior
+    let lastScrollTop = 0;
+    const stickyHeader = document.getElementById('txStickyHeader');
+    
+    function handleTransactionScroll() {
+      const transactionsContent = document.getElementById('transactionsContent');
+      if (!transactionsContent || !stickyHeader) return;
+      
+      const scrollTop = transactionsContent.scrollTop || window.pageYOffset;
+      
+      if (scrollTop > lastScrollTop && scrollTop > 50) {
+        // Scrolling down - hide header
+        stickyHeader.style.transform = 'translateY(-100%)';
+      } else {
+        // Scrolling up - show header
+        stickyHeader.style.transform = 'translateY(0)';
+      }
+      
+      lastScrollTop = scrollTop;
+    }
+    
+    // Attach scroll listener
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', handleTransactionScroll, { passive: true });
+      const transactionsContent = document.getElementById('transactionsContent');
+      if (transactionsContent) {
+        transactionsContent.addEventListener('scroll', handleTransactionScroll, { passive: true });
+      }
+    }
+    
+    // Make functions globally accessible
     window.toggleNWSBar = toggleNWSBar;
+    window.toggleSearch = toggleSearch;
+    window.toggleFilters = toggleFilters;
+    window.filterByType = filterByType;
+    window.filterByPayment = filterByPayment;
+    window.filterByCategory = filterByCategory;
+    window.clearAllFilters = clearAllFilters;
 
     // Open Review All Transactions
     function openReviewAll() {
