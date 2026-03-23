@@ -1330,8 +1330,6 @@
     }
   };
 
-})();
-
   // ── Sorting Functions ──────────────────────────────────────────
 
   window.sortTable = function(column) {
