@@ -2873,3 +2873,209 @@
   right: 0;
   background: linear-gradient(270deg, rgba(255,255,255,1), rgba(255,255,255,0));
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   INFINITE SCROLL
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Loading Indicator ─────────────────────────────────────────── */
+
+.tx-infinite-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  gap: 12px;
+}
+
+.tx-loader-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tx-loader-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+/* ── End Message ───────────────────────────────────────────────── */
+
+.tx-end-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  gap: 8px;
+}
+
+.tx-end-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #059669;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+}
+
+.tx-end-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ── Smooth Fade In Animation ──────────────────────────────────── */
+
+.tx-card,
+.tx-table-row {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Loading State ─────────────────────────────────────────────── */
+
+.tx-infinite-loader.loading {
+  opacity: 1;
+}
+
+.tx-infinite-loader:not(.loading) {
+  opacity: 0.6;
+}
+
+/* ── Mobile Optimizations ──────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .tx-infinite-loader {
+    padding: 20px 12px;
+  }
+  
+  .tx-loader-spinner {
+    width: 28px;
+    height: 28px;
+    border-width: 2.5px;
+  }
+  
+  .tx-loader-text {
+    font-size: 12px;
+  }
+  
+  .tx-end-message {
+    padding: 24px 12px;
+  }
+  
+  .tx-end-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .tx-end-text {
+    font-size: 13px;
+  }
+}
+
+/* ── Skeleton Loader (Initial Load) ────────────────────────────── */
+
+.tx-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.tx-skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.tx-skeleton-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.tx-skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tx-skeleton-line {
+  height: 14px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite;
+}
+
+.tx-skeleton-line.short {
+  width: 60%;
+  height: 12px;
+}
+
+.tx-skeleton-amount {
+  width: 80px;
+  height: 18px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Performance Optimizations ─────────────────────────────────── */
+
+.tx-card-list,
+.tx-table-wrapper {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.tx-infinite-loader {
+  will-change: opacity;
+}

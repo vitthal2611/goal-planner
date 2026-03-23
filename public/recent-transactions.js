@@ -16,7 +16,7 @@
 (function () {
 
   // ── State ─────────────────────────────────────────────────────
-  let visibleCount = 10;
+  let visibleCount = 20; // Initial load: 20 transactions
   let filterType = 'all';
   let filterCategory = 'all';
   let filterEnvelope = 'all';
@@ -27,6 +27,7 @@
   let filterEndDate = null;
   let searchQuery = '';
   let isLoading = false;
+  let isLoadingMore = false; // New: track if we're loading more
   
   // Multi-select state
   let isMultiSelectMode = false;
@@ -552,16 +553,23 @@
         </div>
       </div>` : '';
 
+    // Infinite scroll: Show loading indicator or end message
     const footer = remaining > 0
-      ? `<div class="tx-load-more">
-           <button class="tx-load-btn" onclick="loadMoreTransactions()">Load ${Math.min(remaining, 10)} more</button>
-           <button class="tx-load-btn secondary" onclick="loadAllTransactions()">Show all ${total}</button>
+      ? `<div class="tx-infinite-loader" id="txInfiniteLoader">
+           <div class="tx-loader-spinner"></div>
+           <div class="tx-loader-text">Loading more...</div>
          </div>`
-      : (total > 10
-          ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>`
+      : (total > 20
+          ? `<div class="tx-end-message">
+               <div class="tx-end-icon">✓</div>
+               <div class="tx-end-text">All ${total} transactions loaded</div>
+             </div>`
           : '');
 
     listContainer.innerHTML = multiSelectToolbar + cardListHTML + tableHTML + footer;
+    
+    // Setup infinite scroll observer
+    setupInfiniteScroll();
   }
 
   // ── Init ──────────────────────────────────────────────────────
@@ -755,9 +763,54 @@
 
   window.RecentTransactions = { update, init };
 
-  // ── Multi-Select Functions ────────────────────────────────────
+  // ── Infinite Scroll ───────────────────────────────────────────
+  
+  let infiniteScrollObserver = null;
+  
+  function setupInfiniteScroll() {
+    // Clean up existing observer
+    if (infiniteScrollObserver) {
+      infiniteScrollObserver.disconnect();
+    }
+    
+    const loader = document.getElementById('txInfiniteLoader');
+    if (!loader) return;
+    
+    // Create intersection observer
+    infiniteScrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        // When loader is 80% visible, load more
+        if (entry.isIntersecting && !isLoadingMore) {
+          loadMoreTransactions();
+        }
+      });
+    }, {
+      root: null, // viewport
+      rootMargin: '100px', // Start loading 100px before reaching the loader
+      threshold: 0.1 // Trigger when 10% visible
+    });
+    
+    infiniteScrollObserver.observe(loader);
+  }
+  
+  function loadMoreTransactions() {
+    if (isLoadingMore) return;
+    
+    isLoadingMore = true;
+    
+    // Simulate slight delay for smooth UX (optional)
+    setTimeout(() => {
+      visibleCount += 20; // Load 20 more transactions
+      isLoadingMore = false;
+      update();
+    }, 100);
+  }
 
-  window.toggleMultiSelectMode = function() {
+  // ── Legacy Functions (Keep for compatibility) ─────────────────
+
+  window.loadMoreTransactions = loadMoreTransactions;
+  window.loadAllTransactions = () => { visibleCount = Infinity; update(); };
+  window.loadFewerTransactions = () => { visibleCount = 20; update(); };w.toggleMultiSelectMode = function() {
     isMultiSelectMode = !isMultiSelectMode;
     if (!isMultiSelectMode) {
       selectedTransactions.clear();
