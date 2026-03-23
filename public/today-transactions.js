@@ -1,7 +1,7 @@
 /**
- * today-transactions.js — Today's Transactions Component
+ * today-transactions.js — Today's Transactions Component with Day Navigation
  *
- * Displays all transactions from today with summary stats
+ * Displays all transactions from selected date with navigation
  * Depends on globals: transactions
  */
 
@@ -9,16 +9,23 @@
 
   function el(id) { return document.getElementById(id); }
 
+  // ── State ─────────────────────────────────────────────────────
+  let currentDate = new Date();
+
   // ── Helper Functions ──────────────────────────────────────────
 
-  function getTodayTransactions() {
-    const today = new Date().toISOString().split('T')[0];
+  function getDateString(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  function getTransactionsForDate(date) {
+    const dateStr = getDateString(date);
     const allTx = (typeof transactions !== 'undefined') ? transactions : [];
     
     return allTx.filter(t => {
       if (!t.date) return false;
       try {
-        return new Date(t.date).toISOString().split('T')[0] === today;
+        return new Date(t.date).toISOString().split('T')[0] === dateStr;
       } catch { return false; }
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
   }
@@ -79,11 +86,33 @@
     return '💰';
   }
 
+  // ── Navigation Functions ──────────────────────────────────────
+
+  function goToPreviousDay() {
+    currentDate.setDate(currentDate.getDate() - 1);
+    update();
+  }
+
+  function goToNextDay() {
+    currentDate.setDate(currentDate.getDate() + 1);
+    update();
+  }
+
+  function goToToday() {
+    currentDate = new Date();
+    update();
+  }
+
+  function isToday() {
+    const today = new Date();
+    return getDateString(currentDate) === getDateString(today);
+  }
+
   // ── Render Functions ──────────────────────────────────────────
 
-  function renderSummaryStats(todayTxs) {
-    const income = sumBy(todayTxs, t => t.type === 'income');
-    const expense = sumBy(todayTxs, t => t.type === 'expense');
+  function renderSummaryStats(dateTxs) {
+    const income = sumBy(dateTxs, t => t.type === 'income');
+    const expense = sumBy(dateTxs, t => t.type === 'expense');
     const net = income - expense;
 
     return `
@@ -152,8 +181,8 @@
     return `
       <div class="today-transactions-empty">
         <div class="today-empty-icon">📭</div>
-        <div class="today-empty-text">No transactions today</div>
-        <div class="today-empty-hint">Start tracking your finances by adding a transaction</div>
+        <div class="today-empty-text">No transactions on this date</div>
+        <div class="today-empty-hint">Add a transaction to start tracking</div>
         <button class="today-empty-action" onclick="EnvelopeBottomSheet.open('expense')">
           <span>➕</span>
           <span>Add Transaction</span>
@@ -167,33 +196,48 @@
     const container = el('todayTransactionsList');
     if (!container) return;
 
-    const todayTxs = getTodayTransactions();
+    const dateTxs = getTransactionsForDate(currentDate);
     
-    // Update date in header
+    // Update date in header with navigation
     const dateEl = el('todayTransactionsDate');
     if (dateEl) {
-      const today = new Date();
-      const options = { weekday: 'short', month: 'short', day: 'numeric' };
-      dateEl.textContent = today.toLocaleDateString('en-IN', options);
+      const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+      const dateStr = currentDate.toLocaleDateString('en-IN', options);
+      const todayClass = isToday() ? 'today-badge' : '';
+      const todayBadge = isToday() ? '<span class="today-badge">Today</span>' : '';
+      
+      dateEl.innerHTML = `
+        <button class="today-nav-btn" onclick="TodayTransactions.previousDay()" title="Previous Day">
+          <span>←</span>
+        </button>
+        <div class="today-date-display">
+          <span class="today-date-text">${dateStr}</span>
+          ${todayBadge}
+        </div>
+        <button class="today-nav-btn" onclick="TodayTransactions.nextDay()" ${isToday() ? 'disabled' : ''} title="Next Day">
+          <span>→</span>
+        </button>
+        ${!isToday() ? '<button class="today-jump-btn" onclick="TodayTransactions.goToToday()">Today</button>' : ''}
+      `;
     }
 
-    if (todayTxs.length === 0) {
+    if (dateTxs.length === 0) {
       container.innerHTML = renderEmptyState();
       return;
     }
 
     // Render summary stats
-    const summaryHTML = renderSummaryStats(todayTxs);
+    const summaryHTML = renderSummaryStats(dateTxs);
     
     // Render transactions (limit to 5 for finance dashboard)
-    const displayTxs = todayTxs.slice(0, 5);
+    const displayTxs = dateTxs.slice(0, 5);
     const transactionsHTML = displayTxs.map(tx => renderTransactionItem(tx)).join('');
     
     // Show "View All" button if more than 5 transactions
-    const viewAllHTML = todayTxs.length > 5 ? `
+    const viewAllHTML = dateTxs.length > 5 ? `
       <div class="today-view-all">
         <button class="today-view-all-btn" onclick="switchToTransactions()">
-          <span>View All ${todayTxs.length} Transactions</span>
+          <span>View All ${dateTxs.length} Transactions</span>
           <span>→</span>
         </button>
       </div>` : '';
@@ -213,6 +257,12 @@
 
   // ── Public API ────────────────────────────────────────────────
 
-  window.TodayTransactions = { update, init };
+  window.TodayTransactions = { 
+    update, 
+    init,
+    previousDay: goToPreviousDay,
+    nextDay: goToNextDay,
+    goToToday: goToToday
+  };
 
 })();
