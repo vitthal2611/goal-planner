@@ -3756,17 +3756,18 @@
                 <div style="padding: 16px; background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-radius: 16px; border: 2px solid #7c3aed;">
                     <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 10px;">Required columns:</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                        <span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Date</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Type</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Description</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Category</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Payment Method</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Expense Type</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Amount</span>
+                        <span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Date</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Amount</span>
                     </div>
-                    <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 8px; margin-top: 12px;">Optional column:</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 8px; margin-top: 12px;">Optional columns (can be edited after import):</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                        <span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">ID</span>
+                        <span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Type</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Description</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Category/Envelope</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Payment Method</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Expense Type</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">ID</span>
                     </div>
                     <div style="font-size: 12px; color: #5b21b6; margin-bottom: 14px; line-height: 1.6;">
-                        💡 Type: <strong>income</strong>, <strong>expense</strong>, <strong>transfer-in</strong>, <strong>transfer-out</strong><br>
+                        💡 Type: <strong>income</strong>, <strong>expense</strong>, <strong>transfer-in</strong>, <strong>transfer-out</strong> (auto-detected from amount if missing)<br>
                         💡 Expense Type: <strong>need</strong>, <strong>want</strong>, <strong>save</strong><br>
-                        💡 ID: Auto-generated if not provided (INC-*, EXP-*, TRF-*)<br>
-                        ✅ Adds to existing data — no data loss
+                        💡 Date formats: DD/MM/YYYY, DD/MM/YY, YYYY-MM-DD<br>
+                        💡 Amount: Negative values = expense, Positive = income<br>
+                        ✅ Missing fields can be edited in Transactions tab (double-click cells)
                     </div>
                     <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
                     <button class="add-btn" id="csvImportBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 14px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">📂 Choose CSV / Excel File</button>
@@ -4011,6 +4012,9 @@
     </div>
     <div id="csvPreviewStats" style="margin-bottom:12px; padding:12px 14px; background:#f0fdf4; border-radius:12px; border:2px solid #86efac; font-size:14px; font-weight:700; color:#166534;"></div>
     <div id="csvPreviewErrors" style="display:none; margin-bottom:12px; padding:12px 14px; background:#fef2f2; border-radius:12px; border:2px solid #fca5a5; font-size:13px; color:#991b1b; line-height:1.6;"></div>
+    <div style="margin-bottom:12px; padding:10px 12px; background:#fef3c7; border-radius:10px; border:2px solid #fbbf24; font-size:12px; color:#92400e; line-height:1.5;">
+      💡 <strong>Tip:</strong> Transactions with missing fields (marked with ⚠️) can be edited after import. Go to Transactions tab and double-click any cell to edit.
+    </div>
     <div id="csvPreviewCards" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
     <div id="csvMoreRows" style="display:none; text-align:center; font-size:13px; color:#6b7280; padding:8px; margin-bottom:12px;"></div>
     <div style="display:flex; gap:10px;">

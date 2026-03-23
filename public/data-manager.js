@@ -154,8 +154,8 @@ function initCSVImport() {
         date: new Date(r.date).toISOString(),
         type,
         description: r.description,
-        envelope: r.envelope,
-        payment: r.payment,
+        envelope: r.envelope || '',
+        payment: r.payment || '',
         from, to,
         expenseType: r.expenseType,
         amount: r.amount
@@ -179,7 +179,13 @@ function initCSVImport() {
     updateEnvelopeBudget();
     document.getElementById('csvPreviewModal').style.display = 'none';
     profileModal.classList.remove('show');
-    showToast(`✅ ${newTransactions.length} transactions imported!`, 'success');
+    
+    const withMissingFields = csvParsedRows.filter(r => r.warnings && r.warnings.length > 0).length;
+    if (withMissingFields > 0) {
+      showToast(`✅ ${newTransactions.length} transactions imported! 💡 ${withMissingFields} need editing (double-click cells in Transactions tab)`, 'success');
+    } else {
+      showToast(`✅ ${newTransactions.length} transactions imported!`, 'success');
+    }
     csvParsedRows = [];
   });
 }
@@ -231,60 +237,92 @@ function mapCSVRow(row) {
     return '';
   };
 
-  const id          = get('id', 'transaction id', 'transactionid');
+  const id          = get('id', 'transaction id', 'transactionid', 'trxid');
   const rawDate     = get('date');
-  const type        = get('type').toLowerCase();
+  let type          = get('type', 'trxtype', 'transaction type').toLowerCase();
   const description = get('description', 'desc', 'note', 'narration', 'particulars');
   const category    = get('category', 'envelope', 'tag');
-  const payment     = get('payment method', 'payment', 'account', 'bank', 'method');
+  const payment     = get('payment method', 'payment', 'account', 'bank', 'method', 'payment mode');
   const fromAccount = get('from account', 'from');
   const toAccount   = get('to account', 'to');
   const expenseType = get('expense type', 'expensetype', 'expense type').toLowerCase();
-  const rawAmount   = get('amount', 'debit', 'credit').replace(/[^0-9.\-]/g, '');
+  const rawAmount   = get('amount', 'amt', 'debit', 'credit').replace(/[^0-9.\-]/g, '');
   const amount      = parseFloat(rawAmount);
   const errors      = [];
+  const warnings    = [];
 
-  // Parse date — support DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY
+  // Parse date — support DD/MM/YYYY, DD/MM/YY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY
   let parsedDate = '';
   if (rawDate) {
     const d = rawDate.replace(/\//g, '-');
     const parts = d.split('-');
     if (parts.length === 3) {
       if (parts[0].length === 4) {
+        // YYYY-MM-DD
         parsedDate = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
       } else {
-        parsedDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        // DD-MM-YYYY or DD-MM-YY
+        let year = parts[2];
+        if (year.length === 2) {
+          // Convert 2-digit year to 4-digit (assume 20xx for years 00-50, 19xx for 51-99)
+          year = parseInt(year) <= 50 ? `20${year}` : `19${year}`;
+        }
+        parsedDate = `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
       }
     }
   }
 
+  // Infer type from amount if not provided or invalid
+  if (!type || !['income','expense','transfer','transfer-in','transfer-out'].includes(type)) {
+    if (amount < 0) {
+      type = 'expense';
+      warnings.push('Type inferred as expense (negative amount)');
+    } else {
+      type = 'income';
+      warnings.push('Type inferred as income (positive amount)');
+    }
+  }
+
+  // Critical validations only
   if (!parsedDate || isNaN(new Date(parsedDate))) errors.push('Invalid date');
-  if (!['income','expense','transfer','transfer-in','transfer-out'].includes(type)) errors.push('Type must be income/expense/transfer/transfer-in/transfer-out');
-  if (isNaN(amount) || amount <= 0) errors.push('Invalid amount');
+  if (isNaN(amount) || amount === 0) errors.push('Invalid amount');
   if (type === 'transfer' && (!fromAccount || !toAccount)) errors.push('Transfer needs From Account and To Account columns');
+
+  // Optional field warnings (not errors - can be assigned via UI)
+  if (!description) warnings.push('Missing description');
+  if (!category && type === 'expense') warnings.push('Missing envelope/category');
+  if (!payment && type !== 'transfer') warnings.push('Missing payment method');
 
   return {
     id, date: parsedDate || rawDate, type: type || 'expense',
-    description, envelope: category, payment,
+    description: description || 'Imported transaction',
+    envelope: category, payment,
     fromAccount, toAccount,
     expenseType: ['need','want','save'].includes(expenseType) ? expenseType : '',
     amount: isNaN(amount) ? 0 : Math.abs(amount),
-    errors
+    errors,
+    warnings
   };
 }
 
 function showCSVPreview(parsedRows) {
   const valid   = parsedRows.filter(r => r.errors.length === 0);
   const invalid = parsedRows.filter(r => r.errors.length > 0);
+  const withWarnings = valid.filter(r => r.warnings && r.warnings.length > 0);
 
-  document.getElementById('csvPreviewStats').textContent =
-    `✅ ${valid.length} valid rows ready to import` +
-    (invalid.length ? `  ⚠️ ${invalid.length} rows will be skipped` : '');
+  let statsText = `✅ ${valid.length} rows ready to import`;
+  if (withWarnings.length > 0) {
+    statsText += `  💡 ${withWarnings.length} with missing fields (can be edited after import)`;
+  }
+  if (invalid.length > 0) {
+    statsText += `  ⚠️ ${invalid.length} rows will be skipped`;
+  }
+  document.getElementById('csvPreviewStats').textContent = statsText;
 
   const errorsEl = document.getElementById('csvPreviewErrors');
   if (invalid.length) {
     errorsEl.style.display = 'block';
-    errorsEl.innerHTML = '<strong>Skipped rows:</strong><br>' +
+    errorsEl.innerHTML = '<strong>❌ Skipped rows (critical errors):</strong><br>' +
       invalid.slice(0, 5).map((r, i) => `Row ${i+1}: ${r.description || '(empty)'} → ${r.errors.join(', ')}`).join('<br>') +
       (invalid.length > 5 ? `<br>...and ${invalid.length - 5} more` : '');
   } else {
@@ -297,14 +335,20 @@ function showCSVPreview(parsedRows) {
   document.getElementById('csvPreviewCards').innerHTML = valid.slice(0, 10).map(r => {
     const bg = typeColor[r.type] || '#f3f4f6';
     const tc = typeText[r.type]  || '#374151';
-    return `<div style="background:${bg}; border-radius:12px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:14px; font-weight:700; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.description || '-'}</div>
-        <div style="font-size:12px; color:#6b7280; margin-top:2px;">${r.date} · ${r.envelope || '-'} · ${r.payment || '-'}</div>
-      </div>
-      <div style="text-align:right; flex-shrink:0;">
-        <div style="font-size:15px; font-weight:800; color:${tc};">₹${parseFloat(r.amount).toLocaleString('en-IN')}</div>
-        <div style="font-size:11px; font-weight:600; color:${tc}; text-transform:uppercase;">${r.type}${r.expenseType ? ' · '+r.expenseType : ''}</div>
+    const hasWarnings = r.warnings && r.warnings.length > 0;
+    
+    return `<div style="background:${bg}; border-radius:12px; padding:12px 14px; ${hasWarnings ? 'border:2px dashed #f59e0b;' : ''} position:relative;">
+      ${hasWarnings ? `<div style="position:absolute; top:8px; right:8px; background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px;">⚠️ NEEDS EDIT</div>` : ''}
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:14px; font-weight:700; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.description || '-'}</div>
+          <div style="font-size:12px; color:#6b7280; margin-top:2px;">${r.date} · ${r.envelope || '❓'} · ${r.payment || '❓'}</div>
+          ${hasWarnings ? `<div style="font-size:11px; color:#92400e; margin-top:4px; font-weight:600;">💡 ${r.warnings.join(', ')}</div>` : ''}
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <div style="font-size:15px; font-weight:800; color:${tc};">₹${parseFloat(r.amount).toLocaleString('en-IN')}</div>
+          <div style="font-size:11px; font-weight:600; color:${tc}; text-transform:uppercase;">${r.type}${r.expenseType ? ' · '+r.expenseType : ''}</div>
+        </div>
       </div>
     </div>`;
   }).join('');
