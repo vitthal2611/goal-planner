@@ -1,7 +1,7 @@
 .enhanced-card {
   background: white;
   border-radius: 16px;
-  padding: 24px;
+  padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   border: 1px solid var(--gray-200);
   transition: all 0.3s;

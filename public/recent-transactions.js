@@ -20,12 +20,17 @@
   let filterType = 'all';
   let filterCategory = 'all';
   let filterEnvelope = 'all';
+  let filterPayment = 'all';
   let filterMinAmount = null;
   let filterMaxAmount = null;
   let filterStartDate = null;
   let filterEndDate = null;
   let searchQuery = '';
   let isLoading = false;
+  
+  // Multi-select state
+  let isMultiSelectMode = false;
+  let selectedTransactions = new Set();
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
@@ -82,6 +87,9 @@
     // Check if large transaction (>5000)
     const isLarge = amountValue > 5000;
     
+    // Check if selected
+    const isSelected = selectedTransactions.has(t.id);
+    
     // Get envelopes with categories
     const envelopes = (() => { 
       try { 
@@ -106,15 +114,41 @@
     const description = t.description || 'Transfer';
     const envelope = t.envelope || '-';
     const categoryText = category ? category.charAt(0).toUpperCase() + category.slice(1) : '-';
+    const payment = t.payment || '';
     
-    // Card HTML for mobile with swipe support
+    // Get payment icon
+    function getPaymentIcon(name) {
+      if (!name) return '💰';
+      const n = name.toLowerCase();
+      if (n.includes('cash')) return '💵';
+      if (n.includes('credit') || n.includes('debit') || n.includes('card')) return '💳';
+      if (n.includes('phonepe')) return '📱';
+      if (n.includes('gpay') || n.includes('google pay')) return '📱';
+      if (n.includes('paytm')) return '📱';
+      if (n.includes('upi')) return '📱';
+      if (n.includes('bank')) return '🏦';
+      return '💰';
+    }
+    
+    const paymentIcon = getPaymentIcon(payment);
+    
+    // Card HTML for mobile with swipe support and multi-select
     const cardHTML = `
-      <div class="tx-card ${t.type} ${isLarge ? 'large-amount' : ''}" 
+      <div class="tx-card ${t.type} ${isLarge ? 'large-amount' : ''} ${isSelected ? 'selected' : ''}" 
            data-id="${t.id}"
            ontouchstart="handleTouchStart(event, '${t.id}')"
            ontouchmove="handleTouchMove(event)"
            ontouchend="handleTouchEnd(event, '${t.id}')"
-           onclick="openTransactionDetail('${t.id}')">
+           onclick="${isMultiSelectMode ? `toggleTransactionSelect('${t.id}')` : `openTransactionDetail('${t.id}')`}">
+        ${isMultiSelectMode ? `
+          <div class="tx-card-checkbox">
+            <input type="checkbox" 
+                   id="check-${t.id}" 
+                   ${isSelected ? 'checked' : ''} 
+                   onclick="event.stopPropagation(); toggleTransactionSelect('${t.id}')">
+            <label for="check-${t.id}"></label>
+          </div>
+        ` : ''}
         <div class="tx-card-swipe-bg left">🗑️</div>
         <div class="tx-card-swipe-bg right">✏️</div>
         <div class="tx-card-header">
@@ -126,19 +160,30 @@
               ${envelope !== '-' && dateLabel ? `<span class="tx-card-separator">•</span>` : ''}
               <span class="tx-card-date">${dateLabel}</span>
               ${category ? `<span class="tx-card-separator">•</span><span class="tx-card-badge ${category}">${categoryText}</span>` : ''}
+              ${payment ? `<span class="tx-card-separator">•</span><span class="tx-card-payment">${paymentIcon} ${payment}</span>` : ''}
             </div>
           </div>
           <div class="tx-card-amount">${amount}</div>
         </div>
-        <div class="tx-card-actions">
-          <button class="tx-card-action-btn edit" onclick="event.stopPropagation(); editTransaction('${t.id}')" title="Edit">✏️</button>
-          <button class="tx-card-action-btn delete" onclick="event.stopPropagation(); deleteTransaction('${t.id}')" title="Delete">🗑️</button>
-        </div>
+        ${!isMultiSelectMode ? `
+          <div class="tx-card-actions">
+            <button class="tx-card-action-btn edit" onclick="event.stopPropagation(); editTransaction('${t.id}')" title="Edit">✏️</button>
+            <button class="tx-card-action-btn delete" onclick="event.stopPropagation(); deleteTransaction('${t.id}')" title="Delete">🗑️</button>
+          </div>
+        ` : ''}
       </div>`;
     
-    // Table row HTML for desktop
+    // Table row HTML for desktop with multi-select
     const tableRowHTML = `
-      <tr class="tx-table-row ${t.type}">
+      <tr class="tx-table-row ${t.type} ${isSelected ? 'selected' : ''}" data-id="${t.id}">
+        ${isMultiSelectMode ? `
+          <td class="tx-table-checkbox">
+            <input type="checkbox" 
+                   id="check-table-${t.id}" 
+                   ${isSelected ? 'checked' : ''} 
+                   onclick="toggleTransactionSelect('${t.id}')">
+          </td>
+        ` : ''}
         <td class="tx-table-date">${dateLabel}</td>
         <td class="tx-table-desc">
           <span class="tx-table-icon">${icon}</span>
@@ -146,10 +191,13 @@
         </td>
         <td class="tx-table-category">${envelope}</td>
         <td class="tx-table-type" style="color: ${categoryColor}">${categoryText}</td>
+        <td class="tx-table-payment">${payment ? `${paymentIcon} ${payment}` : '-'}</td>
         <td class="tx-table-amount ${t.type}">${amount}</td>
         <td class="tx-table-actions">
-          <button class="tx-table-action-btn" onclick="editTransaction('${t.id}')" title="Edit">✏️</button>
-          <button class="tx-table-action-btn" onclick="deleteTransaction('${t.id}')" title="Delete">🗑️</button>
+          ${!isMultiSelectMode ? `
+            <button class="tx-table-action-btn" onclick="editTransaction('${t.id}')" title="Edit">✏️</button>
+            <button class="tx-table-action-btn" onclick="deleteTransaction('${t.id}')" title="Delete">🗑️</button>
+          ` : ''}
         </td>
       </tr>`;
     
@@ -249,6 +297,11 @@
       filtered = filtered.filter(t => t.type === 'expense' && t.envelope === filterEnvelope);
     }
 
+    // Payment filter
+    if (filterPayment !== 'all') {
+      filtered = filtered.filter(t => t.payment === filterPayment);
+    }
+
     // Amount range filter
     if (filterMinAmount !== null) {
       filtered = filtered.filter(t => parseFloat(t.amount) >= filterMinAmount);
@@ -316,10 +369,19 @@
         <table class="tx-table">
           <thead>
             <tr>
+              ${isMultiSelectMode ? `
+                <th class="tx-table-checkbox">
+                  <input type="checkbox" 
+                         id="selectAllCheckbox" 
+                         onclick="toggleSelectAll()"
+                         ${selectedTransactions.size > 0 && selectedTransactions.size === filtered.length ? 'checked' : ''}>
+                </th>
+              ` : ''}
               <th>Date</th>
               <th>Name</th>
               <th>Category</th>
               <th>Type</th>
+              <th>Payment</th>
               <th>Amount</th>
               <th>Action</th>
             </tr>
@@ -333,6 +395,32 @@
     const total = sorted.length;
     const remaining = total - count;
 
+    // Multi-select toolbar
+    const multiSelectToolbar = isMultiSelectMode && selectedTransactions.size > 0 ? `
+      <div class="tx-bulk-toolbar">
+        <div class="tx-bulk-info">
+          <span class="tx-bulk-count">${selectedTransactions.size} selected</span>
+        </div>
+        <div class="tx-bulk-actions">
+          <button class="tx-bulk-btn" onclick="bulkReview()" title="Review Selected">
+            <span>🔍</span>
+            <span>Review</span>
+          </button>
+          <button class="tx-bulk-btn" onclick="bulkChangeCategory()" title="Change Category">
+            <span>📁</span>
+            <span>Category</span>
+          </button>
+          <button class="tx-bulk-btn" onclick="bulkChangePayment()" title="Change Payment">
+            <span>💳</span>
+            <span>Payment</span>
+          </button>
+          <button class="tx-bulk-btn danger" onclick="bulkDelete()" title="Delete Selected">
+            <span>🗑️</span>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>` : '';
+
     const footer = remaining > 0
       ? `<div class="tx-load-more">
            <button class="tx-load-btn" onclick="loadMoreTransactions()">Load ${Math.min(remaining, 10)} more</button>
@@ -342,7 +430,7 @@
           ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>`
           : '');
 
-    listContainer.innerHTML = cardListHTML + tableHTML + footer;
+    listContainer.innerHTML = multiSelectToolbar + cardListHTML + tableHTML + footer;
   }
 
   // ── Init ──────────────────────────────────────────────────────
@@ -512,6 +600,326 @@
 
   window.RecentTransactions = { update, init };
 
+  // ── Multi-Select Functions ────────────────────────────────────
+
+  window.toggleMultiSelectMode = function() {
+    isMultiSelectMode = !isMultiSelectMode;
+    if (!isMultiSelectMode) {
+      selectedTransactions.clear();
+    }
+    update();
+    updateMultiSelectButton();
+  };
+
+  window.bulkReview = function() {
+    if (selectedTransactions.size === 0) return;
+
+    const transactions = fromStorage('transactions');
+    const selected = transactions.filter(t => selectedTransactions.has(t.id));
+
+    // Exit multi-select mode
+    isMultiSelectMode = false;
+    selectedTransactions.clear();
+    update();
+    updateMultiSelectButton();
+
+    // Open review modal
+    if (typeof TransactionReview !== 'undefined') {
+      TransactionReview.open(selected, 'date', 'desc');
+    }
+  };
+
+  window.toggleTransactionSelect = function(transactionId) {
+    if (selectedTransactions.has(transactionId)) {
+      selectedTransactions.delete(transactionId);
+    } else {
+      selectedTransactions.add(transactionId);
+    }
+    update();
+  };
+
+  window.toggleSelectAll = function() {
+    const transactions = fromStorage('transactions');
+    const monthSelect = el('monthSelect');
+    const yearSelect = el('yearSelect');
+    const selectedMonth = monthSelect ? monthSelect.value : 'ALL';
+    const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
+
+    let filtered = transactions.filter(t => {
+      if (!t.date) return false;
+      try {
+        const d = new Date(t.date);
+        if (selectedMonth === 'ALL') return d.getFullYear().toString() === selectedYear;
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        return ym === selectedMonth;
+      } catch { return false; }
+    });
+
+    // Apply current filters
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => {
+        const desc = (t.description || '').toLowerCase();
+        const env = (t.envelope || '').toLowerCase();
+        const amount = String(t.amount);
+        return desc.includes(query) || env.includes(query) || amount.includes(query);
+      });
+    }
+
+    if (filterType !== 'all') {
+      filtered = filtered.filter(t => t.type === filterType);
+    }
+
+    if (selectedTransactions.size === filtered.length) {
+      // Deselect all
+      selectedTransactions.clear();
+    } else {
+      // Select all visible
+      filtered.forEach(t => selectedTransactions.add(t.id));
+    }
+    update();
+  };
+
+  window.bulkChangeCategory = function() {
+    if (selectedTransactions.size === 0) return;
+
+    const transactions = fromStorage('transactions');
+    const selected = transactions.filter(t => selectedTransactions.has(t.id) && t.type === 'expense');
+    
+    if (selected.length === 0) {
+      if (typeof showToast === 'function') showToast('No expense transactions selected', 'error');
+      return;
+    }
+
+    // Get envelopes
+    const envelopes = (() => { 
+      try { 
+        const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+        return Array.isArray(envs) && envs.length > 0 && typeof envs[0] === 'object'
+          ? envs.map(e => e.name)
+          : envs;
+      } catch { return []; }
+    })();
+
+    if (envelopes.length === 0) {
+      if (typeof showToast === 'function') showToast('No categories available', 'error');
+      return;
+    }
+
+    // Create category selection dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'bulk-edit-dialog';
+    dialog.innerHTML = `
+      <div class="bulk-edit-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="bulk-edit-content">
+        <div class="bulk-edit-header">
+          <h3>Change Category</h3>
+          <button class="bulk-edit-close" onclick="this.closest('.bulk-edit-dialog').remove()">×</button>
+        </div>
+        <div class="bulk-edit-body">
+          <p>Change category for ${selected.length} transaction(s)</p>
+          <select id="bulkCategorySelect" class="bulk-edit-select">
+            ${envelopes.map(env => `<option value="${env}">${env}</option>`).join('')}
+          </select>
+        </div>
+        <div class="bulk-edit-footer">
+          <button class="bulk-edit-btn cancel" onclick="this.closest('.bulk-edit-dialog').remove()">Cancel</button>
+          <button class="bulk-edit-btn confirm" onclick="confirmBulkCategoryChange()">Apply</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  };
+
+  window.confirmBulkCategoryChange = function() {
+    const select = document.getElementById('bulkCategorySelect');
+    if (!select) return;
+
+    const newCategory = select.value;
+    const transactions = fromStorage('transactions');
+    
+    let updated = 0;
+    transactions.forEach(t => {
+      if (selectedTransactions.has(t.id) && t.type === 'expense') {
+        t.envelope = newCategory;
+        updated++;
+      }
+    });
+
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    window.transactions = transactions;
+
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+    if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+    if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+
+    document.querySelector('.bulk-edit-dialog').remove();
+    selectedTransactions.clear();
+    isMultiSelectMode = false;
+    update();
+    updateMultiSelectButton();
+
+    if (typeof showToast === 'function') showToast(`Updated ${updated} transaction(s)`, 'success');
+  };
+
+  window.bulkChangePayment = function() {
+    if (selectedTransactions.size === 0) return;
+
+    const transactions = fromStorage('transactions');
+    const selected = transactions.filter(t => selectedTransactions.has(t.id));
+    
+    // Get payment methods
+    const payments = fromStorage('payments').map(p => p.name);
+
+    if (payments.length === 0) {
+      if (typeof showToast === 'function') showToast('No payment methods available', 'error');
+      return;
+    }
+
+    // Create payment selection dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'bulk-edit-dialog';
+    dialog.innerHTML = `
+      <div class="bulk-edit-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="bulk-edit-content">
+        <div class="bulk-edit-header">
+          <h3>Change Payment Method</h3>
+          <button class="bulk-edit-close" onclick="this.closest('.bulk-edit-dialog').remove()">×</button>
+        </div>
+        <div class="bulk-edit-body">
+          <p>Change payment method for ${selected.length} transaction(s)</p>
+          <select id="bulkPaymentSelect" class="bulk-edit-select">
+            ${payments.map(pm => `<option value="${pm}">${pm}</option>`).join('')}
+          </select>
+        </div>
+        <div class="bulk-edit-footer">
+          <button class="bulk-edit-btn cancel" onclick="this.closest('.bulk-edit-dialog').remove()">Cancel</button>
+          <button class="bulk-edit-btn confirm" onclick="confirmBulkPaymentChange()">Apply</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  };
+
+  window.confirmBulkPaymentChange = function() {
+    const select = document.getElementById('bulkPaymentSelect');
+    if (!select) return;
+
+    const newPayment = select.value;
+    const transactions = fromStorage('transactions');
+    
+    let updated = 0;
+    transactions.forEach(t => {
+      if (selectedTransactions.has(t.id)) {
+        t.payment = newPayment;
+        updated++;
+      }
+    });
+
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    window.transactions = transactions;
+
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+    if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+    if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+
+    document.querySelector('.bulk-edit-dialog').remove();
+    selectedTransactions.clear();
+    isMultiSelectMode = false;
+    update();
+    updateMultiSelectButton();
+
+    if (typeof showToast === 'function') showToast(`Updated ${updated} transaction(s)`, 'success');
+  };
+
+  window.bulkDelete = function() {
+    if (selectedTransactions.size === 0) return;
+
+    const transactions = fromStorage('transactions');
+    const selected = transactions.filter(t => selectedTransactions.has(t.id));
+
+    // Calculate totals
+    const totalAmount = selected.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+
+    // Use custom confirmation dialog
+    const confirmDialog = document.getElementById('confirmDialog');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    
+    if (confirmDialog && confirmTitle && confirmMessage && confirmOkBtn && confirmCancelBtn) {
+      confirmTitle.textContent = 'Delete Multiple Transactions?';
+      confirmMessage.innerHTML = `
+        <div style="margin-bottom:8px;">This will permanently delete <strong>${selected.length} transaction(s)</strong></div>
+        <div>Total Amount: <strong>₹${totalAmount.toLocaleString('en-IN')}</strong></div>
+      `;
+      
+      confirmDialog.style.display = 'flex';
+      
+      const handleConfirm = () => {
+        confirmDialog.style.display = 'none';
+        
+        const remaining = transactions.filter(t => !selectedTransactions.has(t.id));
+        localStorage.setItem('transactions', JSON.stringify(remaining));
+        window.transactions = remaining;
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+        if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+        if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+        
+        selectedTransactions.clear();
+        isMultiSelectMode = false;
+        update();
+        updateMultiSelectButton();
+        
+        if (typeof showToast === 'function') showToast(`${selected.length} transaction(s) deleted`, 'success');
+        
+        confirmOkBtn.removeEventListener('click', handleConfirm);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
+      
+      const handleCancel = () => {
+        confirmDialog.style.display = 'none';
+        confirmOkBtn.removeEventListener('click', handleConfirm);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
+      
+      confirmOkBtn.addEventListener('click', handleConfirm);
+      confirmCancelBtn.addEventListener('click', handleCancel);
+    } else {
+      // Fallback to browser confirm
+      if (confirm(`Delete ${selected.length} transaction(s)?\n\nTotal Amount: ₹${totalAmount.toLocaleString('en-IN')}`)) {
+        const remaining = transactions.filter(t => !selectedTransactions.has(t.id));
+        localStorage.setItem('transactions', JSON.stringify(remaining));
+        window.transactions = remaining;
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+        if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+        if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+        
+        selectedTransactions.clear();
+        isMultiSelectMode = false;
+        update();
+        updateMultiSelectButton();
+        
+        if (typeof showToast === 'function') showToast(`${selected.length} transaction(s) deleted`, 'success');
+      }
+    }
+  };
+
+  function updateMultiSelectButton() {
+    const btn = document.getElementById('multiSelectBtn');
+    if (btn) {
+      btn.textContent = isMultiSelectMode ? '✓ Done' : '☑️ Select';
+      btn.classList.toggle('active', isMultiSelectMode);
+    }
+  }
+
   // ── Filter Sheet Helpers ──────────────────────────────────────
 
   function populateFilterSheet() {
@@ -534,6 +942,28 @@
       envelopesContainer.querySelectorAll('.tx-filter-chip').forEach(chip => {
         chip.addEventListener('click', () => {
           envelopesContainer.querySelectorAll('.tx-filter-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+        });
+      });
+    }
+
+    // Populate payment chips
+    const paymentsContainer = el('txFilterPayments');
+    if (paymentsContainer) {
+      const payments = fromStorage('payments');
+      const paymentList = payments.map(p => p.name);
+      
+      paymentsContainer.innerHTML = `
+        <button class="tx-filter-chip ${filterPayment === 'all' ? 'active' : ''}" data-payment="all">All</button>
+        ${paymentList.map(pm => `
+          <button class="tx-filter-chip ${filterPayment === pm ? 'active' : ''}" data-payment="${pm}">${pm}</button>
+        `).join('')}
+      `;
+
+      // Add payment chip listeners
+      paymentsContainer.querySelectorAll('.tx-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          paymentsContainer.querySelectorAll('.tx-filter-chip').forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
         });
       });
@@ -569,6 +999,10 @@
     const activeEnvelope = document.querySelector('.tx-filter-chip[data-envelope].active');
     filterEnvelope = activeEnvelope ? activeEnvelope.dataset.envelope : 'all';
 
+    // Get payment
+    const activePayment = document.querySelector('.tx-filter-chip[data-payment].active');
+    filterPayment = activePayment ? activePayment.dataset.payment : 'all';
+
     // Get amount range
     const minAmountInput = el('txFilterMinAmount');
     const maxAmountInput = el('txFilterMaxAmount');
@@ -585,6 +1019,7 @@
   function clearFilters() {
     filterCategory = 'all';
     filterEnvelope = 'all';
+    filterPayment = 'all';
     filterMinAmount = null;
     filterMaxAmount = null;
     filterStartDate = null;
@@ -603,7 +1038,7 @@
 
     document.querySelectorAll('.tx-filter-chip').forEach(chip => {
       chip.classList.remove('active');
-      if (chip.dataset.category === 'all' || chip.dataset.envelope === 'all') {
+      if (chip.dataset.category === 'all' || chip.dataset.envelope === 'all' || chip.dataset.payment === 'all') {
         chip.classList.add('active');
       }
     });
@@ -616,6 +1051,7 @@
     let activeFilters = 0;
     if (filterCategory !== 'all') activeFilters++;
     if (filterEnvelope !== 'all') activeFilters++;
+    if (filterPayment !== 'all') activeFilters++;
     if (filterMinAmount !== null || filterMaxAmount !== null) activeFilters++;
     if (filterStartDate !== null || filterEndDate !== null) activeFilters++;
 

@@ -246,28 +246,28 @@
 
 @media (min-width: 768px) {
   .clean-dashboard {
-    padding: 20px;
+    padding: 16px 20px;
     max-width: 1200px;
     margin: 0 auto;
   }
 
   .filter-bar {
-    padding: 16px;
-    gap: 12px;
+    padding: 12px;
+    gap: 10px;
   }
 
   .filter-bar select {
-    padding: 14px;
-    font-size: 15px;
+    padding: 10px 12px;
+    font-size: 14px;
   }
 
   .insights-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 12px;
   }
 
   .insight-card {
-    padding: 24px;
+    padding: 16px;
   }
 
   .insight-icon {
@@ -281,11 +281,11 @@
   }
 
   .transactions-list {
-    padding: 24px;
+    padding: 16px;
   }
 
   .transaction-item {
-    padding: 16px;
+    padding: 14px;
   }
 
   .transaction-desc {

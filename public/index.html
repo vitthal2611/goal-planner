@@ -110,6 +110,13 @@
           min-height: 100vh;
         }
 
+        @media (min-width: 768px) {
+          .quick-track {
+            max-width: 1200px;
+            padding: 16px 20px;
+          }
+        }
+
         .app-header-row {
           display: flex;
           align-items: center;
@@ -2108,13 +2115,6 @@
           .type-btn .icon { font-size: 28px; }
         }
 
-        @media (min-width: 768px) {
-          .quick-track {
-            max-width: 600px;
-            padding: 24px;
-          }
-        }
-
         /* ── Legacy habit-card (kept for updateTodayHabits fallback) ── */
         .habit-card {
           background: var(--color-surface);
@@ -3167,6 +3167,60 @@
             font-size: 16px;
           }
         }
+
+        /* ── Desktop Optimization (min-width: 768px) ── */
+        @media (min-width: 768px) {
+          .modal-section {
+            margin-bottom: 16px;
+          }
+
+          .form-section {
+            margin-bottom: 16px;
+          }
+
+          .form-field {
+            margin-bottom: 16px;
+          }
+
+          .info-banner {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+          }
+
+          .top-bar {
+            margin-bottom: 12px;
+          }
+
+          .payment-balances-wrapper {
+            margin-bottom: 8px;
+          }
+
+          .modal-content {
+            padding: 20px;
+          }
+
+          .modal-header {
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+          }
+
+          .modal-tabs {
+            margin-bottom: 16px;
+          }
+
+          .add-payment-form {
+            gap: 8px;
+          }
+
+          .payment-method-list {
+            gap: 6px;
+            margin-bottom: 10px;
+          }
+
+          .payment-method-item {
+            padding: 12px 14px;
+          }
+        }
     </style>
     <script src="date-navigation.js"></script>
     <link rel="stylesheet" href="nws.css">
@@ -3188,6 +3242,8 @@
     <script src="envelope-budget.js"></script>
     <link rel="stylesheet" href="recent-transactions.css">
     <script src="recent-transactions.js"></script>
+    <link rel="stylesheet" href="transaction-review.css">
+    <script src="transaction-review.js"></script>
     <link rel="stylesheet" href="habit-dashboard.css">
     <script src="habit-dashboard.js"></script>
     <link rel="stylesheet" href="habit-form.css">
@@ -3356,6 +3412,8 @@
             <div class="recent-header">
                 <h3>Recent</h3>
                 <div class="recent-actions">
+                    <button id="multiSelectBtn" class="recent-action-btn multi-select" onclick="toggleMultiSelectMode()">☑️ Select</button>
+                    <button id="reviewAllBtn" class="recent-action-btn review" onclick="openReviewAll()">🔍 Review</button>
                     <button id="downloadReportBtn" class="recent-action-btn report">📊 Report</button>
                     <div class="recent-more-menu">
                         <button id="recentMoreBtn" class="recent-more-btn">⋮</button>
@@ -3869,6 +3927,14 @@
       </div>
     </div>
 
+    <!-- Payment Method Filter -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:13px; font-weight:700; color:#6b7280; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">💳 Payment Method</div>
+      <div id="txFilterPayments" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <!-- Payment chips will be inserted here -->
+      </div>
+    </div>
+
     <!-- Amount Range -->
     <div style="margin-bottom:24px;">
       <div style="font-size:13px; font-weight:700; color:#6b7280; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Amount Range</div>
@@ -3925,6 +3991,9 @@
   display: flex !important;
 }
 </style>
+
+<!-- Transaction Review Modal -->
+<div id="transactionReviewModal"></div>
 
 <!-- CSV Import Preview Modal -->
 <div id="csvPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:flex-end; justify-content:center;">
@@ -4994,6 +5063,25 @@
 
     NWS.init();
     RecentTransactions.init();
+
+    // Open Review All Transactions
+    function openReviewAll() {
+      const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+      if (transactions.length === 0) {
+        if (typeof showToast === 'function') {
+          showToast('No transactions to review', 'error');
+        } else {
+          alert('No transactions to review');
+        }
+        return;
+      }
+      
+      // Open with date sorting (newest first) by default
+      TransactionReview.open(transactions, 'date', 'desc');
+    }
+
+    // Make it globally accessible
+    window.openReviewAll = openReviewAll;
 </script>
 <script>
     let habits = JSON.parse(localStorage.getItem('habits')) || [];
