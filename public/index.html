@@ -3181,9 +3181,47 @@
                 <h3>Recent</h3>
                 <div class="recent-actions">
                     <button id="downloadReportBtn" class="recent-action-btn report">📊 Report</button>
-                    <button id="deleteAllExpensesBtn" class="recent-action-btn danger">🗑️ Delete All</button>
+                    <div class="recent-more-menu">
+                        <button id="recentMoreBtn" class="recent-more-btn">⋮</button>
+                        <div id="recentMoreDropdown" class="recent-more-dropdown">
+                            <button class="recent-more-item danger" id="deleteAllExpensesBtn">
+                                🗑️ Delete All Expenses
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Search Bar -->
+            <div class="tx-search-wrapper">
+                <span class="tx-search-icon">🔎</span>
+                <input 
+                    type="text" 
+                    id="txSearchInput" 
+                    class="tx-search-input" 
+                    placeholder="Search transactions..."
+                    autocomplete="off"
+                />
+                <button class="tx-search-clear" id="txSearchClear">×</button>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="tx-filters">
+                <select id="txFilterType" class="tx-filter-dropdown">
+                    <option value="all">All Types</option>
+                    <option value="expense">Expenses</option>
+                    <option value="income">Income</option>
+                    <option value="transfer">Transfers</option>
+                </select>
+                
+                <select id="txFilterCategory" class="tx-filter-dropdown">
+                    <option value="all">All Categories</option>
+                    <option value="need">Need</option>
+                    <option value="want">Want</option>
+                    <option value="save">Save</option>
+                </select>
+            </div>
+            
             <div id="envelopeFilterChips" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
                 <!-- Envelope filter chips will be inserted here -->
             </div>

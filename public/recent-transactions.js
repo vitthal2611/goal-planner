@@ -17,6 +17,10 @@
 
   // ── State ─────────────────────────────────────────────────────
   let visibleCount = 10;
+  let filterType = 'all';
+  let filterCategory = 'all';
+  let searchQuery = '';
+  let isLoading = false;
 
   // ── Helpers ───────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
@@ -30,7 +34,7 @@
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   }
 
-  // Consistent icon mapping
+  // Consistent icon mapping with standard categories
   function getIcon(type, envelope, description) {
     if (type === 'income')   return '💰';
     if (type === 'transfer') return '🔄';
@@ -38,23 +42,26 @@
     const env = (envelope || '').toLowerCase();
     const desc = (description || '').toLowerCase();
     
-    // Envelope-based icons (priority)
-    if (env.includes('food') || env.includes('meal') || env.includes('restaurant')) return '🍔';
-    if (env.includes('grocery') || env.includes('groceries')) return '🛒';
-    if (env.includes('transport') || env.includes('travel') || env.includes('fuel')) return '🚗';
+    // Standard icon mapping
+    if (env.includes('eatout') || env.includes('restaurant') || env.includes('dining')) return '🍔';
+    if (env.includes('petrol') || env.includes('fuel') || env.includes('gas')) return '⛽';
+    if (env.includes('vegetable') || env.includes('grocery') || env.includes('groceries')) return '🥦';
+    if (env.includes('shopping') || env.includes('cloth') || env.includes('fashion')) return '🛍️';
+    if (env.includes('electric') || env.includes('electricity') || env.includes('bill')) return '💡';
+    if (env.includes('food') || env.includes('meal')) return '🍽️';
+    if (env.includes('transport') || env.includes('travel') || env.includes('cab') || env.includes('taxi')) return '🚗';
     if (env.includes('insurance')) return '🛡️';
     if (env.includes('emi') || env.includes('loan')) return '🏦';
     if (env.includes('sip') || env.includes('invest') || env.includes('mutual')) return '📈';
-    if (env.includes('electric') || env.includes('gas') || env.includes('water') || env.includes('bill')) return '⚡';
-    if (env.includes('rent') || env.includes('house')) return '🏠';
-    if (env.includes('health') || env.includes('medical')) return '🏥';
+    if (env.includes('water') || env.includes('gas')) return '⚡';
+    if (env.includes('rent') || env.includes('house') || env.includes('home')) return '🏠';
+    if (env.includes('health') || env.includes('medical') || env.includes('doctor')) return '🏥';
     if (env.includes('entertainment') || env.includes('movie')) return '🎬';
-    if (env.includes('shopping') || env.includes('cloth')) return '🛍️';
     if (env.includes('education') || env.includes('school')) return '📚';
     
     // Description fallback
     if (desc.includes('snack') || desc.includes('tea') || desc.includes('coffee')) return '☕';
-    if (desc.includes('uber') || desc.includes('taxi') || desc.includes('bus')) return '🚕';
+    if (desc.includes('uber') || desc.includes('ola') || desc.includes('bus')) return '🚕';
     
     return '💸';
   }
@@ -62,9 +69,13 @@
   function renderItem(t) {
     const icon = getIcon(t.type, t.envelope, t.description);
     const sign = t.type === 'income' ? '+' : (t.type === 'transfer' ? '' : '-');
+    const amountValue = parseFloat(t.amount);
     const amount = t.type === 'transfer'
-      ? `${t.from}→${t.to} ₹${parseFloat(t.amount).toLocaleString('en-IN')}`
-      : `${sign}₹${parseFloat(t.amount).toLocaleString('en-IN')}`;
+      ? `${t.from}→${t.to} ₹${amountValue.toLocaleString('en-IN')}`
+      : `${sign}₹${amountValue.toLocaleString('en-IN')}`;
+    
+    // Check if large transaction (>5000)
+    const isLarge = amountValue > 5000;
     
     // Get envelopes with categories
     const envelopes = (() => { 
@@ -91,7 +102,36 @@
     const envelope = t.envelope || '-';
     const categoryText = category ? category.charAt(0).toUpperCase() + category.slice(1) : '-';
     
-    return `
+    // Card HTML for mobile with swipe support
+    const cardHTML = `
+      <div class="tx-card ${t.type} ${isLarge ? 'large-amount' : ''}" 
+           data-id="${t.id}"
+           ontouchstart="handleTouchStart(event, '${t.id}')"
+           ontouchmove="handleTouchMove(event)"
+           ontouchend="handleTouchEnd(event, '${t.id}')"
+           onclick="openTransactionDetail('${t.id}')">
+        <div class="tx-card-swipe-bg left">🗑️</div>
+        <div class="tx-card-swipe-bg right">✏️</div>
+        <div class="tx-card-header">
+          <div class="tx-card-icon">${icon}</div>
+          <div class="tx-card-main">
+            <div class="tx-card-name">${description}</div>
+            <div class="tx-card-meta">
+              ${envelope !== '-' ? `<span class="tx-card-category">${envelope}</span>` : ''}
+              ${category ? `<span class="tx-card-badge ${category}">${categoryText}</span>` : ''}
+              <span class="tx-card-date">${dateLabel}</span>
+            </div>
+          </div>
+          <div class="tx-card-amount">${amount}</div>
+        </div>
+        <div class="tx-card-actions">
+          <button class="tx-card-action-btn edit" onclick="event.stopPropagation(); editTransaction('${t.id}')" title="Edit">✏️</button>
+          <button class="tx-card-action-btn delete" onclick="event.stopPropagation(); deleteTransaction('${t.id}')" title="Delete">🗑️</button>
+        </div>
+      </div>`;
+    
+    // Table row HTML for desktop
+    const tableRowHTML = `
       <tr class="tx-table-row ${t.type}">
         <td class="tx-table-date">${dateLabel}</td>
         <td class="tx-table-desc">
@@ -106,6 +146,8 @@
           <button class="tx-table-action-btn" onclick="deleteTransaction('${t.id}')" title="Delete">🗑️</button>
         </td>
       </tr>`;
+    
+    return { cardHTML, tableRowHTML };
   }
 
   // ── Core update ───────────────────────────────────────────────
@@ -115,6 +157,24 @@
     const listContainer = el('recentTransactionsList');
     if (!listContainer) {
       console.error('recentTransactionsList container not found');
+      return;
+    }
+
+    // Show skeleton loader
+    if (isLoading) {
+      listContainer.innerHTML = `
+        <div class="tx-skeleton">
+          ${Array(5).fill('').map(() => `
+            <div class="tx-skeleton-card">
+              <div class="tx-skeleton-icon"></div>
+              <div class="tx-skeleton-content">
+                <div class="tx-skeleton-line"></div>
+                <div class="tx-skeleton-line short"></div>
+              </div>
+              <div class="tx-skeleton-amount"></div>
+            </div>
+          `).join('')}
+        </div>`;
       return;
     }
 
@@ -128,7 +188,7 @@
     console.log('Loaded transactions for display:', transactions.length);
 
     if (transactions.length === 0) {
-      listContainer.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;">No transactions yet.</div>';
+      listContainer.innerHTML = '<div class="tx-empty"><div class="tx-empty-icon">📭</div><div class="tx-empty-text">No transactions yet</div></div>';
       return;
     }
 
@@ -143,13 +203,48 @@
       } catch { return false; }
     });
 
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => {
+        const desc = (t.description || '').toLowerCase();
+        const env = (t.envelope || '').toLowerCase();
+        const amount = String(t.amount);
+        return desc.includes(query) || env.includes(query) || amount.includes(query);
+      });
+    }
+
+    // Type filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(t => t.type === filterType);
+    }
+
+    // Category filter
+    if (filterCategory !== 'all') {
+      const envelopes = (() => { 
+        try { 
+          const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+          if (envs.length > 0 && typeof envs[0] === 'string') {
+            return envs.map(name => ({ name, category: 'need' }));
+          }
+          return envs;
+        } catch { return []; }
+      })();
+      
+      filtered = filtered.filter(t => {
+        if (t.type !== 'expense' || !t.envelope) return false;
+        const env = envelopes.find(e => e.name === t.envelope);
+        return env && env.category === filterCategory;
+      });
+    }
+
     // Envelope filter
     if (envelopeFilter !== 'ALL') {
       filtered = filtered.filter(t => t.type === 'expense' && t.envelope === envelopeFilter);
     }
 
     if (filtered.length === 0) {
-      listContainer.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;">No transactions for this period.</div>';
+      listContainer.innerHTML = '<div class="tx-empty"><div class="tx-empty-icon">🔍</div><div class="tx-empty-text">No transactions match your filters</div></div>';
       return;
     }
 
@@ -163,17 +258,26 @@
     });
 
     // Render grouped transactions
-    let txHTML = '';
+    let cardsHTML = '';
+    let tableRowsHTML = '';
     let count = 0;
     for (const [dateLabel, txs] of Object.entries(grouped)) {
       if (count >= visibleCount) break;
       const remaining = visibleCount - count;
       const visible = txs.slice(0, remaining);
       
-      txHTML += visible.map(renderItem).join('');
+      visible.forEach(t => {
+        const rendered = renderItem(t);
+        cardsHTML += rendered.cardHTML;
+        tableRowsHTML += rendered.tableRowHTML;
+      });
       count += visible.length;
     }
 
+    // Card layout for mobile
+    const cardListHTML = `<div class="tx-card-list">${cardsHTML}</div>`;
+    
+    // Table layout for desktop
     const tableHTML = `
       <div class="tx-table-wrapper">
         <table class="tx-table">
@@ -188,7 +292,7 @@
             </tr>
           </thead>
           <tbody>
-            ${txHTML}
+            ${tableRowsHTML}
           </tbody>
         </table>
       </div>`;
@@ -205,7 +309,7 @@
           ? `<div class="tx-load-more"><button class="tx-load-btn secondary" onclick="loadFewerTransactions()">Show less</button></div>`
           : '');
 
-    listContainer.innerHTML = tableHTML + footer;
+    listContainer.innerHTML = cardListHTML + tableHTML + footer;
   }
 
   // ── Init ──────────────────────────────────────────────────────
@@ -213,10 +317,61 @@
   function init() {
     const downloadBtn = el('downloadReportBtn');
     const deleteAllBtn = el('deleteAllExpensesBtn');
+    const typeFilter = el('txFilterType');
+    const categoryFilter = el('txFilterCategory');
+    const searchInput = el('txSearchInput');
+    const searchClear = el('txSearchClear');
+    const moreBtn = el('recentMoreBtn');
+    const moreDropdown = el('recentMoreDropdown');
 
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
         if (typeof downloadReport === 'function') downloadReport();
+      });
+    }
+
+    if (typeFilter) {
+      typeFilter.addEventListener('change', (e) => {
+        filterType = e.target.value;
+        update();
+      });
+    }
+
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', (e) => {
+        filterCategory = e.target.value;
+        update();
+      });
+    }
+
+    // Search functionality
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        update();
+      });
+    }
+
+    if (searchClear) {
+      searchClear.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+          searchQuery = '';
+          update();
+        }
+      });
+    }
+
+    // More menu toggle
+    if (moreBtn && moreDropdown) {
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        moreDropdown.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', () => {
+        moreDropdown.classList.remove('show');
       });
     }
 
@@ -364,6 +519,77 @@
   window.loadMoreTransactions = () => { visibleCount += 10; update(); };
   window.loadAllTransactions = () => { visibleCount = Infinity; update(); };
   window.loadFewerTransactions = () => { visibleCount = 10; update(); };
+
+  // ── Swipe Gesture Handlers ────────────────────────────────────
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let currentCard = null;
+
+  window.handleTouchStart = function(e, id) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    currentCard = e.currentTarget;
+  };
+
+  window.handleTouchMove = function(e) {
+    if (!currentCard) return;
+    
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const deltaX = touchX - touchStartX;
+    const deltaY = touchY - touchStartY;
+    
+    // Only handle horizontal swipes (ignore vertical scrolling)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+      e.preventDefault();
+      
+      if (deltaX > 0) {
+        currentCard.classList.add('swiping-right');
+        currentCard.classList.remove('swiping-left');
+      } else {
+        currentCard.classList.add('swiping-left');
+        currentCard.classList.remove('swiping-right');
+      }
+    }
+  };
+
+  window.handleTouchEnd = function(e, id) {
+    if (!currentCard) return;
+    
+    const touchX = e.changedTouches[0].clientX;
+    const deltaX = touchX - touchStartX;
+    
+    // Swipe threshold
+    if (Math.abs(deltaX) > 100) {
+      if (deltaX > 0) {
+        // Swipe right = Edit
+        editTransaction(id);
+      } else {
+        // Swipe left = Delete
+        deleteTransaction(id);
+      }
+    }
+    
+    currentCard.classList.remove('swiping-left', 'swiping-right');
+    currentCard = null;
+  };
+
+  // ── Transaction Detail Bottom Sheet ────────────────────────────
+
+  window.openTransactionDetail = function(transactionId) {
+    // Prevent opening detail when clicking action buttons
+    if (event && event.target.closest('.tx-card-action-btn')) {
+      return;
+    }
+    
+    const transactions = fromStorage('transactions');
+    const tx = transactions.find(t => String(t.id) === String(transactionId));
+    if (!tx) return;
+
+    // For now, just open edit - can be enhanced to show a detail view
+    editTransaction(transactionId);
+  };
 
   window.editTransaction = function (transactionId) {
     console.log('editTransaction called with ID:', transactionId);
