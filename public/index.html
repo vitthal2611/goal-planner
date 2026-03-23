@@ -834,7 +834,7 @@
 
         .payment-balances-wrapper {
           background: var(--color-surface);
-          padding: 12px 14px;
+          padding: 10px 12px;
           border-radius: var(--radius-md);
           box-shadow: var(--shadow-card);
           margin-bottom: 10px;
@@ -844,122 +844,115 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 0;
-          cursor: pointer;
+          margin-bottom: 8px;
+          cursor: default;
           user-select: none;
         }
 
         .payment-title {
-          font: var(--text-section);
+          font-size: 10px;
+          font-weight: 700;
           color: var(--color-text);
           text-transform: uppercase;
-          letter-spacing: 0.6px;
+          letter-spacing: 0.5px;
           margin-bottom: 0;
         }
 
         .payment-summary {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           color: var(--color-text-secondary);
           white-space: nowrap;
         }
 
         .toggle-icon {
-          font-size: 16px;
-          color: #6b7280;
-          transition: transform 0.3s;
+          display: none;
         }
 
-        .toggle-icon.collapsed {
-          transform: rotate(-90deg);
-        }
-
-        /* ── Payment list layout ── */
+        /* ── Payment Grid Layout (like Income/Expense) ── */
         .payment-balances {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 6px;
+          max-height: none;
+          overflow: visible;
+          transition: none;
         }
 
         .payment-balances.expanded {
-          max-height: 1000px;
-          margin-top: 10px;
+          max-height: none;
+          margin-top: 0;
         }
 
         .pm-group-label {
-          font-size: 9px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.7px;
-          color: #9ca3af;
-          padding: 6px 0 3px;
-          border-top: 1px solid #f3f4f6;
-          margin-top: 3px;
-        }
-
-        .pm-group-label:first-child {
-          border-top: none;
-          margin-top: 0;
-          padding-top: 0;
+          display: none;
         }
 
         .payment-item {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 8px;
-          padding: 6px 0;
-          border-bottom: 1px solid #f9fafb;
-          background: none;
-          border-radius: 0;
-          border-left: none;
-          border-right: none;
-          border-top: none;
+          justify-content: center;
+          gap: 4px;
+          padding: 8px 10px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          background: var(--color-bg);
+          cursor: pointer;
+          transition: all 0.2s;
         }
 
-        .payment-item:last-child { border-bottom: none; }
+        .payment-item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
 
         .pm-icon {
-          width: 30px;
-          height: 30px;
+          width: 24px;
+          height: 24px;
           border-radius: var(--radius-sm);
-          background: var(--color-primary-light);
+          background: transparent;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 14px;
+          font-size: 18px;
           flex-shrink: 0;
         }
 
         .pm-info {
           flex: 1;
           min-width: 0;
+          width: 100%;
+          text-align: center;
         }
 
         .pm-name-row {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-between;
-          margin-bottom: 3px;
+          justify-content: center;
+          margin-bottom: 0;
+          gap: 4px;
         }
 
         .payment-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: #111827;
+          font-size: 9px;
+          font-weight: 700;
+          color: var(--color-text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 140px;
+          max-width: 100%;
         }
 
         .payment-value {
-          font-size: 12px;
+          font-size: 16px;
           font-weight: 800;
           white-space: nowrap;
           flex-shrink: 0;
+          line-height: 1;
         }
 
         .payment-value.positive { color: var(--color-success); }
@@ -967,21 +960,12 @@
         .payment-value.zero     { color: var(--color-text-muted); }
 
         .pm-bar-track {
-          height: 3px;
-          border-radius: 999px;
-          background: #f3f4f6;
-          overflow: hidden;
+          display: none;
         }
 
         .pm-bar-fill {
-          height: 100%;
-          border-radius: var(--radius-pill);
-          background: var(--color-primary);
-          transition: width 0.4s ease;
+          display: none;
         }
-
-        .pm-bar-fill.negative { background: var(--color-danger); }
-        .pm-bar-fill.zero     { background: var(--color-border); }
 
         .quick-track-header {
           display: grid;
@@ -3287,14 +3271,11 @@
         </div>
 
         <div class="payment-balances-wrapper" id="paymentBalancesWrapper">
-            <div class="payment-header" id="paymentHeader" onclick="togglePaymentMethods()">
+            <div class="payment-header" id="paymentHeader">
                 <div class="payment-title">Payment Methods</div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="payment-summary" id="paymentSummary"></span>
-                    <span class="toggle-icon" id="paymentToggleIcon">▼</span>
-                </div>
+                <div class="payment-summary" id="paymentSummary"></div>
             </div>
-            <div class="payment-balances" id="paymentBalances"></div>
+            <div class="payment-balances expanded" id="paymentBalances"></div>
         </div>
 
         <!-- Insights -->
@@ -4643,10 +4624,11 @@
         return { method, balance, usage };
       });
 
+      // Filter out zero balance payment methods
+      const nonZeroStats = stats.filter(s => s.balance !== 0);
+
       // Calculate total balance for summary
-      const totalBalance = stats.reduce((sum, s) => sum + s.balance, 0);
-      const positiveCount = stats.filter(s => s.balance > 0).length;
-      const negativeCount = stats.filter(s => s.balance < 0).length;
+      const totalBalance = nonZeroStats.reduce((sum, s) => sum + s.balance, 0);
       
       // Update summary
       if (summaryEl) {
@@ -4655,58 +4637,51 @@
         summaryEl.innerHTML = `<span style="color: ${color}">${sign}₹${Math.abs(totalBalance).toLocaleString('en-IN')}</span>`;
       }
 
-      // Infer group from name
-      function inferGroup(name) {
+      // If no non-zero balances, show message
+      if (nonZeroStats.length === 0) {
+        container.innerHTML = '<div style="padding:16px 0;text-align:center;color:#9ca3af;font-size:12px;">No active payment methods</div>';
+        container.classList.add('expanded');
+        return;
+      }
+
+      // Infer icon from name
+      function getPaymentIcon(name) {
         const n = name.toLowerCase();
-        if (/credit|card|visa|master|amex|rupay/.test(n)) return 'Credit';
-        if (/upi|gpay|phonepe|paytm|bhim/.test(n))        return 'UPI';
-        if (/cash|wallet/.test(n))                         return 'Cash';
-        return 'Bank';
+        if (/cash/.test(n)) return '💵';
+        if (/credit|card|visa|master|amex|rupay/.test(n)) return '💳';
+        if (/phonepe|phone pe/.test(n)) return '💜';
+        if (/gpay|google pay/.test(n)) return '🔵';
+        if (/paytm/.test(n)) return '💙';
+        if (/upi|bhim/.test(n)) return '📱';
+        if (/bank/.test(n)) return '🏦';
+        if (/wallet/.test(n)) return '👛';
+        return '💰';
       }
 
-      function groupIcon(g) {
-        return { Bank: '🏦', Credit: '💳', UPI: '📱', Cash: '💵' }[g] || '💰';
-      }
+      // Sort by absolute balance descending
+      nonZeroStats.sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance));
 
-      // Group and sort by usage desc within each group
-      const groupOrder = ['Bank', 'Credit', 'UPI', 'Cash'];
-      const groups = {};
-      stats.forEach(s => {
-        const g = inferGroup(s.method);
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(s);
-      });
-      Object.keys(groups).forEach(g => groups[g].sort((a, b) => b.usage - a.usage));
-
-      // Max usage across all methods for bar scaling
-      const maxUsage = Math.max(...stats.map(s => s.usage), 1);
-
+      // Render compact boxes
       let html = '';
-      groupOrder.forEach(g => {
-        if (!groups[g]) return;
-        html += `<div class="pm-group-label">${groupIcon(g)} ${g}</div>`;
-        groups[g].forEach(({ method, balance, usage }) => {
-          const barPct   = Math.round((usage / maxUsage) * 100);
-          const valClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero';
-          const barClass = balance < 0 ? 'negative' : balance === 0 ? 'zero' : '';
-          const sign     = balance > 0 ? '+' : '';
-          html += `
-            <div class="payment-item" style="cursor:pointer;" onclick="DrillDown.openPayment(${JSON.stringify(method)})">
-              <div class="pm-icon">${groupIcon(g)}</div>
-              <div class="pm-info">
-                <div class="pm-name-row">
-                  <span class="payment-label">${method}</span>
-                  <span class="payment-value ${valClass}">${sign}₹${Math.abs(balance).toLocaleString('en-IN')}</span>
-                </div>
-                <div class="pm-bar-track">
-                  <div class="pm-bar-fill ${barClass}" style="width:${barPct}%"></div>
-                </div>
+      nonZeroStats.forEach(({ method, balance }) => {
+        const valClass = balance > 0 ? 'positive' : 'negative';
+        const sign     = balance > 0 ? '+' : '';
+        const icon     = getPaymentIcon(method);
+        
+        html += `
+          <div class="payment-item" onclick="DrillDown.openPayment(${JSON.stringify(method)})">
+            <div class="pm-icon">${icon}</div>
+            <div class="pm-info">
+              <div class="pm-name-row">
+                <span class="payment-label">${method}</span>
+                <span class="payment-value ${valClass}">${sign}₹${Math.abs(balance).toLocaleString('en-IN')}</span>
               </div>
-            </div>`;
-        });
+            </div>
+          </div>`;
       });
 
       container.innerHTML = html;
+      container.classList.add('expanded');
     }
 
     function updateRecentTransactions() { RecentTransactions.update(); }
@@ -4714,18 +4689,7 @@
     let recentTxVisibleCount = 10; // kept for any legacy references
 
     function togglePaymentMethods() {
-      const container = document.getElementById('paymentBalances');
-      const icon = document.getElementById('paymentToggleIcon');
-      if (!container || !icon) return;
-      
-      const isExpanded = container.classList.contains('expanded');
-      if (isExpanded) {
-        container.classList.remove('expanded');
-        icon.classList.add('collapsed');
-      } else {
-        container.classList.add('expanded');
-        icon.classList.remove('collapsed');
-      }
+      // No longer needed - payment methods always visible
     }
 
     function updateEnvelopeBudget() { EnvelopeBudget.update(); }
