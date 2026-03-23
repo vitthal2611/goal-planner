@@ -55,11 +55,32 @@
     const selectedMonth = monthSelect ? monthSelect.value : 'ALL';
     const selectedYear  = yearSelect  ? yearSelect.value  : String(new Date().getFullYear());
 
+    console.log('BalanceSummary.update() - Filter:', { selectedMonth, selectedYear });
+
     const allTx = (typeof transactions !== 'undefined') ? transactions : [];
     const { income, expense } = calcNet(allTx, selectedMonth, selectedYear);
 
+    console.log('BalanceSummary - Calculated:', { 
+      totalTransactions: allTx.length,
+      income: income.toLocaleString('en-IN'), 
+      expense: expense.toLocaleString('en-IN'),
+      net: (income - expense).toLocaleString('en-IN')
+    });
+
     totalIncomeEl.textContent  = `₹${income.toLocaleString('en-IN')}`;
     totalExpenseEl.textContent = `₹${expense.toLocaleString('en-IN')}`;
+
+    // ── Update period display ─────────────────────────────────
+    const periodEl = el('balancePeriod');
+    if (periodEl) {
+      if (selectedMonth === 'ALL') {
+        periodEl.textContent = `(${selectedYear})`;
+      } else {
+        const [year, month] = selectedMonth.split('-');
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        periodEl.textContent = `(${monthNames[parseInt(month) - 1]} ${year})`;
+      }
+    }
 
     // ── Expense ratio badge ───────────────────────────────────
     const ratioEl = el('expenseRatio');
