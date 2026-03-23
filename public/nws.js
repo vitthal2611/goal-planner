@@ -62,6 +62,12 @@
     _set('needPct', `${needP}%`);
     _set('wantPct', `${wantP}%`);
     _set('savePct', `${saveP}%`);
+    
+    // Update compact view
+    _set('needPctCompact', `${needP}%`);
+    _set('wantPctCompact', `${wantP}%`);
+    _set('savePctCompact', `${saveP}%`);
+    
     _width('needBar', needP);
     _width('wantBar', wantP);
     _width('saveBar', saveP);

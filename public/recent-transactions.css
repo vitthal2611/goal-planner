@@ -2177,3 +2177,308 @@
     padding: 6px 10px;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE UX IMPROVEMENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Collapsible NWS Bar ──────────────────────────────────────── */
+
+.nws-compact {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nws-compact:hover {
+  border-color: #d1d5db;
+  background: linear-gradient(135deg, #f1f5f9, #f8fafc);
+}
+
+.nws-compact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nws-compact-icon {
+  font-size: 14px;
+}
+
+.nws-compact-label {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.nws-compact-pct {
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.nws-compact-divider {
+  color: #d1d5db;
+  margin: 0 6px;
+  font-weight: 300;
+}
+
+.nws-expand-icon {
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.nws-expanded {
+  display: flex;
+  gap: 0;
+}
+
+/* Collapsed state */
+.nws-bar.collapsed .nws-compact {
+  display: flex;
+}
+
+.nws-bar.collapsed .nws-expanded {
+  display: none;
+}
+
+/* Expanded state */
+.nws-bar.expanded .nws-compact {
+  display: none;
+}
+
+.nws-bar.expanded .nws-expanded {
+  display: flex;
+}
+
+/* ── Mobile: Hide Desktop Buttons ─────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Default to collapsed on mobile */
+  .nws-bar {
+    /* Will be set by JS, but default to collapsed */
+  }
+  
+  /* Hide desktop action buttons on mobile */
+  .recent-action-btn.desktop-only {
+    display: none !important;
+  }
+  
+  /* Show menu button */
+  .recent-more-btn {
+    display: flex;
+  }
+  
+  /* Compact transaction cards on mobile */
+  .tx-card {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  
+  .tx-card-header {
+    gap: 10px;
+  }
+  
+  .tx-card-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .tx-card-name {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .tx-card-meta {
+    font-size: 11px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .tx-card-amount {
+    font-size: 16px;
+  }
+  
+  .tx-card.large-amount .tx-card-amount {
+    font-size: 18px;
+  }
+  
+  /* Compact filter bar */
+  .tx-filter-bar {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .tx-type-tabs {
+    gap: 4px;
+  }
+  
+  .tx-type-tab {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .tx-payment-filter {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+  
+  .tx-filter-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  
+  /* Compact search bar */
+  .tx-search-wrapper {
+    margin-bottom: 8px;
+  }
+  
+  .tx-search-input {
+    font-size: 14px;
+    padding: 8px 12px 8px 36px;
+  }
+  
+  /* Recent header */
+  .recent-header h3 {
+    font-size: 16px;
+  }
+}
+
+/* ── Tablet: Show Some Buttons ────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Show NWS bars on tablet */
+  .nws-bar.collapsed .nws-compact {
+    display: none;
+  }
+  
+  .nws-bar.collapsed .nws-expanded {
+    display: flex;
+  }
+  
+  /* Show some action buttons */
+  .recent-action-btn.desktop-only {
+    display: flex;
+  }
+  
+  /* Hide text on smaller buttons */
+  .recent-action-btn.apply-smart {
+    font-size: 0;
+  }
+  
+  .recent-action-btn.apply-smart::before {
+    content: '✨';
+    font-size: 16px;
+  }
+}
+
+/* ── Desktop: Full Layout ─────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  /* Always show expanded on desktop */
+  .nws-bar .nws-compact {
+    display: none !important;
+  }
+  
+  .nws-bar .nws-expanded {
+    display: flex !important;
+  }
+  
+  /* Show all action buttons */
+  .recent-action-btn.desktop-only {
+    display: flex;
+  }
+  
+  /* Hide mobile menu on desktop */
+  .recent-more-menu {
+    display: none;
+  }
+}
+
+/* ── Improved More Dropdown ───────────────────────────────────── */
+
+.recent-more-dropdown {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  min-width: 200px;
+  overflow: hidden;
+  display: none;
+}
+
+.recent-more-dropdown.show {
+  display: block;
+}
+
+.recent-more-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+
+.recent-more-item:hover {
+  background: #f9fafb;
+}
+
+.recent-more-item:active {
+  transform: scale(0.98);
+}
+
+.recent-more-item.danger {
+  color: #dc2626;
+  border-top: 1px solid #f3f4f6;
+}
+
+.recent-more-item.danger:hover {
+  background: #fef2f2;
+}
+
+/* ── Touch Target Improvements ────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Ensure minimum 44x44px touch targets */
+  .tx-type-tab {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .tx-filter-btn,
+  .tx-payment-filter {
+    min-height: 44px;
+  }
+  
+  .recent-more-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .nws-bar {
+    min-height: 44px;
+  }
+}

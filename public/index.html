@@ -3384,30 +3384,55 @@
     <!-- Transactions Tab -->
     <div class="tab-content-section" id="transactionsContent">
         
-        <!-- Need, Want, Save Summary -->
-        <div class="nws-bar" style="margin-bottom: 10px;">
-            <div class="nws-item nws-need" onclick="DrillDown.openNWS('need')" style="cursor:pointer;">
-                <span class="nws-icon">🎯</span>
-                <span class="nws-label">Need</span>
-                <span class="nws-pct" id="needPct">0%</span>
-                <span class="nws-amt" id="needTotalTop">₹0</span>
-                <div class="nws-track"><div class="nws-fill nws-fill-need" id="needBar"></div></div>
+        <!-- Need, Want, Save Summary (Collapsible on Mobile) -->
+        <div class="nws-bar collapsed" id="nwsBar" onclick="toggleNWSBar()" style="margin-bottom: 10px;">
+            <!-- Collapsed View (Mobile Default) -->
+            <div class="nws-compact">
+                <span class="nws-compact-item">
+                    <span class="nws-compact-icon">🎯</span>
+                    <span class="nws-compact-label">Need</span>
+                    <span class="nws-compact-pct" id="needPctCompact">0%</span>
+                </span>
+                <span class="nws-compact-divider">|</span>
+                <span class="nws-compact-item">
+                    <span class="nws-compact-icon">🎉</span>
+                    <span class="nws-compact-label">Want</span>
+                    <span class="nws-compact-pct" id="wantPctCompact">0%</span>
+                </span>
+                <span class="nws-compact-divider">|</span>
+                <span class="nws-compact-item">
+                    <span class="nws-compact-icon">💰</span>
+                    <span class="nws-compact-label">Save</span>
+                    <span class="nws-compact-pct" id="savePctCompact">0%</span>
+                </span>
+                <span class="nws-expand-icon">↕</span>
             </div>
-            <div class="nws-divider"></div>
-            <div class="nws-item nws-want" onclick="DrillDown.openNWS('want')" style="cursor:pointer;">
-                <span class="nws-icon">🎉</span>
-                <span class="nws-label">Want</span>
-                <span class="nws-pct" id="wantPct">0%</span>
-                <span class="nws-amt" id="wantTotalTop">₹0</span>
-                <div class="nws-track"><div class="nws-fill nws-fill-want" id="wantBar"></div></div>
-            </div>
-            <div class="nws-divider"></div>
-            <div class="nws-item nws-save" onclick="DrillDown.openNWS('save')" style="cursor:pointer;">
-                <span class="nws-icon">💰</span>
-                <span class="nws-label">Save</span>
-                <span class="nws-pct" id="savePct">0%</span>
-                <span class="nws-amt" id="saveTotalTop">₹0</span>
-                <div class="nws-track"><div class="nws-fill nws-fill-save" id="saveBar"></div></div>
+            
+            <!-- Expanded View -->
+            <div class="nws-expanded">
+                <div class="nws-item nws-need" onclick="event.stopPropagation(); DrillDown.openNWS('need')" style="cursor:pointer;">
+                    <span class="nws-icon">🎯</span>
+                    <span class="nws-label">Need</span>
+                    <span class="nws-pct" id="needPct">0%</span>
+                    <span class="nws-amt" id="needTotalTop">₹0</span>
+                    <div class="nws-track"><div class="nws-fill nws-fill-need" id="needBar"></div></div>
+                </div>
+                <div class="nws-divider"></div>
+                <div class="nws-item nws-want" onclick="event.stopPropagation(); DrillDown.openNWS('want')" style="cursor:pointer;">
+                    <span class="nws-icon">🎉</span>
+                    <span class="nws-label">Want</span>
+                    <span class="nws-pct" id="wantPct">0%</span>
+                    <span class="nws-amt" id="wantTotalTop">₹0</span>
+                    <div class="nws-track"><div class="nws-fill nws-fill-want" id="wantBar"></div></div>
+                </div>
+                <div class="nws-divider"></div>
+                <div class="nws-item nws-save" onclick="event.stopPropagation(); DrillDown.openNWS('save')" style="cursor:pointer;">
+                    <span class="nws-icon">💰</span>
+                    <span class="nws-label">Save</span>
+                    <span class="nws-pct" id="savePct">0%</span>
+                    <span class="nws-amt" id="saveTotalTop">₹0</span>
+                    <div class="nws-track"><div class="nws-fill nws-fill-save" id="saveBar"></div></div>
+                </div>
             </div>
         </div>
 
@@ -3415,13 +3440,28 @@
             <div class="recent-header">
                 <h3>Recent</h3>
                 <div class="recent-actions">
-                    <button id="applyToExistingBtn" class="recent-action-btn apply-smart" onclick="applyVendorMappingsFromTransactions()" title="Apply learned categories to uncategorized transactions">✨ Auto-Categorize</button>
-                    <button id="multiSelectBtn" class="recent-action-btn multi-select" onclick="toggleMultiSelectMode()">☑️ Select</button>
-                    <button id="reviewAllBtn" class="recent-action-btn review" onclick="openReviewAll()">🔍 Review</button>
-                    <button id="downloadReportBtn" class="recent-action-btn report">📊 Report</button>
+                    <!-- Desktop: Show all buttons -->
+                    <button id="applyToExistingBtn" class="recent-action-btn apply-smart desktop-only" onclick="applyVendorMappingsFromTransactions()" title="Apply learned categories to uncategorized transactions">✨ Auto-Categorize</button>
+                    <button id="multiSelectBtn" class="recent-action-btn multi-select desktop-only" onclick="toggleMultiSelectMode()">☑️ Select</button>
+                    <button id="reviewAllBtn" class="recent-action-btn review desktop-only" onclick="openReviewAll()">🔍 Review</button>
+                    <button id="downloadReportBtn" class="recent-action-btn report desktop-only">📊 Report</button>
+                    
+                    <!-- Mobile: Compact menu -->
                     <div class="recent-more-menu">
                         <button id="recentMoreBtn" class="recent-more-btn">⋮</button>
                         <div id="recentMoreDropdown" class="recent-more-dropdown">
+                            <button class="recent-more-item" onclick="applyVendorMappingsFromTransactions(); document.getElementById('recentMoreDropdown').classList.remove('show');">
+                                ✨ Auto-Categorize
+                            </button>
+                            <button class="recent-more-item" onclick="toggleMultiSelectMode(); document.getElementById('recentMoreDropdown').classList.remove('show');">
+                                ☑️ Multi-Select
+                            </button>
+                            <button class="recent-more-item" onclick="openReviewAll(); document.getElementById('recentMoreDropdown').classList.remove('show');">
+                                🔍 Review All
+                            </button>
+                            <button class="recent-more-item" onclick="downloadReport(); document.getElementById('recentMoreDropdown').classList.remove('show');">
+                                📊 Download Report
+                            </button>
                             <button class="recent-more-item danger" id="deleteAllExpensesBtn">
                                 🗑️ Delete All Expenses
                             </button>
@@ -5417,6 +5457,18 @@ Supports: CSV, Tab-separated, Excel copy-paste" style="width: 100%; min-height: 
     
     // Make it globally accessible
     window.applyVendorMappingsFromTransactions = applyVendorMappingsFromTransactions;
+    
+    // Toggle NWS Bar (Collapse/Expand)
+    function toggleNWSBar() {
+      const nwsBar = document.getElementById('nwsBar');
+      if (nwsBar) {
+        nwsBar.classList.toggle('collapsed');
+        nwsBar.classList.toggle('expanded');
+      }
+    }
+    
+    // Make it globally accessible
+    window.toggleNWSBar = toggleNWSBar;
 
     // Open Review All Transactions
     function openReviewAll() {
