@@ -173,7 +173,7 @@
         ` : ''}
       </div>`;
     
-    // Table row HTML for desktop with multi-select
+    // Table row HTML for desktop with multi-select and inline editing
     const tableRowHTML = `
       <tr class="tx-table-row ${t.type} ${isSelected ? 'selected' : ''}" data-id="${t.id}">
         ${isMultiSelectMode ? `
@@ -184,15 +184,15 @@
                    onclick="toggleTransactionSelect('${t.id}')">
           </td>
         ` : ''}
-        <td class="tx-table-date">${dateLabel}</td>
-        <td class="tx-table-desc">
+        <td class="tx-table-date editable" data-field="date" data-id="${t.id}" ondblclick="editCell(this)">${dateLabel}</td>
+        <td class="tx-table-desc editable" data-field="description" data-id="${t.id}" ondblclick="editCell(this)">
           <span class="tx-table-icon">${icon}</span>
           <span class="tx-table-name">${description}</span>
         </td>
-        <td class="tx-table-category">${envelope}</td>
+        <td class="tx-table-category editable" data-field="envelope" data-id="${t.id}" ondblclick="editCell(this)">${envelope}</td>
         <td class="tx-table-type" style="color: ${categoryColor}">${categoryText}</td>
-        <td class="tx-table-payment">${payment ? `${paymentIcon} ${payment}` : '-'}</td>
-        <td class="tx-table-amount ${t.type}">${amount}</td>
+        <td class="tx-table-payment editable" data-field="payment" data-id="${t.id}" ondblclick="editCell(this)">${payment ? `${paymentIcon} ${payment}` : '-'}</td>
+        <td class="tx-table-amount ${t.type} editable" data-field="amount" data-id="${t.id}" ondblclick="editCell(this)">${amount}</td>
         <td class="tx-table-actions">
           ${!isMultiSelectMode ? `
             <button class="tx-table-action-btn" onclick="editTransaction('${t.id}')" title="Edit">✏️</button>
@@ -203,6 +203,10 @@
     
     return { cardHTML, tableRowHTML };
   }
+
+  // ── Sorting state ─────────────────────────────────────────────
+  let sortColumn = 'date'; // default sort by date
+  let sortDirection = 'desc'; // desc = newest first
 
   // ── Core update ───────────────────────────────────────────────
 
@@ -335,7 +339,58 @@
     }
 
     // Group by date
-    const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...filtered].sort((a, b) => {
+      let aVal, bVal;
+      
+      switch(sortColumn) {
+        case 'date':
+          aVal = new Date(a.date);
+          bVal = new Date(b.date);
+          break;
+        case 'description':
+          aVal = (a.description || '').toLowerCase();
+          bVal = (b.description || '').toLowerCase();
+          break;
+        case 'envelope':
+          aVal = (a.envelope || '').toLowerCase();
+          bVal = (b.envelope || '').toLowerCase();
+          break;
+        case 'amount':
+          aVal = parseFloat(a.amount) || 0;
+          bVal = parseFloat(b.amount) || 0;
+          break;
+        case 'payment':
+          aVal = (a.payment || '').toLowerCase();
+          bVal = (b.payment || '').toLowerCase();
+          break;
+        case 'type':
+          // Get category for sorting
+          const envelopes = (() => { 
+            try { 
+              const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+              if (envs.length > 0 && typeof envs[0] === 'string') {
+                return envs.map(name => ({ name, category: 'need' }));
+              }
+              return envs;
+            } catch { return []; }
+          })();
+          const getCategory = (t) => {
+            if (t.type !== 'expense' || !t.envelope) return '';
+            const env = envelopes.find(e => e.name === t.envelope);
+            return env ? env.category : '';
+          };
+          aVal = getCategory(a);
+          bVal = getCategory(b);
+          break;
+        default:
+          aVal = new Date(a.date);
+          bVal = new Date(b.date);
+      }
+      
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
     const grouped = {};
     sorted.forEach(t => {
       const label = getDateLabel(t.date);
@@ -364,6 +419,11 @@
     const cardListHTML = `<div class="tx-card-list">${cardsHTML}</div>`;
     
     // Table layout for desktop
+    const getSortIcon = (column) => {
+      if (sortColumn !== column) return '⇅';
+      return sortDirection === 'asc' ? '↑' : '↓';
+    };
+    
     const tableHTML = `
       <div class="tx-table-wrapper">
         <table class="tx-table">
@@ -377,12 +437,24 @@
                          ${selectedTransactions.size > 0 && selectedTransactions.size === filtered.length ? 'checked' : ''}>
                 </th>
               ` : ''}
-              <th>Date</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>Payment</th>
-              <th>Amount</th>
+              <th class="sortable ${sortColumn === 'date' ? 'active' : ''}" onclick="sortTable('date')">
+                Date <span class="sort-icon">${getSortIcon('date')}</span>
+              </th>
+              <th class="sortable ${sortColumn === 'description' ? 'active' : ''}" onclick="sortTable('description')">
+                Name <span class="sort-icon">${getSortIcon('description')}</span>
+              </th>
+              <th class="sortable ${sortColumn === 'envelope' ? 'active' : ''}" onclick="sortTable('envelope')">
+                Category <span class="sort-icon">${getSortIcon('envelope')}</span>
+              </th>
+              <th class="sortable ${sortColumn === 'type' ? 'active' : ''}" onclick="sortTable('type')">
+                Type <span class="sort-icon">${getSortIcon('type')}</span>
+              </th>
+              <th class="sortable ${sortColumn === 'payment' ? 'active' : ''}" onclick="sortTable('payment')">
+                Payment <span class="sort-icon">${getSortIcon('payment')}</span>
+              </th>
+              <th class="sortable ${sortColumn === 'amount' ? 'active' : ''}" onclick="sortTable('amount')">
+                Amount <span class="sort-icon">${getSortIcon('amount')}</span>
+              </th>
               <th>Action</th>
             </tr>
           </thead>
@@ -1257,5 +1329,187 @@
       if (typeof showToast === 'function') showToast('Edit feature not available', 'error');
     }
   };
+
+})();
+
+  // ── Sorting Functions ──────────────────────────────────────────
+
+  window.sortTable = function(column) {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // New column, default to ascending (except date which defaults to desc)
+      sortColumn = column;
+      sortDirection = column === 'date' ? 'desc' : 'asc';
+    }
+    update();
+  };
+
+  // ── Inline Editing Functions ───────────────────────────────────
+
+  let currentEditCell = null;
+  let originalValue = null;
+
+  window.editCell = function(cell) {
+    // If already editing another cell, save it first
+    if (currentEditCell && currentEditCell !== cell) {
+      saveCellEdit();
+    }
+
+    const field = cell.dataset.field;
+    const transactionId = cell.dataset.id;
+    const transactions = fromStorage('transactions');
+    const tx = transactions.find(t => String(t.id) === String(transactionId));
+    
+    if (!tx) return;
+
+    currentEditCell = cell;
+    cell.classList.add('editing');
+
+    // Get current value
+    if (field === 'description') {
+      originalValue = tx.description || '';
+    } else if (field === 'date') {
+      originalValue = tx.date;
+    } else if (field === 'envelope') {
+      originalValue = tx.envelope || '';
+    } else if (field === 'payment') {
+      originalValue = tx.payment || '';
+    } else if (field === 'amount') {
+      originalValue = tx.amount;
+    }
+
+    // Create appropriate input based on field type
+    let input;
+    
+    if (field === 'date') {
+      input = document.createElement('input');
+      input.type = 'date';
+      input.value = originalValue;
+      input.className = 'cell-edit-input';
+    } else if (field === 'envelope' || field === 'payment') {
+      input = document.createElement('select');
+      input.className = 'cell-edit-select';
+      
+      if (field === 'envelope') {
+        const envelopes = (() => { 
+          try { 
+            const envs = JSON.parse(localStorage.getItem('envelopes') || '[]');
+            if (envs.length > 0 && typeof envs[0] === 'string') {
+              return envs;
+            }
+            return envs.map(e => e.name);
+          } catch { return []; }
+        })();
+        
+        input.innerHTML = '<option value="">Select Envelope</option>' + 
+          envelopes.map(env => `<option value="${env}" ${env === originalValue ? 'selected' : ''}>${env}</option>`).join('');
+      } else if (field === 'payment') {
+        const payments = JSON.parse(localStorage.getItem('paymentMethods') || '[]');
+        input.innerHTML = '<option value="">Select Payment</option>' + 
+          payments.map(pm => `<option value="${pm}" ${pm === originalValue ? 'selected' : ''}>${pm}</option>`).join('');
+      }
+    } else if (field === 'amount') {
+      input = document.createElement('input');
+      input.type = 'number';
+      input.step = '0.01';
+      input.value = originalValue;
+      input.className = 'cell-edit-input';
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = originalValue;
+      input.className = 'cell-edit-input';
+    }
+
+    // Replace cell content with input
+    cell.innerHTML = '';
+    cell.appendChild(input);
+    input.focus();
+    if (input.select) input.select();
+
+    // Save on blur or Enter key
+    input.addEventListener('blur', () => saveCellEdit());
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveCellEdit();
+      } else if (e.key === 'Escape') {
+        cancelCellEdit();
+      }
+    });
+  };
+
+  function saveCellEdit() {
+    if (!currentEditCell) return;
+
+    const field = currentEditCell.dataset.field;
+    const transactionId = currentEditCell.dataset.id;
+    const input = currentEditCell.querySelector('input, select');
+    
+    if (!input) {
+      currentEditCell = null;
+      return;
+    }
+
+    const newValue = input.value.trim();
+
+    // Validate
+    if (field === 'amount' && (!newValue || parseFloat(newValue) <= 0)) {
+      if (typeof showToast === 'function') showToast('Amount must be greater than 0', 'error');
+      cancelCellEdit();
+      return;
+    }
+
+    // Update transaction
+    const transactions = fromStorage('transactions');
+    const txIndex = transactions.findIndex(t => String(t.id) === String(transactionId));
+    
+    if (txIndex === -1) {
+      cancelCellEdit();
+      return;
+    }
+
+    // Update the field
+    if (field === 'description') {
+      transactions[txIndex].description = newValue;
+    } else if (field === 'date') {
+      transactions[txIndex].date = newValue;
+    } else if (field === 'envelope') {
+      transactions[txIndex].envelope = newValue;
+    } else if (field === 'payment') {
+      transactions[txIndex].payment = newValue;
+    } else if (field === 'amount') {
+      transactions[txIndex].amount = parseFloat(newValue);
+    }
+
+    // Save to localStorage
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    window.transactions = transactions;
+
+    // Update UI
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+    if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+    if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+    
+    currentEditCell.classList.remove('editing');
+    currentEditCell = null;
+    originalValue = null;
+    
+    update();
+    
+    if (typeof showToast === 'function') showToast('Transaction updated', 'success');
+  }
+
+  function cancelCellEdit() {
+    if (!currentEditCell) return;
+    
+    currentEditCell.classList.remove('editing');
+    currentEditCell = null;
+    originalValue = null;
+    
+    update();
+  }
 
 })();

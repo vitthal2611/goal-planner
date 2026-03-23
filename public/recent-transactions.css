@@ -1984,3 +1984,112 @@
 .recent-action-btn.review:hover {
   background: #dbeafe;
 }
+
+/* ── Sortable Column Headers ──────────────────────────────────── */
+
+.tx-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tx-table th.sortable:hover {
+  background: #f3f4f6;
+  color: #3b82f6;
+}
+
+.tx-table th.sortable.active {
+  background: #eff6ff;
+  color: #3b82f6;
+  font-weight: 800;
+}
+
+.tx-table th .sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 12px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.tx-table th.sortable:hover .sort-icon,
+.tx-table th.sortable.active .sort-icon {
+  opacity: 1;
+}
+
+/* ── Inline Editing Styles ────────────────────────────────────── */
+
+.tx-table td.editable {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tx-table td.editable:hover {
+  background: #f9fafb;
+  outline: 2px solid #e5e7eb;
+  outline-offset: -2px;
+}
+
+.tx-table td.editable:hover::after {
+  content: '✏️';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.tx-table td.editing {
+  padding: 0;
+  background: #eff6ff;
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.cell-edit-input,
+.cell-edit-select {
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+}
+
+.cell-edit-input:focus,
+.cell-edit-select:focus {
+  background: #eff6ff;
+}
+
+.cell-edit-select {
+  cursor: pointer;
+}
+
+/* ── Excel-like editing hint ──────────────────────────────────── */
+
+.tx-table-wrapper::before {
+  content: '💡 Double-click any cell to edit';
+  display: block;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .tx-table-wrapper::before {
+    display: none;
+  }
+}
