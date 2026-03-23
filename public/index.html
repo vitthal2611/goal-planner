@@ -834,7 +834,7 @@
 
         .payment-balances-wrapper {
           background: var(--color-surface);
-          padding: var(--space-md);
+          padding: 12px 14px;
           border-radius: var(--radius-md);
           box-shadow: var(--shadow-card);
           margin-bottom: 10px;
@@ -844,7 +844,7 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 0;
           cursor: pointer;
           user-select: none;
         }
@@ -854,11 +854,18 @@
           color: var(--color-text);
           text-transform: uppercase;
           letter-spacing: 0.6px;
-          margin-bottom: 10px;
+          margin-bottom: 0;
+        }
+
+        .payment-summary {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--color-text-secondary);
+          white-space: nowrap;
         }
 
         .toggle-icon {
-          font-size: 20px;
+          font-size: 16px;
           color: #6b7280;
           transition: transform 0.3s;
         }
@@ -872,17 +879,25 @@
           display: flex;
           flex-direction: column;
           gap: 0;
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
+        }
+
+        .payment-balances.expanded {
+          max-height: 1000px;
+          margin-top: 10px;
         }
 
         .pm-group-label {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.7px;
           color: #9ca3af;
-          padding: 8px 0 4px;
+          padding: 6px 0 3px;
           border-top: 1px solid #f3f4f6;
-          margin-top: 4px;
+          margin-top: 3px;
         }
 
         .pm-group-label:first-child {
@@ -894,8 +909,8 @@
         .payment-item {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 8px 0;
+          gap: 8px;
+          padding: 6px 0;
           border-bottom: 1px solid #f9fafb;
           background: none;
           border-radius: 0;
@@ -907,14 +922,14 @@
         .payment-item:last-child { border-bottom: none; }
 
         .pm-icon {
-          width: 34px;
-          height: 34px;
+          width: 30px;
+          height: 30px;
           border-radius: var(--radius-sm);
           background: var(--color-primary-light);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 15px;
+          font-size: 14px;
           flex-shrink: 0;
         }
 
@@ -927,11 +942,11 @@
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
 
         .payment-label {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           color: #111827;
           white-space: nowrap;
@@ -941,7 +956,7 @@
         }
 
         .payment-value {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 800;
           white-space: nowrap;
           flex-shrink: 0;
@@ -952,7 +967,7 @@
         .payment-value.zero     { color: var(--color-text-muted); }
 
         .pm-bar-track {
-          height: 4px;
+          height: 3px;
           border-radius: 999px;
           background: #f3f4f6;
           overflow: hidden;
@@ -1061,22 +1076,13 @@
           background-clip: padding-box;
           position: relative;
           box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         @media (max-width: 400px) {
           .amount-input-wrapper {
             padding: 8px 10px;
             gap: 5px;
-          }
-        }
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        @media (max-width: 400px) {
-          .amount-input-wrapper {
-            padding: 10px 12px;
-            border-radius: 8px;
-            gap: 6px;
           }
         }
         
@@ -1203,6 +1209,168 @@
         .description-input::placeholder { 
           color: #9ca3af;
           font-weight: 400;
+        }
+        
+        /* ── Expense Type Dropdown ── */
+        .expense-type-dropdown {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          color: #1f2937;
+          background: white;
+          font-family: 'Inter', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 36px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 400px) {
+          .expense-type-dropdown {
+            padding: 10px 14px;
+            padding-right: 34px;
+            font-size: 14px;
+            border-radius: 10px;
+          }
+        }
+
+        .expense-type-dropdown:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .expense-type-dropdown:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        @media (hover: none) {
+          .expense-type-dropdown:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        .expense-type-dropdown option {
+          padding: 10px;
+          font-weight: 600;
+        }
+        
+        /* ── Category Dropdown ── */
+        .category-dropdown {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          color: #1f2937;
+          background: white;
+          font-family: 'Inter', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 36px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 400px) {
+          .category-dropdown {
+            padding: 10px 14px;
+            padding-right: 34px;
+            font-size: 14px;
+            border-radius: 10px;
+          }
+        }
+
+        .category-dropdown:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .category-dropdown:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        @media (hover: none) {
+          .category-dropdown:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        .category-dropdown option {
+          padding: 10px;
+          font-weight: 600;
+        }
+        
+        /* ── Payment Dropdown ── */
+        .payment-dropdown {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          color: #1f2937;
+          background: white;
+          font-family: 'Inter', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 36px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 400px) {
+          .payment-dropdown {
+            padding: 10px 14px;
+            padding-right: 34px;
+            font-size: 14px;
+            border-radius: 10px;
+          }
+        }
+
+        .payment-dropdown:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .payment-dropdown:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        @media (hover: none) {
+          .payment-dropdown:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        .payment-dropdown option {
+          padding: 10px;
+          font-weight: 600;
         }
         
         /* ── Field Labels ── */
@@ -3081,6 +3249,8 @@
         </div>
         <div class="app-tabs">
             <button class="app-tab active" id="financeTab">Finance</button>
+            <button class="app-tab" id="budgetTab">Budget</button>
+            <button class="app-tab" id="transactionsTab">Transactions</button>
             <button class="app-tab" id="habitTab">Habits</button>
         </div>
         <button class="profile-btn" id="profileBtn" aria-label="Settings">
@@ -3091,8 +3261,78 @@
         </button>
     </div>
 
-    <div class="tab-content-section" id="financeContent">
+    <div class="tab-content-section active" id="financeContent">
 
+        <div class="balance-summary-wrapper" id="balanceSummaryWrapper">
+            <div class="balance-title">Income & Expense</div>
+            <div class="balance-summary" id="balanceSummary">
+                <div class="balance-item income">
+                    <div class="balance-label">Income</div>
+                    <div class="balance-value" id="totalIncome">₹0</div>
+                </div>
+                <div class="balance-item expense">
+                    <div class="balance-label">Expense</div>
+                    <div class="balance-value" id="totalExpense">₹0</div>
+                    <div class="expense-ratio" id="expenseRatio"></div>
+                </div>
+            </div>
+            <!-- Visual comparison bar -->
+            <div class="balance-ratio-bar" id="balanceRatioBar" style="display:none;">
+                <div class="ratio-bar-income" id="ratioBarIncome"></div>
+                <div class="ratio-bar-expense" id="ratioBarExpense"></div>
+            </div>
+            <div class="net-balance-banner" id="netBalanceBanner"></div>
+        </div>
+
+        <div class="payment-balances-wrapper" id="paymentBalancesWrapper">
+            <div class="payment-header" id="paymentHeader" onclick="togglePaymentMethods()">
+                <div class="payment-title">Payment Methods</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="payment-summary" id="paymentSummary"></span>
+                    <span class="toggle-icon" id="paymentToggleIcon">▼</span>
+                </div>
+            </div>
+            <div class="payment-balances" id="paymentBalances"></div>
+        </div>
+
+        <!-- Insights -->
+        <div class="insights-wrapper" id="insightsWrapper">
+            <div class="insights-header">
+                <span class="insights-title">Insights</span>
+                <span class="insights-period" id="insightsPeriod"></span>
+            </div>
+            <div class="insights-list" id="insightsList"></div>
+        </div>
+
+        <div class="quick-track-header" style="display:none;">
+            <button class="type-btn income" id="incomeBtn">
+                <span class="icon">↓</span>
+                <span>Income</span>
+            </button>
+            <button class="type-btn transfer" id="transferBtn">
+                <span class="icon">⇄</span>
+                <span>Move Money</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Budget Tab -->
+    <div class="tab-content-section" id="budgetContent">
+        
+        <div class="envelope-budget">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0;">Envelope Budget vs Actual</h3>
+            </div>
+            
+            <div id="envelopeBudgetList">
+                <!-- Dynamic envelope budget items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Tab -->
+    <div class="tab-content-section" id="transactionsContent">
+        
         <!-- Need, Want, Save Summary -->
         <div class="nws-bar" style="margin-bottom: 10px;">
             <div class="nws-item nws-need" onclick="DrillDown.openNWS('need')" style="cursor:pointer;">
@@ -3117,62 +3357,6 @@
                 <span class="nws-pct" id="savePct">0%</span>
                 <span class="nws-amt" id="saveTotalTop">₹0</span>
                 <div class="nws-track"><div class="nws-fill nws-fill-save" id="saveBar"></div></div>
-            </div>
-        </div>
-
-        <div class="balance-summary-wrapper" id="balanceSummaryWrapper">
-            <div class="balance-title">Income & Expense</div>
-            <div class="balance-summary" id="balanceSummary">
-                <div class="balance-item income">
-                    <div class="balance-label">Income</div>
-                    <div class="balance-value" id="totalIncome">₹0</div>
-                </div>
-                <div class="balance-item expense">
-                    <div class="balance-label">Expense</div>
-                    <div class="balance-value" id="totalExpense">₹0</div>
-                    <div class="expense-ratio" id="expenseRatio"></div>
-                </div>
-            </div>
-            <!-- Visual comparison bar -->
-            <div class="balance-ratio-bar" id="balanceRatioBar" style="display:none;">
-                <div class="ratio-bar-income" id="ratioBarIncome"></div>
-                <div class="ratio-bar-expense" id="ratioBarExpense"></div>
-            </div>
-            <div class="net-balance-banner" id="netBalanceBanner"></div>
-        </div>
-
-        <div class="payment-balances-wrapper" id="paymentBalancesWrapper">
-            <div class="payment-title">Payment Methods</div>
-            <div class="payment-balances" id="paymentBalances"></div>
-        </div>
-
-        <!-- Insights -->
-        <div class="insights-wrapper" id="insightsWrapper">
-            <div class="insights-header">
-                <span class="insights-title">Insights</span>
-                <span class="insights-period" id="insightsPeriod"></span>
-            </div>
-            <div class="insights-list" id="insightsList"></div>
-        </div>
-
-        <div class="quick-track-header" style="display:none;">
-            <button class="type-btn income" id="incomeBtn">
-                <span class="icon">↓</span>
-                <span>Income</span>
-            </button>
-            <button class="type-btn transfer" id="transferBtn">
-                <span class="icon">⇄</span>
-                <span>Move Money</span>
-            </button>
-        </div>
-
-        <div class="envelope-budget">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="margin: 0;">Envelope Budget vs Actual</h3>
-            </div>
-            
-            <div id="envelopeBudgetList">
-                <!-- Dynamic envelope budget items will be inserted here -->
             </div>
         </div>
 
@@ -4406,12 +4590,14 @@
 
     function updatePaymentBalances() {
       const container = document.getElementById('paymentBalances');
+      const summaryEl = document.getElementById('paymentSummary');
       if (!container) return;
       const selectedMonth = monthSelect.value;
       const selectedYear  = yearSelect.value;
 
       if (paymentMethods.length === 0) {
         container.innerHTML = '<div style="padding:16px 0;text-align:center;color:#9ca3af;font-size:13px;">No payment methods added yet.</div>';
+        if (summaryEl) summaryEl.textContent = '';
         return;
       }
 
@@ -4444,6 +4630,18 @@
         });
         return { method, balance, usage };
       });
+
+      // Calculate total balance for summary
+      const totalBalance = stats.reduce((sum, s) => sum + s.balance, 0);
+      const positiveCount = stats.filter(s => s.balance > 0).length;
+      const negativeCount = stats.filter(s => s.balance < 0).length;
+      
+      // Update summary
+      if (summaryEl) {
+        const sign = totalBalance >= 0 ? '+' : '';
+        const color = totalBalance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+        summaryEl.innerHTML = `<span style="color: ${color}">${sign}₹${Math.abs(totalBalance).toLocaleString('en-IN')}</span>`;
+      }
 
       // Infer group from name
       function inferGroup(name) {
@@ -4502,6 +4700,21 @@
     function updateRecentTransactions() { RecentTransactions.update(); }
 
     let recentTxVisibleCount = 10; // kept for any legacy references
+
+    function togglePaymentMethods() {
+      const container = document.getElementById('paymentBalances');
+      const icon = document.getElementById('paymentToggleIcon');
+      if (!container || !icon) return;
+      
+      const isExpanded = container.classList.contains('expanded');
+      if (isExpanded) {
+        container.classList.remove('expanded');
+        icon.classList.add('collapsed');
+      } else {
+        container.classList.add('expanded');
+        icon.classList.remove('collapsed');
+      }
+    }
 
     function updateEnvelopeBudget() { EnvelopeBudget.update(); }
 
@@ -4735,31 +4948,69 @@
     // Envelope quick actions (long-press / swipe-left context menu)
     if (typeof EnvelopeActions !== 'undefined') EnvelopeActions.init();
 
-    // ── Finance / Habit tab switching ─────────────────────────────
-    const financeTab       = document.getElementById('financeTab');
-    const habitTab         = document.getElementById('habitTab');
-    const financeContent   = document.getElementById('financeContent');
-    const habitContent     = document.getElementById('habitContent');
-    const bottomNav        = document.querySelector('.bottom-nav');
+    // ── Finance / Budget / Transactions / Habit tab switching ─────────────
+    const financeTab          = document.getElementById('financeTab');
+    const budgetTab           = document.getElementById('budgetTab');
+    const transactionsTab     = document.getElementById('transactionsTab');
+    const habitTab            = document.getElementById('habitTab');
+    const financeContent      = document.getElementById('financeContent');
+    const budgetContent       = document.getElementById('budgetContent');
+    const transactionsContent = document.getElementById('transactionsContent');
+    const habitContent        = document.getElementById('habitContent');
+    const bottomNav           = document.querySelector('.bottom-nav');
 
     function switchToFinance() {
-      if (financeTab)       financeTab.classList.add('active');
-      if (habitTab)         habitTab.classList.remove('active');
-      if (financeContent)   financeContent.classList.add('active');
-      if (habitContent)     habitContent.classList.remove('active');
-      if (bottomNav)        bottomNav.style.display = 'block';
+      if (financeTab)          financeTab.classList.add('active');
+      if (budgetTab)           budgetTab.classList.remove('active');
+      if (transactionsTab)     transactionsTab.classList.remove('active');
+      if (habitTab)            habitTab.classList.remove('active');
+      if (financeContent)      financeContent.classList.add('active');
+      if (budgetContent)       budgetContent.classList.remove('active');
+      if (transactionsContent) transactionsContent.classList.remove('active');
+      if (habitContent)        habitContent.classList.remove('active');
+      if (bottomNav)           bottomNav.style.display = 'block';
+    }
+
+    function switchToBudget() {
+      if (budgetTab)           budgetTab.classList.add('active');
+      if (financeTab)          financeTab.classList.remove('active');
+      if (transactionsTab)     transactionsTab.classList.remove('active');
+      if (habitTab)            habitTab.classList.remove('active');
+      if (budgetContent)       budgetContent.classList.add('active');
+      if (financeContent)      financeContent.classList.remove('active');
+      if (transactionsContent) transactionsContent.classList.remove('active');
+      if (habitContent)        habitContent.classList.remove('active');
+      if (bottomNav)           bottomNav.style.display = 'block';
+    }
+
+    function switchToTransactions() {
+      if (transactionsTab)     transactionsTab.classList.add('active');
+      if (financeTab)          financeTab.classList.remove('active');
+      if (budgetTab)           budgetTab.classList.remove('active');
+      if (habitTab)            habitTab.classList.remove('active');
+      if (transactionsContent) transactionsContent.classList.add('active');
+      if (financeContent)      financeContent.classList.remove('active');
+      if (budgetContent)       budgetContent.classList.remove('active');
+      if (habitContent)        habitContent.classList.remove('active');
+      if (bottomNav)           bottomNav.style.display = 'block';
     }
 
     function switchToHabit() {
-      if (habitTab)         habitTab.classList.add('active');
-      if (financeTab)       financeTab.classList.remove('active');
-      if (habitContent)     habitContent.classList.add('active');
-      if (financeContent)   financeContent.classList.remove('active');
-      if (bottomNav)        bottomNav.style.display = 'none';
+      if (habitTab)            habitTab.classList.add('active');
+      if (financeTab)          financeTab.classList.remove('active');
+      if (budgetTab)           budgetTab.classList.remove('active');
+      if (transactionsTab)     transactionsTab.classList.remove('active');
+      if (habitContent)        habitContent.classList.add('active');
+      if (financeContent)      financeContent.classList.remove('active');
+      if (budgetContent)       budgetContent.classList.remove('active');
+      if (transactionsContent) transactionsContent.classList.remove('active');
+      if (bottomNav)           bottomNav.style.display = 'none';
     }
 
-    if (financeTab) financeTab.addEventListener('click', switchToFinance);
-    if (habitTab)   habitTab.addEventListener('click', switchToHabit);
+    if (financeTab)      financeTab.addEventListener('click', switchToFinance);
+    if (budgetTab)       budgetTab.addEventListener('click', switchToBudget);
+    if (transactionsTab) transactionsTab.addEventListener('click', switchToTransactions);
+    if (habitTab)        habitTab.addEventListener('click', switchToHabit);
 
     // Start on Finance tab
     switchToFinance();

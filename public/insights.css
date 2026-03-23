@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-md) 0;
+  padding: 12px 14px 0;
 }
 
 .insights-title {
@@ -29,27 +29,27 @@
 }
 
 .insights-list {
-  padding: 8px 0 6px;
+  padding: 6px 0 4px;
 }
 
 .insight-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 10px var(--space-md);
+  gap: 10px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--color-border-light);
 }
 
 .insight-item:last-child { border-bottom: none; }
 
 .insight-icon {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -62,7 +62,7 @@
 .insight-body { flex: 1; min-width: 0; }
 
 .insight-text {
-  font-size: var(--font-sm);
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-text);
   line-height: 1.4;
@@ -74,15 +74,15 @@
 }
 
 .insight-sub {
-  font-size: var(--font-xs);
+  font-size: 10px;
   color: var(--color-text-muted);
   margin-top: 2px;
   font-weight: 500;
 }
 
 .insights-empty {
-  padding: 20px var(--space-md);
+  padding: 16px 14px;
   text-align: center;
-  font-size: var(--font-sm);
+  font-size: 12px;
   color: var(--color-text-muted);
 }

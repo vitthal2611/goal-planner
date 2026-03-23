@@ -64,15 +64,17 @@
     return '💰';
   }
 
-  function pmChipsHTML(methods, rowId) {
-    return methods.map(m => {
-      const isSelected = m === lastPaymentMethod ? 'selected' : '';
-      return `
-      <button type="button" class="ebs-chip ${isSelected}" data-method="${m}" data-row="${rowId}"
-              onclick="EnvelopeBottomSheet._selectChip(this,'${rowId}')">
-        <span class="ebs-chip-icon">${getPaymentIcon(m)}</span> ${m}
-      </button>`;
-    }).join('');
+  function pmDropdownHTML(methods, id, label = 'Payment Method') {
+    const selected = lastPaymentMethod || '';
+    return `
+      <select class="ebs-dropdown" id="${id}" name="${id}">
+        <option value="">Select ${label.toLowerCase()}...</option>
+        ${methods.map(m => {
+          const icon = getPaymentIcon(m);
+          const isSelected = m === selected ? 'selected' : '';
+          return `<option value="${m}" ${isSelected}>${icon} ${m}</option>`;
+        }).join('')}
+      </select>`;
   }
 
   function quickAmountHTML() {
@@ -161,7 +163,7 @@
     const envelopes = typeof window.envelopes !== 'undefined' ? window.envelopes
                     : (() => { try { return JSON.parse(localStorage.getItem('envelopes') || '[]'); } catch { return []; } })();
 
-    const envSection = envelopeName
+    const envHeader = envelopeName
       ? `<div class="ebs-type-header ebs-type-expense">
            <span>${getEnvelopeIcon(envelopeName)}</span><span>${envelopeName}</span>
            <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
@@ -171,26 +173,22 @@
            <button class="ebs-close-btn" onclick="EnvelopeBottomSheet.close()" aria-label="Close">×</button>
          </div>`;
 
-    const envChips = !envelopeName
+    const envDropdownSection = !envelopeName
       ? `<div class="ebs-section">
            <label class="ebs-section-label">Category</label>
-           <div class="ebs-chip-row" id="ebsEnvRow">
+           <select class="ebs-dropdown" id="ebsEnvDropdown" name="ebsEnvDropdown">
+             <option value="">Select category...</option>
              ${envelopes.map(e => {
                const categoryIcons = { need: '🧠', want: '🎯', save: '💰' };
-               return `
-               <button type="button" class="ebs-chip" data-method="${e.name}" data-category="${e.category}"
-                 onclick="EnvelopeBottomSheet._selectChip(this,'ebsEnvRow');EnvelopeBottomSheet._setEnv(this.dataset.method)">
-                 <span class="ebs-chip-icon">${getEnvelopeIcon(e.name)}</span> 
-                 <span>${e.name}</span>
-                 <span style="font-size: 10px; opacity: 0.7;">${categoryIcons[e.category]}</span>
-               </button>`;
+               const icon = getEnvelopeIcon(e.name);
+               return `<option value="${e.name}" data-category="${e.category}">${icon} ${e.name} ${categoryIcons[e.category]}</option>`;
              }).join('')}
-           </div>
+           </select>
          </div>`
       : '';
 
     sheetContent.innerHTML = `
-      ${envSection}
+      ${envHeader}
       <div class="ebs-body">
         <div class="ebs-amount-section">
           <div class="ebs-amount-hero">
@@ -201,11 +199,11 @@
           ${quickAmountHTML()}
         </div>
 
-        ${envChips}
+        ${envDropdownSection}
 
         <div class="ebs-section">
           <label class="ebs-section-label">Payment Method</label>
-          <div class="ebs-chip-row" id="ebsPMRow">${pmChipsHTML(methods, 'ebsPMRow')}</div>
+          ${pmDropdownHTML(methods, 'ebsPMDropdown', 'Payment Method')}
         </div>
 
         <div class="ebs-section">
@@ -224,6 +222,19 @@
         <button type="button" class="ebs-submit-btn ebs-submit-expense" id="ebsSubmitBtn" 
                 onclick="EnvelopeBottomSheet._submit()">Add Expense</button>
       </div>`;
+    
+    // Add category dropdown listener
+    const envDropdown = el('ebsEnvDropdown');
+    if (envDropdown) {
+      envDropdown.addEventListener('change', (e) => {
+        currentEnvelope = e.target.value;
+      });
+      // Set initial value if preselected
+      if (envelopeName) {
+        envDropdown.value = envelopeName;
+        currentEnvelope = envelopeName;
+      }
+    }
     
     focusAmount();
   }
@@ -252,7 +263,7 @@
 
         <div class="ebs-section">
           <label class="ebs-section-label">Received In</label>
-          <div class="ebs-chip-row" id="ebsPMRow">${pmChipsHTML(methods, 'ebsPMRow')}</div>
+          ${pmDropdownHTML(methods, 'ebsPMDropdown', 'Account')}
         </div>
 
         <div class="ebs-section">
@@ -301,14 +312,14 @@
 
         <div class="ebs-section">
           <label class="ebs-section-label">From Account</label>
-          <div class="ebs-chip-row" id="ebsFromRow">${pmChipsHTML(methods, 'ebsFromRow')}</div>
+          ${pmDropdownHTML(methods, 'ebsFromDropdown', 'Account')}
         </div>
 
         <div class="ebs-transfer-arrow">↓</div>
 
         <div class="ebs-section">
           <label class="ebs-section-label">To Account</label>
-          <div class="ebs-chip-row" id="ebsToRow">${pmChipsHTML(methods, 'ebsToRow')}</div>
+          ${pmDropdownHTML(methods, 'ebsToDropdown', 'Account')}
         </div>
 
         <div class="ebs-section">
@@ -390,8 +401,9 @@
       let tx;
 
       if (currentType === 'income') {
-        const pmBtn = sheetContent.querySelector('#ebsPMRow .ebs-chip.selected');
-        if (!pmBtn) {
+        const pmDropdown = el('ebsPMDropdown');
+        const payment = pmDropdown ? pmDropdown.value : '';
+        if (!payment) {
           if (typeof showToast === 'function') showToast('Please select a payment method', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Income'; }
           return;
@@ -401,7 +413,7 @@
           type: 'income',
           amount: parseFloat(amount).toFixed(2),
           description: note || 'Income',
-          payment: pmBtn.dataset.method,
+          payment: payment,
           date: new Date(dateVal).toISOString(),
         };
         const msg = editingTransaction 
@@ -410,19 +422,22 @@
         _saveAndRefresh(tx, msg);
 
       } else if (currentType === 'transfer') {
-        const fromBtn = sheetContent.querySelector('#ebsFromRow .ebs-chip.selected');
-        const toBtn   = sheetContent.querySelector('#ebsToRow .ebs-chip.selected');
-        if (!fromBtn) {
+        const fromDropdown = el('ebsFromDropdown');
+        const toDropdown = el('ebsToDropdown');
+        const fromAccount = fromDropdown ? fromDropdown.value : '';
+        const toAccount = toDropdown ? toDropdown.value : '';
+        
+        if (!fromAccount) {
           if (typeof showToast === 'function') showToast('Select source account', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Move Money'; }
           return;
         }
-        if (!toBtn) {
+        if (!toAccount) {
           if (typeof showToast === 'function') showToast('Select destination account', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Move Money'; }
           return;
         }
-        if (fromBtn.dataset.method === toBtn.dataset.method) {
+        if (fromAccount === toAccount) {
           if (typeof showToast === 'function') showToast('Cannot transfer to the same account', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Move Money'; }
           return;
@@ -431,19 +446,21 @@
           id: editingTransaction ? editingTransaction.id : `TRF-${Date.now()}`,
           type: 'transfer',
           amount: parseFloat(amount).toFixed(2),
-          description: note || `Transfer from ${fromBtn.dataset.method} to ${toBtn.dataset.method}`,
-          from: fromBtn.dataset.method,
-          to: toBtn.dataset.method,
+          description: note || `Transfer from ${fromAccount} to ${toAccount}`,
+          from: fromAccount,
+          to: toAccount,
           date: new Date(dateVal).toISOString(),
         };
         const msg = editingTransaction 
           ? `✅ Transfer updated` 
-          : `✅ Moved ₹${amount.toLocaleString('en-IN')} → ${toBtn.dataset.method}`;
+          : `✅ Moved ₹${amount.toLocaleString('en-IN')} → ${toAccount}`;
         _saveAndRefresh(tx, msg);
 
       } else {
         // expense
-        const pmBtn  = sheetContent.querySelector('#ebsPMRow .ebs-chip.selected');
+        const pmDropdown = el('ebsPMDropdown');
+        const payment = pmDropdown ? pmDropdown.value : '';
+        
         if (!currentEnvelope) {
           if (typeof showToast === 'function') showToast('Please select a category', 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Expense'; }
@@ -455,7 +472,7 @@
           amount: parseFloat(amount).toFixed(2),
           description: note || currentEnvelope,
           envelope: currentEnvelope,
-          payment: pmBtn ? pmBtn.dataset.method : '',
+          payment: payment,
           date: new Date(dateVal).toISOString(),
         };
         const msg = editingTransaction 

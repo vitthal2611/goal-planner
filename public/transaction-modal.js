@@ -104,28 +104,23 @@
   function getSelectedValue(container) {
     if (!container) return '';
     if (container.tagName === 'INPUT' && container.type === 'hidden') return container.value || '';
+    if (container.tagName === 'SELECT') return container.value || '';
     const sel = container.querySelector('.visual-option.selected, .pm-chip.selected');
     return sel ? sel.dataset.value : '';
   }
 
-  function createPaymentChips(container, methods, selectedValue = '', onSelect = null) {
+  function createPaymentDropdown(dropdown, methods, selectedValue = '') {
     methods.forEach(method => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'pm-chip';
-      btn.dataset.value = method;
+      const option = document.createElement('option');
+      option.value = method;
       const balance = getPaymentMethodBalance(method);
       const balanceText = balance >= 0
         ? `₹${balance.toLocaleString('en-IN')}`
         : `-₹${Math.abs(balance).toLocaleString('en-IN')}`;
-      const balanceColor = balance >= 0 ? '#10b981' : '#ef4444';
-      btn.innerHTML = `
-        <span class="pm-chip-icon">${getPaymentIcon(method)}</span>
-        <span style="flex:1;">${method}</span>
-        <span style="font-size:11px;font-weight:700;color:${balanceColor};">${balanceText}</span>`;
-      btn.onclick = () => { selectVisualOption(container, method); if (onSelect) onSelect(method); };
-      if (method === selectedValue) btn.classList.add('selected');
-      container.appendChild(btn);
+      const icon = getPaymentIcon(method);
+      option.textContent = `${icon} ${method} (${balanceText})`;
+      if (method === selectedValue) option.selected = true;
+      dropdown.appendChild(option);
     });
   }
 
@@ -291,15 +286,24 @@
         </div>
         <div class="form-group">
           <label class="form-label">Category</label>
-          <div class="visual-selector" data-field="envelope" id="envelope-selector-${index}"></div>
+          <select class="category-dropdown" data-field="envelope" name="expense-category-${index}" id="expense-category-${index}">
+            <option value="">Select category...</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">Payment Method</label>
-          <div class="pm-chips" data-field="payment"></div>
+          <select class="payment-dropdown" data-field="payment" name="expense-payment-${index}" id="expense-payment-${index}">
+            <option value="">Select payment method...</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">Type</label>
-          <div class="visual-selector expense-type-selector" data-field="expenseType"></div>
+          <select class="expense-type-dropdown" data-field="expenseType" name="expense-type-${index}" id="expense-type-${index}">
+            <option value="">Select type...</option>
+            <option value="need">🎯 Need</option>
+            <option value="want">🎉 Want</option>
+            <option value="save">💰 Save</option>
+          </select>
         </div>
       </div>`;
     return entry;
@@ -326,7 +330,9 @@
         </div>
         <div class="form-group">
           <label class="form-label">Payment Method</label>
-          <div class="pm-chips" id="incomePaymentSelector"></div>
+          <select class="payment-dropdown" id="incomePaymentSelector" name="income-payment">
+            <option value="">Select payment method...</option>
+          </select>
         </div>`;
     } else if (type === 'transfer') {
       entry.innerHTML = `
@@ -346,14 +352,18 @@
         </div>
         <div class="form-group">
           <label class="form-label">From Account</label>
-          <div class="pm-chips" id="transferFromSelector"></div>
+          <select class="payment-dropdown" id="transferFromSelector" name="transfer-from">
+            <option value="">Select account...</option>
+          </select>
         </div>
         <div style="display:flex;justify-content:center;margin:8px 0;">
           <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;padding:6px 14px;border-radius:16px;font-size:16px;font-weight:700;box-shadow:0 2px 8px rgba(59,130,246,0.3);">↓</div>
         </div>
         <div class="form-group">
           <label class="form-label">To Account</label>
-          <div class="pm-chips" id="transferToSelector"></div>
+          <select class="payment-dropdown" id="transferToSelector" name="transfer-to">
+            <option value="">Select account...</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">Note (optional)</label>
@@ -393,33 +403,29 @@
     const entry = createExpenseEntry(expenseEntryCount, preselectedEnvelope);
     expenseEntriesContainer.appendChild(entry);
 
-    if (preselectedEnvelope) {
-      const envelopeContainer = entry.querySelector(`#envelope-selector-${expenseEntryCount}`);
-      if (envelopeContainer) {
-        const icon = getEnvelopeIcon(preselectedEnvelope);
-        envelopeContainer.outerHTML = `
-          <div>
-            <div style="padding:14px 16px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #3b82f6;border-radius:12px;font-size:15px;font-weight:700;color:#1e40af;display:flex;align-items:center;gap:8px;">
-              <span>${icon}</span><span>${preselectedEnvelope}</span>
-            </div>
-            <input type="hidden" data-field="envelope" value="${preselectedEnvelope}" />
-          </div>`;
-      }
+    // Populate category dropdown
+    const envelopeDropdown = entry.querySelector('[data-field="envelope"]');
+    if (envelopeDropdown && envelopeDropdown.tagName === 'SELECT') {
+      const envelopeList = typeof envelopes !== 'undefined' ? envelopes : [];
+      envelopeList.forEach(env => {
+        const option = document.createElement('option');
+        option.value = env.name || env;
+        const icon = getEnvelopeIcon(env.name || env);
+        option.textContent = `${icon} ${env.name || env}`;
+        if (preselectedEnvelope && (env.name === preselectedEnvelope || env === preselectedEnvelope)) {
+          option.selected = true;
+        } else if (previousEnvelope && (env.name === previousEnvelope || env === previousEnvelope)) {
+          option.selected = true;
+        }
+        envelopeDropdown.appendChild(option);
+      });
     }
 
-    const envelopeContainer = entry.querySelector('[data-field="envelope"]');
-    const paymentContainer  = entry.querySelector('[data-field="payment"]');
-    if (envelopeContainer && envelopeContainer.classList.contains('visual-selector')) {
-      createVisualOptions(envelopeContainer, typeof envelopes !== 'undefined' ? envelopes : [], previousEnvelope, getEnvelopeIcon);
+    // Populate payment dropdown
+    const paymentDropdown = entry.querySelector('[data-field="payment"]');
+    if (paymentDropdown && paymentDropdown.tagName === 'SELECT') {
+      createPaymentDropdown(paymentDropdown, typeof paymentMethods !== 'undefined' ? paymentMethods : [], previousPayment);
     }
-    createPaymentChips(paymentContainer, typeof paymentMethods !== 'undefined' ? paymentMethods : [], previousPayment);
-
-    const expenseTypeContainer = entry.querySelector('[data-field="expenseType"]');
-    createVisualOptions(expenseTypeContainer, [
-      { value: 'need', label: 'Need', icon: '🎯' },
-      { value: 'want', label: 'Want', icon: '🎉' },
-      { value: 'save', label: 'Save', icon: '💰' },
-    ]);
 
     expenseEntryCount++;
     focusAmountInput(entry, '[data-field="amount"]');
@@ -439,7 +445,10 @@
       addAnotherExpenseBtn.style.display = 'none';
       const entry = createSingleEntry('income');
       expenseEntriesContainer.appendChild(entry);
-      createPaymentChips(entry.querySelector('#incomePaymentSelector'), typeof paymentMethods !== 'undefined' ? paymentMethods : []);
+      const incomePaymentDropdown = entry.querySelector('#incomePaymentSelector');
+      if (incomePaymentDropdown && incomePaymentDropdown.tagName === 'SELECT') {
+        createPaymentDropdown(incomePaymentDropdown, typeof paymentMethods !== 'undefined' ? paymentMethods : []);
+      }
       focusAmountInput(entry);
 
     } else if (type === 'transfer') {
@@ -451,23 +460,35 @@
       const toContainer   = entry.querySelector('#transferToSelector');
       const methods = typeof paymentMethods !== 'undefined' ? paymentMethods : [];
 
-      function updateTransferFlow() {
-        const from = getSelectedValue(fromContainer);
-        const to   = getSelectedValue(toContainer);
-        if (from && to && from === to) {
-          const toBtn = toContainer.querySelector('.pm-chip.selected');
-          if (toBtn) toBtn.classList.remove('selected');
-        }
+      if (fromContainer && fromContainer.tagName === 'SELECT') {
+        createPaymentDropdown(fromContainer, methods);
       }
-      createPaymentChips(fromContainer, methods, '', updateTransferFlow);
-      createPaymentChips(toContainer, methods, '', (method) => {
-        const from = getSelectedValue(fromContainer);
-        if (from && from === method) {
-          showToast('⚠️ Cannot select the same account', 'error');
-          const toBtn = toContainer.querySelector('.pm-chip.selected');
-          if (toBtn) toBtn.classList.remove('selected');
-        }
-      });
+      if (toContainer && toContainer.tagName === 'SELECT') {
+        createPaymentDropdown(toContainer, methods);
+      }
+      
+      // Add change listeners to prevent same account selection
+      if (fromContainer) {
+        fromContainer.addEventListener('change', () => {
+          const from = fromContainer.value;
+          const to = toContainer.value;
+          if (from && to && from === to) {
+            toContainer.value = '';
+            showToast('⚠️ Cannot select the same account', 'error');
+          }
+        });
+      }
+      if (toContainer) {
+        toContainer.addEventListener('change', () => {
+          const from = fromContainer.value;
+          const to = toContainer.value;
+          if (from && to && from === to) {
+            toContainer.value = '';
+            showToast('⚠️ Cannot select the same account', 'error');
+          }
+        });
+      }
+      
       focusAmountInput(entry);
 
     } else {

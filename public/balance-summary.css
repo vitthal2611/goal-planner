@@ -2,7 +2,7 @@
 
 .balance-summary-wrapper {
   background: var(--color-surface);
-  padding: var(--space-md);
+  padding: 12px 14px;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   margin-bottom: 10px;
@@ -14,17 +14,17 @@
   color: var(--color-text);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .balance-summary {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .balance-item {
-  padding: 14px 12px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   text-align: center;
   background: var(--color-bg);
@@ -32,38 +32,39 @@
 }
 
 .balance-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .balance-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--color-text);
+  line-height: 1;
 }
 
 .balance-item.income .balance-value { color: var(--color-success); }
 .balance-item.expense .balance-value { color: var(--color-danger); }
 
 .expense-ratio {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-danger);
   margin-top: 4px;
   opacity: 0.8;
-  min-height: 14px;
+  min-height: 12px;
 }
 
 .balance-ratio-bar {
   display: flex;
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 12px;
+  margin-top: 8px;
   background: var(--color-border-light);
 }
 
@@ -80,124 +81,3 @@
   border-radius: 0 999px 999px 0;
   transition: width 0.4s ease;
 }
-
-.net-balance-banner {
-  margin-top: 12px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.net-balance-banner:empty { display: none; }
-
-.net-card {
-  padding: 16px;
-  border-radius: var(--radius-md);
-  border: 1.5px solid transparent;
-}
-
-.net-card.positive {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-color: var(--color-success-mid);
-  color: #065f46;
-}
-
-.net-card.negative {
-  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-  border-color: var(--color-danger-mid);
-  color: #9f1239;
-}
-
-.net-card.neutral {
-  background: var(--color-bg);
-  border-color: var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.net-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.net-card-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  opacity: 0.7;
-}
-
-.net-card-mom {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.6);
-  border: 1px solid rgba(0,0,0,0.06);
-  white-space: nowrap;
-}
-
-.net-card-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.net-card-trend { font-size: 20px; line-height: 1; }
-
-.net-card-amount {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -1.5px;
-  line-height: 1;
-}
-
-.net-card-goal { margin-top: 2px; }
-
-.net-card-goal-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.net-card-goal-label {
-  font-size: 11px;
-  font-weight: 600;
-  opacity: 0.75;
-}
-
-.net-card-goal-edit {
-  font-size: 11px;
-  font-weight: 600;
-  opacity: 0.6;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: none;
-  color: inherit;
-  padding: 0;
-  font-family: inherit;
-}
-
-.net-card-goal-edit:hover { opacity: 1; }
-
-.net-goal-track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.08);
-  overflow: hidden;
-}
-
-.net-goal-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.5s ease;
-  background: currentColor;
-  opacity: 0.6;
-}
-
-.net-goal-fill.over { opacity: 1; }

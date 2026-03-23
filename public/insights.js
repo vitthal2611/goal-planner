@@ -89,21 +89,7 @@
       });
     });
 
-    // 3. Net savings change
-    if (prev.length > 0 && prevNet !== 0) {
-      const chg = pctChange(currNet, prevNet);
-      if (chg !== null && Math.abs(chg) >= 5) {
-        const up = chg > 0;
-        insights.push({
-          icon: up ? '📈' : '📉',
-          type: up ? 'good' : 'danger',
-          text: `Savings ${up ? 'up' : 'down'} <em>${Math.abs(chg)}%</em> from last month`,
-          sub: `${fmt(prevNet)} → ${fmt(currNet)}`,
-        });
-      }
-    }
-
-    // 4. Overspending vs income
+    // 3. Overspending vs income
     if (currIncome > 0 && currTotal > currIncome) {
       const over = currTotal - currIncome;
       insights.push({
@@ -113,7 +99,7 @@
       });
     }
 
-    // 5. Savings rate
+    // 4. Savings rate
     if (currIncome > 0 && currNet > 0) {
       const rate = Math.round((currNet / currIncome) * 100);
       if (rate >= 20) {
@@ -125,7 +111,7 @@
       }
     }
 
-    // 6. Most used payment method (by transaction count)
+    // 5. Most used payment method (by transaction count)
     const pmCount = {};
     currExpenses.forEach(t => {
       if (t.payment) pmCount[t.payment] = (pmCount[t.payment] || 0) + 1;
@@ -139,7 +125,7 @@
       });
     }
 
-    // 7. No transactions yet
+    // 6. No transactions yet
     if (curr.length === 0) {
       return [];
     }

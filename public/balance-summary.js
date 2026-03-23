@@ -38,13 +38,6 @@
 
   // ── Core update ───────────────────────────────────────────────
 
-  function getPrevMonth(selectedMonth, selectedYear) {
-    if (selectedMonth === 'ALL') return null;
-    const [y, m] = selectedMonth.split('-').map(Number);
-    const d = new Date(y, m - 2, 1); // subtract 1 month
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  }
-
   function calcNet(allTx, period, year) {
     const filtered = filterByPeriod(allTx, period, year);
     const income  = filtered.filter(t => t.type === 'income') .reduce((s, t) => s + parseFloat(t.amount || 0), 0);
@@ -63,7 +56,7 @@
     const selectedYear  = yearSelect  ? yearSelect.value  : String(new Date().getFullYear());
 
     const allTx = (typeof transactions !== 'undefined') ? transactions : [];
-    const { income, expense, net } = calcNet(allTx, selectedMonth, selectedYear);
+    const { income, expense } = calcNet(allTx, selectedMonth, selectedYear);
 
     totalIncomeEl.textContent  = `₹${income.toLocaleString('en-IN')}`;
     totalExpenseEl.textContent = `₹${expense.toLocaleString('en-IN')}`;
@@ -90,90 +83,7 @@
       }
     }
 
-    // ── Net savings card ──────────────────────────────────────
-    const banner = el('netBalanceBanner');
-    if (!banner) return;
-
-    if (income === 0 && expense === 0) {
-      banner.innerHTML = '';
-      return;
-    }
-
-    // Month-over-month comparison
-    let momHTML = '';
-    if (selectedMonth !== 'ALL') {
-      const prevPeriod = getPrevMonth(selectedMonth, selectedYear);
-      if (prevPeriod) {
-        const prevYear = prevPeriod.split('-')[0];
-        const { net: prevNet } = calcNet(allTx, prevPeriod, prevYear);
-        if (prevNet !== 0) {
-          const diff = net - prevNet;
-          const pct  = Math.round(Math.abs(diff / prevNet) * 100);
-          const sign = diff >= 0 ? '+' : '-';
-          momHTML = `<span class="net-card-mom">${sign}${pct}% vs last month</span>`;
-        }
-      }
-    }
-
-    // Savings goal
-    const goalKey  = 'savingsGoal';
-    let   goal     = parseFloat(localStorage.getItem(goalKey) || '0');
-    let   goalHTML = '';
-    if (net > 0) {
-      const goalPct  = goal > 0 ? Math.min(Math.round((net / goal) * 100), 100) : 0;
-      const goalFmt  = goal > 0 ? `₹${goal.toLocaleString('en-IN')}` : 'Set goal';
-      const overGoal = goal > 0 && net >= goal;
-      goalHTML = `
-        <div class="net-card-goal">
-          <div class="net-card-goal-row">
-            <span class="net-card-goal-label">
-              ${goal > 0
-                ? (overGoal ? `Goal reached — ₹${goal.toLocaleString('en-IN')}` : `${goalPct}% of ${goalFmt} goal`)
-                : 'No savings goal set'}
-            </span>
-            <button class="net-card-goal-edit" onclick="BalanceSummary.editGoal()">${goal > 0 ? 'Edit' : '+ Set goal'}</button>
-          </div>
-          ${goal > 0 ? `
-          <div class="net-goal-track">
-            <div class="net-goal-fill${overGoal ? ' over' : ''}" style="width:${goalPct}%"></div>
-          </div>` : ''}
-        </div>`;
-    }
-
-    // Render
-    const absNet = Math.abs(net);
-    const fmt    = `₹${absNet.toLocaleString('en-IN')}`;
-    let cls, trend, amount;
-
-    if (net > 0)      { cls = 'positive'; trend = '📈'; amount = `+${fmt}`; }
-    else if (net < 0) { cls = 'negative'; trend = '📉'; amount = `-${fmt}`; }
-    else              { cls = 'neutral';  trend = '➡️'; amount = `₹0`; }
-
-    banner.innerHTML = `
-      <div class="net-card ${cls}">
-        <div class="net-card-top">
-          <span class="net-card-label">Net Savings</span>
-          ${momHTML}
-        </div>
-        <div class="net-card-main">
-          <span class="net-card-trend">${trend}</span>
-          <span class="net-card-amount">${amount}</span>
-        </div>
-        ${goalHTML}
-      </div>`;
-  }
-
-  // ── Edit savings goal ─────────────────────────────────────────
-
-  function editGoal() {
-    const current = localStorage.getItem('savingsGoal') || '';
-    const val = prompt('Set monthly savings goal (₹):', current);
-    if (val === null) return;
-    const num = parseFloat(val.replace(/[^0-9.]/g, ''));
-    if (!isNaN(num) && num >= 0) {
-      localStorage.setItem('savingsGoal', num);
-      update();
-    }
+    // Net savings card removed per user request
   }
 
   // ── Init ─────────────────────────────────────────────────────
@@ -184,6 +94,6 @@
 
   // ── Public API ────────────────────────────────────────────────
 
-  window.BalanceSummary = { update, init, editGoal };
+  window.BalanceSummary = { update, init };
 
 })();
