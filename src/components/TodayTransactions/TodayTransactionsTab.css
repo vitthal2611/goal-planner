@@ -1,0 +1,123 @@
+.today-transactions-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.today-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .today-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.today-summary-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.today-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.today-summary-card.income {
+  background: linear-gradient(135deg, #d1fae5, #ffffff);
+  border-color: var(--color-success);
+}
+
+.today-summary-card.expense {
+  background: linear-gradient(135deg, #fee2e2, #ffffff);
+  border-color: var(--color-danger);
+}
+
+.today-summary-card.net.positive {
+  background: linear-gradient(135deg, #dbeafe, #ffffff);
+  border-color: var(--color-primary);
+}
+
+.today-summary-card.net.negative {
+  background: linear-gradient(135deg, #fef3c7, #ffffff);
+  border-color: var(--color-warning);
+}
+
+.summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.summary-amount {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.transactions-section {
+  background: var(--color-surface);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.transactions-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.transactions-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}

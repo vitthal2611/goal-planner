@@ -1,0 +1,135 @@
+.balance-summary-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.balance-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .balance-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.expense-type-section {
+  background: var(--color-surface);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.expense-type-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .expense-type-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.expense-type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 2px solid;
+  transition: all 0.2s;
+}
+
+.expense-type-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.expense-type-card.need {
+  background: linear-gradient(135deg, #fef3c7, #ffffff);
+  border-color: #f59e0b;
+}
+
+.expense-type-card.want {
+  background: linear-gradient(135deg, #dbeafe, #ffffff);
+  border-color: #3b82f6;
+}
+
+.expense-type-card.save {
+  background: linear-gradient(135deg, #d1fae5, #ffffff);
+  border-color: #10b981;
+}
+
+.expense-type-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.expense-type-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-type-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.expense-type-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.expense-type-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0 auto;
+}

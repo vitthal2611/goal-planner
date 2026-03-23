@@ -1,0 +1,64 @@
+/* Design Tokens - Consistent design system */
+
+:root {
+  /* ── Radius scale ── */
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   20px;
+  --radius-xl:   24px;
+  --radius-pill: 999px;
+
+  /* ── Spacing ── */
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 28px;
+
+  /* ── Elevation ── */
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:   0 8px 28px rgba(0,0,0,0.13);
+
+  /* ── Color System ── */
+  /* Primary: Indigo/Purple */
+  --color-primary:       #4f46e5;
+  --color-primary-dark:  #3730a3;
+  --color-primary-light: #eef2ff;
+  --color-primary-mid:   #c7d2fe;
+
+  /* Success: Green (income) */
+  --color-success:       #059669;
+  --color-success-light: #d1fae5;
+  --color-success-mid:   #6ee7b7;
+
+  /* Danger: Red (expense) */
+  --color-danger:        #dc2626;
+  --color-danger-light:  #fee2e2;
+  --color-danger-mid:    #fca5a5;
+
+  /* Warning: Amber */
+  --color-warning:       #d97706;
+  --color-warning-light: #fef3c7;
+
+  /* Neutral */
+  --color-text:           #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted:     #9ca3af;
+  --color-border:         #e5e7eb;
+  --color-border-light:   #f3f4f6;
+  --color-surface:        #ffffff;
+  --color-bg:             #f1f5f9;
+
+  /* ── Typography scale ── */
+  --text-title:   700 18px/1.2 'Inter', sans-serif;
+  --text-section: 700 11px/1   'Inter', sans-serif;
+  --text-value:   800 20px/1   'Inter', sans-serif;
+
+  --font-xs:   11px;
+  --font-sm:   13px;
+  --font-base: 15px;
+  --font-md:   16px;
+  --font-lg:   18px;
+  --font-xl:   22px;
+}

@@ -1,0 +1,132 @@
+.nws-tab {
+  padding: var(--space-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nws-header {
+  margin-bottom: var(--space-lg);
+}
+
+.nws-title {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.nws-subtitle {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+.nws-summary {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-lg);
+}
+
+.nws-total {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.nws-total-label {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.nws-total-amount {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--color-text);
+}
+
+.nws-bar {
+  display: flex;
+  height: 40px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.nws-bar-segment {
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.nws-bar-segment:hover {
+  opacity: 0.8;
+}
+
+.nws-bar-segment.need {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+.nws-bar-segment.want {
+  background: linear-gradient(135deg, #f43f5e, #fb7185);
+}
+
+.nws-bar-segment.save {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.nws-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.nws-tab .empty-state {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.nws-tab .empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--space-md);
+}
+
+.nws-tab .empty-state h3 {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.nws-tab .empty-state p {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .nws-tab {
+    padding: var(--space-sm);
+  }
+
+  .nws-summary {
+    padding: var(--space-md);
+  }
+
+  .nws-total-amount {
+    font-size: 28px;
+  }
+
+  .nws-bar {
+    height: 32px;
+  }
+
+  .nws-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+}

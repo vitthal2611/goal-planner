@@ -1,0 +1,143 @@
+.habit-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-bg);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.habit-card:hover {
+  background: var(--color-border-light);
+  transform: translateX(4px);
+}
+
+.habit-card.completed {
+  background: var(--color-success-light);
+  border-left-color: var(--color-success);
+}
+
+.habit-check {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 3px solid var(--color-primary);
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.habit-check:hover {
+  transform: scale(1.1);
+}
+
+.habit-check.checked {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.habit-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-name {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.habit-description {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.habit-time {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.habit-streak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-warning);
+  flex-shrink: 0;
+}
+
+.habit-streak-num {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.habit-streak-label {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.habit-delete {
+  padding: var(--space-xs);
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.habit-delete:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+  .habit-card {
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .habit-check {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .habit-name {
+    font-size: var(--font-sm);
+  }
+
+  .habit-streak {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .habit-streak-num {
+    font-size: 20px;
+  }
+}

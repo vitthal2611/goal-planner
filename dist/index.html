@@ -1,18 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Budget Planner - Google Sheets Dashboard">
-  <meta name="theme-color" content="#3b82f6">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/icon-192.png">
-  <title>Budget Planner</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="/assets/index-CWap7iw5.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DdGRVwPy.css">
-</head>
-<body>
-  <div id="root"></div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#667eea" />
+    <title>Bulk Transaction Upload</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDkVbVhmFA301ZERkgNuxzfkjxzmlpe7Uk",
+        authDomain: "goal-planner-b604e.firebaseapp.com",
+        databaseURL: "https://goal-planner-b604e-default-rtdb.firebaseio.com",
+        projectId: "goal-planner-b604e",
+        storageBucket: "goal-planner-b604e.firebasestorage.app",
+        messagingSenderId: "82233624728",
+        appId: "1:82233624728:web:49b5d083a39237d987e8ed",
+        measurementId: "G-ZJRQEGH25W"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
+      
+      // Anonymous auth for testing
+      firebase.auth().signInAnonymously().catch(error => {
+        console.error('Auth error:', error);
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-CqbAEGF7.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BCLHLoHS.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>

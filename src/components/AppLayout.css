@@ -1,0 +1,30 @@
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px;
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 1200px;
+    padding: 16px 20px;
+  }
+}
+
+.app-header-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 6px;
+  position: relative;
+  z-index: 10;
+}
+
+.app-content {
+  animation: fadeIn 0.3s ease;
+}

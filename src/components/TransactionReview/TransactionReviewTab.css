@@ -1,0 +1,100 @@
+.transaction-review-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.review-summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  min-width: 120px;
+}
+
+.summary-stat.income {
+  border-color: var(--color-success-light);
+  background: linear-gradient(135deg, #d1fae5, #ffffff);
+}
+
+.summary-stat.expense {
+  border-color: var(--color-danger-light);
+  background: linear-gradient(135deg, #fee2e2, #ffffff);
+}
+
+.summary-stat.net.positive {
+  border-color: var(--color-primary-light);
+  background: linear-gradient(135deg, #dbeafe, #ffffff);
+}
+
+.summary-stat.net.negative {
+  border-color: var(--color-warning-light);
+  background: linear-gradient(135deg, #fef3c7, #ffffff);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.export-btn {
+  padding: 12px 20px;
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+@media (max-width: 768px) {
+  .review-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .review-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .export-btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,56 @@
+.drill-down-tab {
+  padding: var(--space-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.drill-down-header {
+  margin-bottom: var(--space-lg);
+}
+
+.drill-down-title {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.drill-down-subtitle {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+.drill-down-tab .empty-state {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.drill-down-tab .empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--space-md);
+}
+
+.drill-down-tab .empty-state h3 {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.drill-down-tab .empty-state p {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .drill-down-tab {
+    padding: var(--space-sm);
+  }
+
+  .drill-down-title {
+    font-size: var(--font-lg);
+  }
+}

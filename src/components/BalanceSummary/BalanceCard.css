@@ -1,0 +1,118 @@
+.balance-card {
+  background: var(--color-surface);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-dark));
+}
+
+.balance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.balance-card.income {
+  --accent-color: var(--color-success);
+  --accent-color-dark: #047857;
+}
+
+.balance-card.income:hover {
+  border-color: var(--color-success-light);
+}
+
+.balance-card.expense {
+  --accent-color: var(--color-danger);
+  --accent-color-dark: #b91c1c;
+}
+
+.balance-card.expense:hover {
+  border-color: var(--color-danger-light);
+}
+
+.balance-card.positive {
+  --accent-color: var(--color-primary);
+  --accent-color-dark: var(--color-primary-dark);
+}
+
+.balance-card.positive:hover {
+  border-color: var(--color-primary-light);
+}
+
+.balance-card.negative {
+  --accent-color: var(--color-danger);
+  --accent-color-dark: #b91c1c;
+}
+
+.balance-card.negative:hover {
+  border-color: var(--color-danger-light);
+}
+
+.balance-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.balance-card-icon {
+  font-size: 24px;
+}
+
+.balance-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-card-amount {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.balance-card-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-card.positive .balance-card-badge {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.balance-card.negative .balance-card-badge {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+@media (max-width: 768px) {
+  .balance-card {
+    padding: 16px;
+  }
+
+  .balance-card-amount {
+    font-size: 28px;
+  }
+}
