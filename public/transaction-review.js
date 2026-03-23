@@ -352,6 +352,12 @@
       if (tx.type === 'expense') {
         allTransactions[txIndex].envelope = category;
         allTransactions[txIndex].payment = payment;
+        
+        // Learn vendor-to-category mapping
+        const description = allTransactions[txIndex].description;
+        if (description && category && typeof learnVendorCategory === 'function') {
+          learnVendorCategory(description, category);
+        }
       } else if (tx.type === 'income') {
         allTransactions[txIndex].payment = payment;
       } else if (tx.type === 'transfer') {

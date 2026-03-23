@@ -2018,6 +2018,27 @@
   background: #dbeafe;
 }
 
+/* ── Apply Smart Categorization Button ────────────────────── */
+
+.recent-action-btn.apply-smart {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  font-weight: 700;
+  border: 2px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.recent-action-btn.apply-smart:hover {
+  background: linear-gradient(135deg, #fde68a, #fcd34d);
+  border-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.recent-action-btn.apply-smart:active {
+  transform: translateY(0);
+}
+
 /* ── Sortable Column Headers ──────────────────────────────────── */
 
 .tx-table th.sortable {
@@ -2124,5 +2145,35 @@
 @media (max-width: 768px) {
   .tx-table-wrapper::before {
     display: none;
+  }
+}
+
+
+/* ── Responsive: Hide button text on small screens ──────────── */
+
+@media (max-width: 600px) {
+  .recent-action-btn.apply-smart {
+    font-size: 16px;
+    padding: 6px 10px;
+  }
+  
+  /* Show only emoji on very small screens */
+  .recent-action-btn.apply-smart::after {
+    content: '✨';
+  }
+  
+  .recent-action-btn.apply-smart {
+    font-size: 0;
+  }
+  
+  .recent-action-btn.apply-smart::after {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .recent-action-btn.apply-smart {
+    font-size: 11px;
+    padding: 6px 10px;
   }
 }

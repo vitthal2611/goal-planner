@@ -3415,6 +3415,7 @@
             <div class="recent-header">
                 <h3>Recent</h3>
                 <div class="recent-actions">
+                    <button id="applyToExistingBtn" class="recent-action-btn apply-smart" onclick="applyVendorMappingsFromTransactions()" title="Apply learned categories to uncategorized transactions">✨ Auto-Categorize</button>
                     <button id="multiSelectBtn" class="recent-action-btn multi-select" onclick="toggleMultiSelectMode()">☑️ Select</button>
                     <button id="reviewAllBtn" class="recent-action-btn review" onclick="openReviewAll()">🔍 Review</button>
                     <button id="downloadReportBtn" class="recent-action-btn report">📊 Report</button>
@@ -3758,7 +3759,7 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
                         <span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Date</span><span style="background:white; color:#5b21b6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #c4b5fd;">Amount</span>
                     </div>
-                    <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 8px; margin-top: 12px;">Optional columns (can be edited after import):</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #4c1d95; margin-bottom: 8px; margin-top: 12px;">Optional columns (can be assigned after import):</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
                         <span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Type</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Description</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Category/Envelope</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Payment Method</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">Expense Type</span><span style="background:#f3f4f6; color:#6b7280; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; border:1px solid #d1d5db;">ID</span>
                     </div>
@@ -3767,10 +3768,51 @@
                         💡 Expense Type: <strong>need</strong>, <strong>want</strong>, <strong>save</strong><br>
                         💡 Date formats: DD/MM/YYYY, DD/MM/YY, YYYY-MM-DD<br>
                         💡 Amount: Negative values = expense, Positive = income<br>
-                        ✅ Missing fields can be edited in Transactions tab (double-click cells)
+                        ✅ Missing fields (description, category, payment) can be assigned later in Transactions tab
                     </div>
-                    <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
-                    <button class="add-btn" id="csvImportBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 14px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">📂 Choose CSV / Excel File</button>
+                    
+                    <!-- Import Mode Toggle -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <button id="csvModeFile" class="add-btn" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 12px; font-size: 14px; font-weight: 700; border: 2px solid #7c3aed;">📂 Upload File</button>
+                        <button id="csvModePaste" class="add-btn" style="flex: 1; padding: 12px; background: white; color: #7c3aed; border-radius: 12px; font-size: 14px; font-weight: 700; border: 2px solid #7c3aed;">📋 Paste Data</button>
+                    </div>
+                    
+                    <!-- File Upload Section -->
+                    <div id="csvFileSection">
+                        <input type="file" id="csvImportFileInput" accept=".csv,.txt" style="display: none;" />
+                        <button class="add-btn" id="csvImportBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 14px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">📂 Choose CSV / Excel File</button>
+                    </div>
+                    
+                    <!-- Paste Section -->
+                    <div id="csvPasteSection" style="display: none;">
+                        <textarea id="csvPasteTextarea" placeholder="Paste your transaction data here...
+
+Example:
+ID   Date   Amount   Description   Payment Method
+1   24/12/25   1147   Old Balance   HDFC
+2   24/12/25   -850   UPI Payment   HDFC
+
+Supports: CSV, Tab-separated, Excel copy-paste" style="width: 100%; min-height: 200px; padding: 12px; border: 2px dashed #7c3aed; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 13px; resize: vertical; background: white;"></textarea>
+                        <button class="add-btn" id="csvPasteAnalyzeBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 14px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px; margin-top: 12px;">🔍 Analyze & Preview</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Vendor Category Mappings -->
+            <div class="modal-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+                <div class="section-title">🤖 Smart Categorization</div>
+                <div style="padding: 16px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 16px; border: 2px solid #f59e0b;">
+                    <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 10px;">Auto-assign categories based on vendor names</div>
+                    <div style="font-size: 12px; color: #78350f; margin-bottom: 14px; line-height: 1.6;">
+                        💡 When you assign a category to a vendor (e.g., "SAMRUDDHI SNACKS" → "Eatout"), the system learns and automatically assigns the same category to future transactions from that vendor.
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <button class="add-btn" id="applyVendorMappingsBtn" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; font-size: 15px; font-weight: 700;">✨ Apply to Existing</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="add-btn" id="viewVendorMappingsBtn" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; font-size: 14px; font-weight: 700;">📋 View Mappings</button>
+                        <button class="add-btn" id="clearVendorMappingsBtn" style="flex: 1; padding: 12px; background: white; color: #dc2626; border: 2px solid #dc2626; border-radius: 12px; font-size: 14px; font-weight: 700;">🗑️ Clear All</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4290,6 +4332,42 @@
 
     // Transactions array - stores all transactions
     let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    
+    // Auto-fix malformed transactions on load
+    if (transactions.length > 0) {
+      let needsFix = false;
+      transactions = transactions.map(t => {
+        const fixed = { ...t };
+        
+        // Fix type field
+        if (!fixed.type || !['income', 'expense', 'transfer'].includes(fixed.type)) {
+          const amt = parseFloat(fixed.amount);
+          fixed.type = amt < 0 ? 'expense' : 'income';
+          needsFix = true;
+        }
+        
+        // Fix amount field (ensure it's a positive number)
+        if (typeof fixed.amount !== 'number' || isNaN(fixed.amount)) {
+          fixed.amount = Math.abs(parseFloat(fixed.amount) || 0);
+          needsFix = true;
+        } else {
+          fixed.amount = Math.abs(fixed.amount);
+        }
+        
+        // Ensure required fields exist
+        fixed.description = fixed.description || '';
+        fixed.envelope = fixed.envelope || '';
+        fixed.payment = fixed.payment || '';
+        
+        return fixed;
+      });
+      
+      // Save fixed data back to localStorage
+      if (needsFix) {
+        console.log('Auto-fixed transaction data format');
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+      }
+    }
     
     // Expose to window for access from other scripts
     window.transactions = transactions;
@@ -4985,9 +5063,196 @@
 
     // Export / Import / CSV — handled by data-manager.js
 
-    // ── CSV Import — handled by data-manager.js ─────────────────
+// ── CSV Import — handled by data-manager.js ─────────────────
+
+    // CSV Mode Toggle
+    const csvModeFile = document.getElementById('csvModeFile');
+    const csvModePaste = document.getElementById('csvModePaste');
+    const csvFileSection = document.getElementById('csvFileSection');
+    const csvPasteSection = document.getElementById('csvPasteSection');
+    const csvPasteAnalyzeBtn = document.getElementById('csvPasteAnalyzeBtn');
+    const csvPasteTextarea = document.getElementById('csvPasteTextarea');
+
+    if (csvModeFile && csvModePaste) {
+      csvModeFile.addEventListener('click', () => {
+        csvModeFile.style.background = 'linear-gradient(135deg, #7c3aed, #6d28d9)';
+        csvModeFile.style.color = 'white';
+        csvModePaste.style.background = 'white';
+        csvModePaste.style.color = '#7c3aed';
+        csvFileSection.style.display = 'block';
+        csvPasteSection.style.display = 'none';
+      });
+
+      csvModePaste.addEventListener('click', () => {
+        csvModePaste.style.background = 'linear-gradient(135deg, #7c3aed, #6d28d9)';
+        csvModePaste.style.color = 'white';
+        csvModeFile.style.background = 'white';
+        csvModeFile.style.color = '#7c3aed';
+        csvFileSection.style.display = 'none';
+        csvPasteSection.style.display = 'block';
+      });
+    }
+
+    if (csvPasteAnalyzeBtn && csvPasteTextarea) {
+      csvPasteAnalyzeBtn.addEventListener('click', () => {
+        const text = csvPasteTextarea.value.trim();
+        if (!text) {
+          showToast('Please paste some transaction data first', 'error');
+          return;
+        }
+        
+        const { rows, error } = parseCSV(text);
+        if (error) { 
+          showToast(error, 'error'); 
+          return; 
+        }
+        if (rows.length === 0) { 
+          showToast('No data rows found in pasted text.', 'error'); 
+          return; 
+        }
+        
+        showCSVPreview(rows.map(mapCSVRow));
+        csvPasteTextarea.value = ''; // Clear textarea after successful parse
+      });
+    }
 
     // Balance summary & view toggle — handled by balance-summary.js
+
+    // ── Vendor Category Mappings Management ─────────────────────
+    
+    const applyVendorMappingsBtn = document.getElementById('applyVendorMappingsBtn');
+    const viewVendorMappingsBtn = document.getElementById('viewVendorMappingsBtn');
+    const clearVendorMappingsBtn = document.getElementById('clearVendorMappingsBtn');
+    
+    if (applyVendorMappingsBtn) {
+      applyVendorMappingsBtn.addEventListener('click', () => {
+        const mappings = typeof loadVendorMappings === 'function' ? loadVendorMappings() : {};
+        const mappingCount = Object.keys(mappings).length;
+        
+        if (mappingCount === 0) {
+          showToast('No learned mappings yet. Assign categories to vendors first!', 'error');
+          return;
+        }
+        
+        // Find uncategorized transactions
+        let uncategorized = transactions.filter(t => t.type === 'expense' && !t.envelope && t.description);
+        
+        if (uncategorized.length === 0) {
+          showToast('All transactions already have categories!', 'success');
+          return;
+        }
+        
+        // Count how many can be auto-assigned
+        let canAssign = 0;
+        const preview = [];
+        uncategorized.forEach(t => {
+          const suggested = mappings[t.description.toLowerCase()];
+          if (suggested) {
+            canAssign++;
+            if (preview.length < 5) {
+              preview.push(`${t.description} → ${suggested}`);
+            }
+          }
+        });
+        
+        if (canAssign === 0) {
+          showToast(`No matching vendors found. ${uncategorized.length} transaction(s) still need manual categorization.`, 'error');
+          return;
+        }
+        
+        // Show preview and confirm
+        const previewText = preview.join('\n');
+        const moreText = canAssign > 5 ? `\n...and ${canAssign - 5} more` : '';
+        const confirmMsg = `Apply learned categories to ${canAssign} transaction(s)?\n\nPreview:\n${previewText}${moreText}`;
+        
+        if (!confirm(confirmMsg)) return;
+        
+        // Apply mappings
+        let appliedCount = 0;
+        uncategorized.forEach(t => {
+          const suggested = mappings[t.description.toLowerCase()];
+          if (suggested) {
+            const txIndex = transactions.findIndex(tx => tx.id === t.id);
+            if (txIndex !== -1) {
+              transactions[txIndex].envelope = suggested;
+              appliedCount++;
+            }
+          }
+        });
+        
+        if (appliedCount > 0) {
+          // Update global and save
+          window.transactions = transactions;
+          saveToLocalStorage();
+          
+          // Update UI
+          if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+          if (typeof updateRecentTransactions === 'function') updateRecentTransactions();
+          if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+          if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+          
+          const remaining = uncategorized.length - appliedCount;
+          const msg = remaining > 0 
+            ? `✨ Applied categories to ${appliedCount} transaction(s)! ${remaining} still need manual categorization.`
+            : `✨ Applied categories to ${appliedCount} transaction(s)!`;
+          
+          showToast(msg, 'success');
+          
+          // Close modal
+          profileModal.classList.remove('show');
+        }
+      });
+    }
+    
+    if (viewVendorMappingsBtn) {
+      viewVendorMappingsBtn.addEventListener('click', () => {
+        const mappings = typeof loadVendorMappings === 'function' ? loadVendorMappings() : {};
+        const count = Object.keys(mappings).length;
+        
+        if (count === 0) {
+          showToast('No learned mappings yet. Assign categories to vendors to start learning!', 'error');
+          return;
+        }
+        
+        let html = `<div style="max-height: 400px; overflow-y: auto;">
+          <div style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #1f2937;">
+            📋 Learned Vendor Mappings (${count})
+          </div>
+          <div style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">
+            These vendors will be automatically categorized in future imports:
+          </div>`;
+        
+        Object.entries(mappings).sort((a, b) => a[0].localeCompare(b[0])).forEach(([vendor, category]) => {
+          html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e5e7eb;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${vendor}</div>
+              <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">→ ${category}</div>
+            </div>
+          </div>`;
+        });
+        
+        html += '</div>';
+        
+        alert(html.replace(/<[^>]*>/g, '\n').replace(/\n+/g, '\n'));
+      });
+    }
+    
+    if (clearVendorMappingsBtn) {
+      clearVendorMappingsBtn.addEventListener('click', () => {
+        const mappings = typeof loadVendorMappings === 'function' ? loadVendorMappings() : {};
+        const count = Object.keys(mappings).length;
+        
+        if (count === 0) {
+          showToast('No mappings to clear', 'error');
+          return;
+        }
+        
+        if (confirm(`Clear all ${count} learned vendor-to-category mappings?\n\nThis will not affect existing transactions, but future imports won't auto-assign categories.`)) {
+          localStorage.removeItem('vendorCategoryMappings');
+          showToast(`Cleared ${count} vendor mappings`, 'success');
+        }
+      });
+    }
     BalanceSummary.init();
     if (typeof TodayTransactions !== 'undefined') TodayTransactions.init();
     if (typeof DrillDown !== 'undefined') DrillDown.init();
@@ -5073,6 +5338,85 @@
 
     NWS.init();
     RecentTransactions.init();
+
+    // Apply Vendor Mappings from Transactions Tab
+    function applyVendorMappingsFromTransactions() {
+      const mappings = typeof loadVendorMappings === 'function' ? loadVendorMappings() : {};
+      const mappingCount = Object.keys(mappings).length;
+      
+      if (mappingCount === 0) {
+        showToast('No learned mappings yet. Assign categories to vendors first!', 'error');
+        return;
+      }
+      
+      // Find uncategorized transactions
+      let uncategorized = transactions.filter(t => t.type === 'expense' && !t.envelope && t.description);
+      
+      if (uncategorized.length === 0) {
+        showToast('All transactions already have categories!', 'success');
+        return;
+      }
+      
+      // Count how many can be auto-assigned
+      let canAssign = 0;
+      const preview = [];
+      uncategorized.forEach(t => {
+        const suggested = mappings[t.description.toLowerCase()];
+        if (suggested) {
+          canAssign++;
+          if (preview.length < 5) {
+            preview.push(`${t.description} → ${suggested}`);
+          }
+        }
+      });
+      
+      if (canAssign === 0) {
+        showToast(`No matching vendors found. ${uncategorized.length} transaction(s) still need manual categorization.`, 'error');
+        return;
+      }
+      
+      // Show preview and confirm
+      const previewText = preview.join('\n');
+      const moreText = canAssign > 5 ? `\n...and ${canAssign - 5} more` : '';
+      const confirmMsg = `Apply learned categories to ${canAssign} transaction(s)?\n\nPreview:\n${previewText}${moreText}`;
+      
+      if (!confirm(confirmMsg)) return;
+      
+      // Apply mappings
+      let appliedCount = 0;
+      uncategorized.forEach(t => {
+        const suggested = mappings[t.description.toLowerCase()];
+        if (suggested) {
+          const txIndex = transactions.findIndex(tx => tx.id === t.id);
+          if (txIndex !== -1) {
+            transactions[txIndex].envelope = suggested;
+            appliedCount++;
+          }
+        }
+      });
+      
+      if (appliedCount > 0) {
+        // Update global and save
+        window.transactions = transactions;
+        saveToLocalStorage();
+        
+        // Update UI
+        if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+        if (typeof updateRecentTransactions === 'function') updateRecentTransactions();
+        if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+        if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+        
+        const remaining = uncategorized.length - appliedCount;
+        const msg = remaining > 0 
+          ? `✨ Applied categories to ${appliedCount} transaction(s)! ${remaining} still need manual categorization.`
+          : `✨ Applied categories to ${appliedCount} transaction(s)!`;
+        
+        showToast(msg, 'success');
+      }
+    }
+    
+    // Make it globally accessible
+    window.applyVendorMappingsFromTransactions = applyVendorMappingsFromTransactions;
 
     // Open Review All Transactions
     function openReviewAll() {

@@ -1562,6 +1562,12 @@
       transactions[txIndex].date = newValue;
     } else if (field === 'envelope') {
       transactions[txIndex].envelope = newValue;
+      
+      // Learn vendor-to-category mapping
+      const description = transactions[txIndex].description;
+      if (description && newValue && typeof learnVendorCategory === 'function') {
+        learnVendorCategory(description, newValue);
+      }
     } else if (field === 'payment') {
       transactions[txIndex].payment = newValue;
     } else if (field === 'amount') {
