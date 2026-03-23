@@ -578,6 +578,30 @@
     const filterSheetClose = el('txFilterSheetClose');
     const filterApply = el('txFilterApply');
     const filterClear = el('txFilterClear');
+    const paymentFilter = el('txPaymentFilter');
+
+    // Populate payment filter dropdown
+    function populatePaymentFilter() {
+      if (!paymentFilter) return;
+      
+      const payments = fromStorage('paymentMethods');
+      const paymentList = Array.isArray(payments) ? payments : [];
+      
+      paymentFilter.innerHTML = '<option value="all">All Payments</option>' +
+        paymentList.map(pm => `<option value="${pm}" ${filterPayment === pm ? 'selected' : ''}>${pm}</option>`).join('');
+    }
+
+    // Payment filter change handler
+    if (paymentFilter) {
+      paymentFilter.addEventListener('change', (e) => {
+        filterPayment = e.target.value;
+        updateFilterBadge();
+        update();
+      });
+    }
+
+    // Initialize payment filter
+    populatePaymentFilter();
 
     // Type tabs
     const typeTabs = document.querySelectorAll('.tx-type-tab');
@@ -1161,11 +1185,13 @@
     const maxAmountInput = el('txFilterMaxAmount');
     const startDateInput = el('txFilterStartDate');
     const endDateInput = el('txFilterEndDate');
+    const paymentFilter = el('txPaymentFilter');
     
     if (minAmountInput) minAmountInput.value = '';
     if (maxAmountInput) maxAmountInput.value = '';
     if (startDateInput) startDateInput.value = '';
     if (endDateInput) endDateInput.value = '';
+    if (paymentFilter) paymentFilter.value = 'all';
 
     document.querySelectorAll('.tx-filter-chip').forEach(chip => {
       chip.classList.remove('active');
