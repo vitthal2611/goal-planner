@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './BulkUpload.css';
 
 const BulkUpload = () => {
@@ -9,6 +9,81 @@ const BulkUpload = () => {
   const [result, setResult] = useState(null);
   const [pasteMode, setPasteMode] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Haptic feedback helper
+  const triggerHaptic = (type = 'light') => {
+    if ('vibrate' in navigator) {
+      const patterns = {
+        light: 10,
+        medium: 20,
+        heavy: 30,
+        success: [10, 50, 10],
+        error: [20, 100, 20]
+      };
+      navigator.vibrate(patterns[type] || 10);
+    }
+  };
+
+  // Online/Offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      triggerHaptic('light');
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      triggerHaptic('error');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Pull-to-refresh (simple implementation)
+  useEffect(() => {
+    let startY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isPulling) return;
+      const currentY = e.touches[0].clientY;
+      const pullDistance = currentY - startY;
+      
+      if (pullDistance > 80) {
+        // Trigger refresh
+        triggerHaptic('medium');
+        window.location.reload();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isPulling = false;
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
 
   const parseDate = (dateStr) => {
     if (!dateStr) return '';
@@ -212,8 +287,10 @@ const BulkUpload = () => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
+    triggerHaptic('light');
     setFile(selectedFile);
     setResult(null);
+    setIsLoading(true);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -225,16 +302,22 @@ const BulkUpload = () => {
         console.log('Parsed transactions:', transactions.length);
         
         if (transactions.length === 0) {
+          triggerHaptic('error');
           alert('No valid transactions found in file. Please check the format.');
           setFile(null);
+          setIsLoading(false);
           return;
         }
         
+        triggerHaptic('success');
         setPreview(transactions.slice(0, 10));
+        setIsLoading(false);
       } catch (error) {
         console.error('Parse error:', error);
+        triggerHaptic('error');
         alert(`Error parsing file: ${error.message}\n\nPlease check CONVERT_EXCEL.md for help.`);
         setFile(null);
+        setIsLoading(false);
       }
     };
     reader.readAsText(selectedFile);
@@ -242,23 +325,33 @@ const BulkUpload = () => {
 
   const handlePasteAnalyze = () => {
     if (!pastedText.trim()) {
+      triggerHaptic('error');
       alert('Please paste some transaction data first');
       return;
     }
+
+    triggerHaptic('light');
+    setIsLoading(true);
 
     try {
       const transactions = parseCSV(pastedText);
       
       if (transactions.length === 0) {
+        triggerHaptic('error');
         alert('No valid transactions found. Please check the format.');
+        setIsLoading(false);
         return;
       }
       
+      triggerHaptic('success');
       setPreview(transactions.slice(0, 10));
       setPasteMode(false);
+      setIsLoading(false);
     } catch (error) {
       console.error('Parse error:', error);
+      triggerHaptic('error');
       alert(`Error parsing data: ${error.message}`);
+      setIsLoading(false);
     }
   };
 
@@ -322,6 +415,7 @@ const BulkUpload = () => {
       // Commit batch - all or nothing
       await batch.commit();
 
+      triggerHaptic('success');
       setResult({
         success: true,
         count: transactions.length,
@@ -330,6 +424,7 @@ const BulkUpload = () => {
 
     } catch (error) {
       console.error('Upload error:', error);
+      triggerHaptic('error');
       setResult({
         success: false,
         message: `Upload failed: ${error.message}. No transactions were saved.`
@@ -340,6 +435,7 @@ const BulkUpload = () => {
   };
 
   const handleUploadError = (error) => {
+    triggerHaptic('error');
     setResult({
       success: false,
       message: `Error: ${error.message}`
@@ -349,6 +445,19 @@ const BulkUpload = () => {
 
   return (
     <div className="bulk-upload-container">
+      {/* Offline Banner */}
+      <div className={`offline-banner ${isOnline ? 'hidden' : ''}`}>
+        ⚠️ You're offline. Some features may not work.
+      </div>
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Processing...</div>
+        </div>
+      )}
+
       <div className="bulk-upload-card">
         <h1>📊 Bulk Transaction Upload</h1>
         <p className="subtitle">Upload your Excel/CSV file or paste transaction data directly</p>
@@ -357,6 +466,7 @@ const BulkUpload = () => {
           <button 
             className={`mode-btn ${!pasteMode ? 'active' : ''}`}
             onClick={() => {
+              triggerHaptic('light');
               setPasteMode(false);
               setPastedText('');
               setPreview([]);
@@ -367,6 +477,7 @@ const BulkUpload = () => {
           <button 
             className={`mode-btn ${pasteMode ? 'active' : ''}`}
             onClick={() => {
+              triggerHaptic('light');
               setPasteMode(true);
               setFile(null);
               setPreview([]);
@@ -439,7 +550,13 @@ const BulkUpload = () => {
         )}
 
         {((file || preview.length > 0) && !uploading && !result) && (
-          <button className="upload-btn" onClick={uploadToFirebase}>
+          <button 
+            className="upload-btn" 
+            onClick={() => {
+              triggerHaptic('medium');
+              uploadToFirebase();
+            }}
+          >
             🚀 Upload All Transactions
           </button>
         )}
@@ -460,13 +577,17 @@ const BulkUpload = () => {
             <h3>{result.success ? 'Upload Successful!' : 'Upload Failed'}</h3>
             <p>{result.message}</p>
             {result.success && (
-              <button className="reset-btn" onClick={() => {
-                setFile(null);
-                setPreview([]);
-                setResult(null);
-                setProgress(0);
-                setPastedText('');
-              }}>
+              <button 
+                className="reset-btn" 
+                onClick={() => {
+                  triggerHaptic('light');
+                  setFile(null);
+                  setPreview([]);
+                  setResult(null);
+                  setProgress(0);
+                  setPastedText('');
+                }}
+              >
                 Upload More Transactions
               </button>
             )}
