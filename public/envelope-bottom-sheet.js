@@ -472,38 +472,40 @@
   }
 
   function _saveAndRefresh(tx, toastMsg) {
-    // If editing, update existing transaction
+    console.log('_saveAndRefresh called', { editingTransaction, tx });
+    
+    // Update localStorage first
+    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    console.log('Current transactions count:', transactions.length);
+    
     if (editingTransaction) {
-      const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      // Update existing transaction
       const index = transactions.findIndex(t => String(t.id) === String(editingTransaction.id));
-      
+      console.log('Editing transaction, found at index:', index);
       if (index !== -1) {
-        // Keep the same ID
-        tx.id = editingTransaction.id;
+        tx.id = editingTransaction.id; // Keep the same ID
         transactions[index] = tx;
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-        
-        // Update global array if available
-        if (typeof window.transactions !== 'undefined' && Array.isArray(window.transactions)) {
-          const globalIndex = window.transactions.findIndex(t => String(t.id) === String(editingTransaction.id));
-          if (globalIndex !== -1) window.transactions[globalIndex] = tx;
-        }
       }
     } else {
-      // Creating new transaction
-      // Merge into global transactions array if available
-      if (typeof transactions !== 'undefined' && Array.isArray(transactions)) {
-        transactions.push(tx);
-      } else {
-        const stored = JSON.parse(localStorage.getItem('transactions') || '[]');
-        stored.unshift(tx);
-        localStorage.setItem('transactions', JSON.stringify(stored));
-      }
+      // Create new transaction
+      transactions.unshift(tx);
+      console.log('Creating new transaction');
     }
+    
+    // Save to localStorage
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    console.log('Saved to localStorage, new count:', transactions.length);
+    
+    // Update global window.transactions reference
+    window.transactions = transactions;
+    console.log('Updated window.transactions');
 
     if (typeof saveToLocalStorage       === 'function') saveToLocalStorage();
     if (typeof updateBalanceSummary     === 'function') updateBalanceSummary();
-    if (typeof updateRecentTransactions === 'function') updateRecentTransactions();
+    if (typeof updateRecentTransactions === 'function') {
+      console.log('Calling updateRecentTransactions');
+      updateRecentTransactions();
+    }
     if (typeof updatePaymentBalances    === 'function') updatePaymentBalances();
     if (typeof updateEnvelopeBudget     === 'function') updateEnvelopeBudget();
     if (typeof showToast                === 'function') showToast(toastMsg, 'success');

@@ -111,8 +111,12 @@
   // ── Core update ───────────────────────────────────────────────
 
   function update() {
+    console.log('RecentTransactions.update() called');
     const listContainer = el('recentTransactionsList');
-    if (!listContainer) return;
+    if (!listContainer) {
+      console.error('recentTransactionsList container not found');
+      return;
+    }
 
     const monthSelect = el('monthSelect');
     const yearSelect = el('yearSelect');
@@ -121,6 +125,7 @@
     const envelopeFilter = window.EnvelopeBudget ? EnvelopeBudget.getFilter() : 'ALL';
 
     const transactions = fromStorage('transactions');
+    console.log('Loaded transactions for display:', transactions.length);
 
     if (transactions.length === 0) {
       listContainer.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;">No transactions yet.</div>';
@@ -274,30 +279,85 @@
 
   // Globals called from inline onclick in rendered HTML
   window.deleteTransaction = function (transactionId) {
+    console.log('deleteTransaction called with ID:', transactionId);
     const transactions = fromStorage('transactions');
+    console.log('Loaded transactions count:', transactions.length);
     const tx = transactions.find(t => String(t.id) === String(transactionId));
     if (!tx) {
+      console.error('Transaction not found:', transactionId);
       if (typeof showToast === 'function') showToast('Transaction not found', 'error');
       return;
     }
 
-    const confirmMsg = `Delete "${tx.description || 'this transaction'}"?\n\nAmount: ₹${parseFloat(tx.amount).toLocaleString('en-IN')}\nDate: ${new Date(tx.date).toLocaleDateString('en-IN')}`;
+    console.log('Found transaction to delete:', tx);
     
-    if (confirm(confirmMsg)) {
-      const updated = transactions.filter(t => String(t.id) !== String(transactionId));
-      localStorage.setItem('transactions', JSON.stringify(updated));
+    // Use custom confirmation dialog
+    const confirmDialog = document.getElementById('confirmDialog');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    
+    if (confirmDialog && confirmTitle && confirmMessage && confirmOkBtn && confirmCancelBtn) {
+      confirmTitle.textContent = 'Delete Transaction?';
+      confirmMessage.innerHTML = `
+        <div style="margin-bottom:8px;"><strong>${tx.description || 'this transaction'}</strong></div>
+        <div>Amount: <strong>₹${parseFloat(tx.amount).toLocaleString('en-IN')}</strong></div>
+        <div>Date: <strong>${new Date(tx.date).toLocaleDateString('en-IN')}</strong></div>
+      `;
       
-      // Update global array if available
-      if (typeof window.transactions !== 'undefined' && Array.isArray(window.transactions)) {
+      confirmDialog.style.display = 'flex';
+      
+      const handleConfirm = () => {
+        confirmDialog.style.display = 'none';
+        
+        // Update localStorage
+        const updated = transactions.filter(t => String(t.id) !== String(transactionId));
+        console.log('Filtered transactions, new count:', updated.length);
+        localStorage.setItem('transactions', JSON.stringify(updated));
+        
+        // Update global window.transactions reference
         window.transactions = updated;
-      }
+        console.log('Updated window.transactions');
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+        if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+        if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+        console.log('Calling update() to refresh UI');
+        update();
+        if (typeof showToast === 'function') showToast('Transaction deleted', 'success');
+        
+        // Remove event listeners
+        confirmOkBtn.removeEventListener('click', handleConfirm);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
       
-      if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
-      if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
-      if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
-      if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
-      update();
-      if (typeof showToast === 'function') showToast('Transaction deleted', 'error');
+      const handleCancel = () => {
+        console.log('Delete cancelled by user');
+        confirmDialog.style.display = 'none';
+        confirmOkBtn.removeEventListener('click', handleConfirm);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
+      
+      confirmOkBtn.addEventListener('click', handleConfirm);
+      confirmCancelBtn.addEventListener('click', handleCancel);
+    } else {
+      // Fallback to browser confirm if custom dialog not available
+      const confirmMsg = `Delete "${tx.description || 'this transaction'}"?\n\nAmount: ₹${parseFloat(tx.amount).toLocaleString('en-IN')}\nDate: ${new Date(tx.date).toLocaleDateString('en-IN')}`;
+      
+      if (confirm(confirmMsg)) {
+        const updated = transactions.filter(t => String(t.id) !== String(transactionId));
+        localStorage.setItem('transactions', JSON.stringify(updated));
+        window.transactions = updated;
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        if (typeof updateBalanceSummary === 'function') updateBalanceSummary();
+        if (typeof updatePaymentBalances === 'function') updatePaymentBalances();
+        if (typeof updateEnvelopeBudget === 'function') updateEnvelopeBudget();
+        update();
+        if (typeof showToast === 'function') showToast('Transaction deleted', 'success');
+      }
     }
   };
 
@@ -306,23 +366,31 @@
   window.loadFewerTransactions = () => { visibleCount = 10; update(); };
 
   window.editTransaction = function (transactionId) {
+    console.log('editTransaction called with ID:', transactionId);
     const transactions = fromStorage('transactions');
+    console.log('Loaded transactions count:', transactions.length);
     const tx = transactions.find(t => String(t.id) === String(transactionId));
     if (!tx) {
+      console.error('Transaction not found:', transactionId);
       if (typeof showToast === 'function') showToast('Transaction not found', 'error');
       return;
     }
 
+    console.log('Found transaction to edit:', tx);
     // Open the appropriate bottom sheet based on transaction type
     if (typeof EnvelopeBottomSheet !== 'undefined') {
       if (tx.type === 'expense') {
+        console.log('Opening expense sheet');
         EnvelopeBottomSheet.open('expense', tx.envelope, tx);
       } else if (tx.type === 'income') {
+        console.log('Opening income sheet');
         EnvelopeBottomSheet.open('income', null, tx);
       } else if (tx.type === 'transfer') {
+        console.log('Opening transfer sheet');
         EnvelopeBottomSheet.open('transfer', null, tx);
       }
     } else {
+      console.error('EnvelopeBottomSheet not defined');
       if (typeof showToast === 'function') showToast('Edit feature not available', 'error');
     }
   };

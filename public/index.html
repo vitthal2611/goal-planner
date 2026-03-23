@@ -3596,6 +3596,42 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- Custom Confirmation Dialog -->
+<div id="confirmDialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:3000; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:20px; padding:24px; width:90%; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;">
+    <div id="confirmTitle" style="font-size:20px; font-weight:800; color:#1f2937; margin-bottom:12px;"></div>
+    <div id="confirmMessage" style="font-size:14px; color:#6b7280; line-height:1.6; margin-bottom:20px;"></div>
+    <div style="display:flex; gap:10px;">
+      <button id="confirmCancelBtn" style="flex:1; padding:14px; border:2px solid #e5e7eb; background:white; color:#6b7280; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; transition: all 0.2s;">Cancel</button>
+      <button id="confirmOkBtn" style="flex:1; padding:14px; border:none; background:#ef4444; color:white; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(239,68,68,0.4); transition: all 0.2s;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+#confirmDialog[style*="display: flex"] {
+  display: flex !important;
+}
+#confirmOkBtn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(239,68,68,0.5);
+}
+#confirmCancelBtn:hover {
+  background: #f3f4f6;
+}
+</style>
+
 <!-- CSV Import Preview Modal -->
 <div id="csvPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:2000; align-items:flex-end; justify-content:center;">
   <div style="background:white; border-radius:24px 24px 0 0; padding:20px 16px 32px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 -8px 40px rgba(0,0,0,0.2);">
@@ -3881,9 +3917,17 @@
 
     // Transactions array - stores all transactions
     let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    
+    // Expose to window for access from other scripts
+    window.transactions = transactions;
 
     // Save to localStorage and Firebase
     function saveToLocalStorage() {
+      // Sync local variable with window.transactions if it was updated
+      if (window.transactions && window.transactions !== transactions) {
+        transactions = window.transactions;
+      }
+      
       localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
       localStorage.setItem('envelopes', JSON.stringify(envelopes));
       localStorage.setItem('defaultBudgets', JSON.stringify(defaultBudgets));
