@@ -3191,6 +3191,8 @@
     <script src="balance-summary.js"></script>
     <link rel="stylesheet" href="insights.css">
     <script src="insights.js"></script>
+    <link rel="stylesheet" href="today-transactions.css">
+    <script src="today-transactions.js"></script>
     <link rel="stylesheet" href="drill-down.css">
     <script src="drill-down.js"></script>
     <script src="transaction-modal.js"></script>
@@ -3302,6 +3304,15 @@
                 <span class="insights-period" id="insightsPeriod"></span>
             </div>
             <div class="insights-list" id="insightsList"></div>
+        </div>
+
+        <!-- Today's Transactions -->
+        <div class="today-transactions-wrapper" id="todayTransactionsWrapper">
+            <div class="today-transactions-header">
+                <span class="today-transactions-title">Today's Transactions</span>
+                <span class="today-transactions-date" id="todayTransactionsDate"></span>
+            </div>
+            <div class="today-transactions-list" id="todayTransactionsList"></div>
         </div>
 
         <div class="quick-track-header" style="display:none;">
@@ -4586,6 +4597,7 @@
     function updateBalanceSummary() {
       BalanceSummary.update();
       if (typeof Insights !== 'undefined') Insights.update();
+      if (typeof TodayTransactions !== 'undefined') TodayTransactions.update();
     }
 
     function updatePaymentBalances() {
@@ -4934,6 +4946,7 @@
 
     // Balance summary & view toggle — handled by balance-summary.js
     BalanceSummary.init();
+    if (typeof TodayTransactions !== 'undefined') TodayTransactions.init();
     if (typeof DrillDown !== 'undefined') DrillDown.init();
 
     // Date navigation — delegated to date-navigation.js
