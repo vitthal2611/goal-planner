@@ -346,9 +346,9 @@
 
 .tx-card {
   background: white;
-  border: 2px solid #f3f4f6;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 12px;
+  padding: 14px;
   transition: all 0.2s;
   cursor: pointer;
   position: relative;
@@ -357,13 +357,12 @@
 }
 
 .tx-card:hover {
-  border-color: #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .tx-card:active {
-  transform: translateY(0);
+  transform: scale(0.99);
 }
 
 /* Swipe gesture indicators */
@@ -378,16 +377,19 @@
   font-size: 20px;
   transition: all 0.2s;
   pointer-events: none;
+  opacity: 0;
 }
 
 .tx-card-swipe-bg.left {
   left: 0;
-  background: linear-gradient(90deg, #fee2e2, transparent);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+  color: #dc2626;
 }
 
 .tx-card-swipe-bg.right {
   right: 0;
-  background: linear-gradient(270deg, #dbeafe, transparent);
+  background: linear-gradient(270deg, rgba(59, 130, 246, 0.1), transparent);
+  color: #3b82f6;
 }
 
 .tx-card.swiping-left .tx-card-swipe-bg.left {
@@ -400,32 +402,32 @@
 
 .tx-card-header {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
 .tx-card-icon {
-  font-size: 24px;
+  font-size: 22px;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 12px;
+  background: #f9fafb;
 }
 
 .tx-card.income .tx-card-icon {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  background: #f0fdf4;
 }
 
 .tx-card.expense .tx-card-icon {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  background: #fef2f2;
 }
 
 .tx-card.transfer .tx-card-icon {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  background: #eff6ff;
 }
 
 .tx-card-main {
@@ -436,24 +438,26 @@
 .tx-card-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 4px;
+  color: #111827;
+  margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .tx-card-amount {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1;
   margin-left: auto;
   flex-shrink: 0;
   text-align: right;
+  letter-spacing: -0.02em;
 }
 
 .tx-card.income .tx-card-amount {
-  color: #059669;
+  color: #16a34a;
 }
 
 .tx-card.expense .tx-card-amount {
@@ -462,75 +466,80 @@
 
 .tx-card.transfer .tx-card-amount {
   color: #2563eb;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 /* Highlight large transactions */
 .tx-card.large-amount {
   border-color: #fbbf24;
-  background: linear-gradient(135deg, #fffbeb, white);
+  background: #fffbeb;
 }
 
 .tx-card.large-amount .tx-card-amount {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .tx-card-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   font-size: 12px;
-  color: #6b7280;
+  color: #9ca3af;
+  line-height: 1.3;
 }
 
 .tx-card-category {
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.3px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.tx-card-separator {
+  color: #d1d5db;
+  font-weight: 400;
 }
 
 .tx-card-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
 .tx-card-badge.need {
-  background: #ede9fe;
+  background: #f3f4f6;
   color: #6d28d9;
-  border: 1px solid #c4b5fd;
 }
 
 .tx-card-badge.want {
   background: #fef3c7;
   color: #d97706;
-  border: 1px solid #fde68a;
 }
 
 .tx-card-badge.save {
   background: #d1fae5;
   color: #047857;
-  border: 1px solid #86efac;
 }
 
 .tx-card-date {
-  font-weight: 600;
+  font-weight: 500;
   color: #9ca3af;
+  font-size: 12px;
 }
 
 .tx-card-actions {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -545,7 +554,7 @@
   border: none;
   border-radius: 8px;
   background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
@@ -555,7 +564,7 @@
 }
 
 .tx-card-action-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .tx-card-action-btn:active {
@@ -563,13 +572,15 @@
 }
 
 .tx-card-action-btn.edit:hover {
-  background: #f0f9ff;
+  background: #eff6ff;
   color: #3b82f6;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
 .tx-card-action-btn.delete:hover {
-  background: #fee2e2;
+  background: #fef2f2;
   color: #dc2626;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2);
 }
 
 /* ── Desktop: Show table on larger screens ───────────────── */

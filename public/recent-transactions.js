@@ -123,8 +123,9 @@
             <div class="tx-card-name">${description}</div>
             <div class="tx-card-meta">
               ${envelope !== '-' ? `<span class="tx-card-category">${envelope}</span>` : ''}
-              ${category ? `<span class="tx-card-badge ${category}">${categoryText}</span>` : ''}
+              ${envelope !== '-' && dateLabel ? `<span class="tx-card-separator">•</span>` : ''}
               <span class="tx-card-date">${dateLabel}</span>
+              ${category ? `<span class="tx-card-separator">•</span><span class="tx-card-badge ${category}">${categoryText}</span>` : ''}
             </div>
           </div>
           <div class="tx-card-amount">${amount}</div>
