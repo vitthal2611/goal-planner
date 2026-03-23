@@ -357,12 +357,20 @@
           break;
         case 'amount':
           // Parse amounts as numbers, handle string values
-          const aAmount = typeof a.amount === 'string' ? parseFloat(a.amount) : (a.amount || 0);
-          const bAmount = typeof b.amount === 'string' ? parseFloat(b.amount) : (b.amount || 0);
+          let aAmount = a.amount;
+          let bAmount = b.amount;
           
-          // Ensure we have valid numbers and use absolute values
-          aVal = isNaN(aAmount) ? 0 : Math.abs(aAmount);
-          bVal = isNaN(bAmount) ? 0 : Math.abs(bAmount);
+          // Convert to number if string
+          if (typeof aAmount === 'string') {
+            aAmount = parseFloat(aAmount.replace(/[^0-9.-]/g, ''));
+          }
+          if (typeof bAmount === 'string') {
+            bAmount = parseFloat(bAmount.replace(/[^0-9.-]/g, ''));
+          }
+          
+          // Ensure we have valid numbers
+          aVal = isNaN(aAmount) ? 0 : Number(aAmount);
+          bVal = isNaN(bAmount) ? 0 : Number(bAmount);
           break;
         case 'payment':
           aVal = (a.payment || '').toLowerCase();
@@ -392,32 +400,78 @@
           bVal = new Date(b.date);
       }
       
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      // For numeric comparisons, ensure proper type
+      if (sortColumn === 'amount') {
+        // Numeric comparison
+        const diff = aVal - bVal;
+        if (diff !== 0) return sortDirection === 'asc' ? diff : -diff;
+        return 0;
+      } else {
+        // String/Date comparison
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
     });
-    const grouped = {};
-    sorted.forEach(t => {
-      const label = getDateLabel(t.date);
-      if (!grouped[label]) grouped[label] = [];
-      grouped[label].push(t);
-    });
-
-    // Render grouped transactions
+    
+    // Debug: Log first 5 sorted amounts
+    if (sortColumn === 'amount') {
+      console.log('First 5 sorted amounts (' + sortDirection + '):', sorted.slice(0, 5).map(t => {
+        const amt = typeof t.amount === 'string' ? parseFloat(t.amount.replace(/[^0-9.-]/g, '')) : t.amount;
+        return {
+          desc: t.description,
+          rawAmount: t.amount,
+          numericAmount: amt,
+          type: t.type
+        };
+      }));
+      console.log('Last 5 sorted amounts (' + sortDirection + '):', sorted.slice(-5).map(t => {
+        const amt = typeof t.amount === 'string' ? parseFloat(t.amount.replace(/[^0-9.-]/g, '')) : t.amount;
+        return {
+          desc: t.description,
+          rawAmount: t.amount,
+          numericAmount: amt,
+          type: t.type
+        };
+      }));
+    }
+    
+    // Render transactions
     let cardsHTML = '';
     let tableRowsHTML = '';
     let count = 0;
-    for (const [dateLabel, txs] of Object.entries(grouped)) {
-      if (count >= visibleCount) break;
-      const remaining = visibleCount - count;
-      const visible = txs.slice(0, remaining);
-      
+    
+    // If sorting by date, group by date labels
+    // Otherwise, render in sorted order without grouping
+    if (sortColumn === 'date') {
+      const grouped = {};
+      sorted.forEach(t => {
+        const label = getDateLabel(t.date);
+        if (!grouped[label]) grouped[label] = [];
+        grouped[label].push(t);
+      });
+
+      for (const [dateLabel, txs] of Object.entries(grouped)) {
+        if (count >= visibleCount) break;
+        const remaining = visibleCount - count;
+        const visible = txs.slice(0, remaining);
+        
+        visible.forEach(t => {
+          const rendered = renderItem(t);
+          cardsHTML += rendered.cardHTML;
+          tableRowsHTML += rendered.tableRowHTML;
+        });
+        count += visible.length;
+      }
+    } else {
+      // For non-date sorting, render in sorted order
+      const visible = sorted.slice(0, visibleCount);
       visible.forEach(t => {
         const rendered = renderItem(t);
         cardsHTML += rendered.cardHTML;
         tableRowsHTML += rendered.tableRowHTML;
       });
-      count += visible.length;
+      count = visible.length;
     }
 
     // Card layout for mobile
@@ -1338,6 +1392,7 @@
   // ── Sorting Functions ──────────────────────────────────────────
 
   window.sortTable = function(column) {
+    console.log('Sorting by column:', column, 'Current direction:', sortDirection);
     if (sortColumn === column) {
       // Toggle direction if same column
       sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -1346,6 +1401,7 @@
       sortColumn = column;
       sortDirection = column === 'date' ? 'desc' : 'asc';
     }
+    console.log('New sort:', sortColumn, sortDirection);
     update();
   };
 
