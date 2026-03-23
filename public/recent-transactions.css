@@ -1494,3 +1494,86 @@
   border: 1px solid currentColor;
   opacity: 0.9;
 }
+
+
+/* ── Type Tabs & Filter Button ────────────────────────────── */
+
+.tx-filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tx-type-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.tx-type-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.tx-type-tab:hover {
+  color: #374151;
+}
+
+.tx-type-tab.active {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tx-filter-btn {
+  padding: 8px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tx-filter-btn:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+  color: #3b82f6;
+}
+
+.tx-filter-btn:active {
+  transform: scale(0.98);
+}
+
+.tx-filter-badge {
+  background: #3b82f6;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}

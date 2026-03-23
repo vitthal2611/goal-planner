@@ -19,6 +19,11 @@
   let visibleCount = 10;
   let filterType = 'all';
   let filterCategory = 'all';
+  let filterEnvelope = 'all';
+  let filterMinAmount = null;
+  let filterMaxAmount = null;
+  let filterStartDate = null;
+  let filterEndDate = null;
   let searchQuery = '';
   let isLoading = false;
 
@@ -239,8 +244,35 @@
     }
 
     // Envelope filter
-    if (envelopeFilter !== 'ALL') {
-      filtered = filtered.filter(t => t.type === 'expense' && t.envelope === envelopeFilter);
+    if (filterEnvelope !== 'all') {
+      filtered = filtered.filter(t => t.type === 'expense' && t.envelope === filterEnvelope);
+    }
+
+    // Amount range filter
+    if (filterMinAmount !== null) {
+      filtered = filtered.filter(t => parseFloat(t.amount) >= filterMinAmount);
+    }
+    if (filterMaxAmount !== null) {
+      filtered = filtered.filter(t => parseFloat(t.amount) <= filterMaxAmount);
+    }
+
+    // Date range filter
+    if (filterStartDate) {
+      const startDate = new Date(filterStartDate);
+      filtered = filtered.filter(t => {
+        try {
+          return new Date(t.date) >= startDate;
+        } catch { return false; }
+      });
+    }
+    if (filterEndDate) {
+      const endDate = new Date(filterEndDate);
+      endDate.setHours(23, 59, 59, 999); // Include the entire end date
+      filtered = filtered.filter(t => {
+        try {
+          return new Date(t.date) <= endDate;
+        } catch { return false; }
+      });
     }
 
     if (filtered.length === 0) {
@@ -317,30 +349,77 @@
   function init() {
     const downloadBtn = el('downloadReportBtn');
     const deleteAllBtn = el('deleteAllExpensesBtn');
-    const typeFilter = el('txFilterType');
-    const categoryFilter = el('txFilterCategory');
     const searchInput = el('txSearchInput');
     const searchClear = el('txSearchClear');
     const moreBtn = el('recentMoreBtn');
     const moreDropdown = el('recentMoreDropdown');
+    const filterBtn = el('txFilterBtn');
+    const filterSheet = el('txFilterSheet');
+    const filterSheetClose = el('txFilterSheetClose');
+    const filterApply = el('txFilterApply');
+    const filterClear = el('txFilterClear');
+
+    // Type tabs
+    const typeTabs = document.querySelectorAll('.tx-type-tab');
+    typeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        typeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        filterType = tab.dataset.type;
+        update();
+      });
+    });
+
+    // Filter button - open bottom sheet
+    if (filterBtn && filterSheet) {
+      filterBtn.addEventListener('click', () => {
+        filterSheet.style.display = 'flex';
+        populateFilterSheet();
+      });
+    }
+
+    // Close filter sheet
+    if (filterSheetClose && filterSheet) {
+      filterSheetClose.addEventListener('click', () => {
+        filterSheet.style.display = 'none';
+      });
+    }
+
+    // Apply filters
+    if (filterApply && filterSheet) {
+      filterApply.addEventListener('click', () => {
+        applyFilters();
+        filterSheet.style.display = 'none';
+        updateFilterBadge();
+        update();
+      });
+    }
+
+    // Clear filters
+    if (filterClear) {
+      filterClear.addEventListener('click', () => {
+        clearFilters();
+        updateFilterBadge();
+        update();
+      });
+    }
+
+    // Category chips in filter sheet
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tx-filter-chip')) {
+        const category = e.target.dataset.category;
+        if (category) {
+          document.querySelectorAll('.tx-filter-chip[data-category]').forEach(chip => {
+            chip.classList.remove('active');
+          });
+          e.target.classList.add('active');
+        }
+      }
+    });
 
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
         if (typeof downloadReport === 'function') downloadReport();
-      });
-    }
-
-    if (typeFilter) {
-      typeFilter.addEventListener('change', (e) => {
-        filterType = e.target.value;
-        update();
-      });
-    }
-
-    if (categoryFilter) {
-      categoryFilter.addEventListener('change', (e) => {
-        filterCategory = e.target.value;
-        update();
       });
     }
 
@@ -432,7 +511,128 @@
 
   window.RecentTransactions = { update, init };
 
-  // Globals called from inline onclick in rendered HTML
+  // ── Filter Sheet Helpers ──────────────────────────────────────
+
+  function populateFilterSheet() {
+    // Populate envelope chips
+    const envelopesContainer = el('txFilterEnvelopes');
+    if (envelopesContainer) {
+      const envelopes = fromStorage('envelopes');
+      const envelopeList = Array.isArray(envelopes) && envelopes.length > 0 && typeof envelopes[0] === 'object'
+        ? envelopes.map(e => e.name)
+        : envelopes;
+      
+      envelopesContainer.innerHTML = `
+        <button class="tx-filter-chip ${filterEnvelope === 'all' ? 'active' : ''}" data-envelope="all">All</button>
+        ${envelopeList.map(env => `
+          <button class="tx-filter-chip ${filterEnvelope === env ? 'active' : ''}" data-envelope="${env}">${env}</button>
+        `).join('')}
+      `;
+
+      // Add envelope chip listeners
+      envelopesContainer.querySelectorAll('.tx-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          envelopesContainer.querySelectorAll('.tx-filter-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+        });
+      });
+    }
+
+    // Set current category
+    const categoryChips = document.querySelectorAll('.tx-filter-chip[data-category]');
+    categoryChips.forEach(chip => {
+      if (chip.dataset.category === filterCategory) {
+        chip.classList.add('active');
+      }
+    });
+
+    // Set amount range
+    const minAmountInput = el('txFilterMinAmount');
+    const maxAmountInput = el('txFilterMaxAmount');
+    if (minAmountInput) minAmountInput.value = filterMinAmount || '';
+    if (maxAmountInput) maxAmountInput.value = filterMaxAmount || '';
+
+    // Set date range
+    const startDateInput = el('txFilterStartDate');
+    const endDateInput = el('txFilterEndDate');
+    if (startDateInput) startDateInput.value = filterStartDate || '';
+    if (endDateInput) endDateInput.value = filterEndDate || '';
+  }
+
+  function applyFilters() {
+    // Get category
+    const activeCategory = document.querySelector('.tx-filter-chip[data-category].active');
+    filterCategory = activeCategory ? activeCategory.dataset.category : 'all';
+
+    // Get envelope
+    const activeEnvelope = document.querySelector('.tx-filter-chip[data-envelope].active');
+    filterEnvelope = activeEnvelope ? activeEnvelope.dataset.envelope : 'all';
+
+    // Get amount range
+    const minAmountInput = el('txFilterMinAmount');
+    const maxAmountInput = el('txFilterMaxAmount');
+    filterMinAmount = minAmountInput && minAmountInput.value ? parseFloat(minAmountInput.value) : null;
+    filterMaxAmount = maxAmountInput && maxAmountInput.value ? parseFloat(maxAmountInput.value) : null;
+
+    // Get date range
+    const startDateInput = el('txFilterStartDate');
+    const endDateInput = el('txFilterEndDate');
+    filterStartDate = startDateInput && startDateInput.value ? startDateInput.value : null;
+    filterEndDate = endDateInput && endDateInput.value ? endDateInput.value : null;
+  }
+
+  function clearFilters() {
+    filterCategory = 'all';
+    filterEnvelope = 'all';
+    filterMinAmount = null;
+    filterMaxAmount = null;
+    filterStartDate = null;
+    filterEndDate = null;
+
+    // Clear UI
+    const minAmountInput = el('txFilterMinAmount');
+    const maxAmountInput = el('txFilterMaxAmount');
+    const startDateInput = el('txFilterStartDate');
+    const endDateInput = el('txFilterEndDate');
+    
+    if (minAmountInput) minAmountInput.value = '';
+    if (maxAmountInput) maxAmountInput.value = '';
+    if (startDateInput) startDateInput.value = '';
+    if (endDateInput) endDateInput.value = '';
+
+    document.querySelectorAll('.tx-filter-chip').forEach(chip => {
+      chip.classList.remove('active');
+      if (chip.dataset.category === 'all' || chip.dataset.envelope === 'all') {
+        chip.classList.add('active');
+      }
+    });
+  }
+
+  function updateFilterBadge() {
+    const badge = el('txFilterBadge');
+    const btnText = el('txFilterBtnText');
+    
+    let activeFilters = 0;
+    if (filterCategory !== 'all') activeFilters++;
+    if (filterEnvelope !== 'all') activeFilters++;
+    if (filterMinAmount !== null || filterMaxAmount !== null) activeFilters++;
+    if (filterStartDate !== null || filterEndDate !== null) activeFilters++;
+
+    if (badge) {
+      if (activeFilters > 0) {
+        badge.textContent = activeFilters;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    if (btnText) {
+      btnText.textContent = activeFilters > 0 ? `Filters (${activeFilters})` : 'Category';
+    }
+  }
+
+  // ── Globals called from inline onclick in rendered HTML ───────
   window.deleteTransaction = function (transactionId) {
     console.log('deleteTransaction called with ID:', transactionId);
     const transactions = fromStorage('transactions');
