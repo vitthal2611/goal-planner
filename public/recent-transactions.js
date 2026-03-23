@@ -356,8 +356,13 @@
           bVal = (b.envelope || '').toLowerCase();
           break;
         case 'amount':
-          aVal = parseFloat(a.amount) || 0;
-          bVal = parseFloat(b.amount) || 0;
+          // Parse amounts as numbers, handle string values
+          const aAmount = typeof a.amount === 'string' ? parseFloat(a.amount) : (a.amount || 0);
+          const bAmount = typeof b.amount === 'string' ? parseFloat(b.amount) : (b.amount || 0);
+          
+          // Ensure we have valid numbers and use absolute values
+          aVal = isNaN(aAmount) ? 0 : Math.abs(aAmount);
+          bVal = isNaN(bAmount) ? 0 : Math.abs(bAmount);
           break;
         case 'payment':
           aVal = (a.payment || '').toLowerCase();
