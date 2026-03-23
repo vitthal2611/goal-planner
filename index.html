@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bulk Transaction Upload</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDkVbVhmFA301ZERkgNuxzfkjxzmlpe7Uk",
+        authDomain: "goal-planner-b604e.firebaseapp.com",
+        databaseURL: "https://goal-planner-b604e-default-rtdb.firebaseio.com",
+        projectId: "goal-planner-b604e",
+        storageBucket: "goal-planner-b604e.firebasestorage.app",
+        messagingSenderId: "82233624728",
+        appId: "1:82233624728:web:49b5d083a39237d987e8ed",
+        measurementId: "G-ZJRQEGH25W"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
+      
+      // Anonymous auth for testing
+      firebase.auth().signInAnonymously().catch(error => {
+        console.error('Auth error:', error);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

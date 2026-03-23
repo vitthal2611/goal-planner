@@ -1,0 +1,5 @@
+ID   Date   Amount   Description   Payment Method   Expense Type   Category/Envelope
+1   24/12/25   1147   Old Balance   HDFC   Income   Income
+2   24/12/25   201700   NEFT CR-SALARY   HDFC   Income   Income
+3   24/12/25   -850   UPI-GUPTA BINAYKUMAR   HDFC   Expense   
+4   24/12/25   -825   UPI-PANKAJ HARDWARE   HDFC   Expense   
