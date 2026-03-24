@@ -113,9 +113,20 @@ export const AppProvider = ({ children }) => {
   };
   
   const updateTransaction = (id, updates) => {
-    setTransactions(prev => 
-      prev.map(t => t.id === id ? { ...t, ...updates } : t)
-    );
+    setTransactions(prev => {
+      // If the update includes a new ID (type conversion), handle it specially
+      if (updates.id && updates.id !== id) {
+        return prev.map(t => {
+          if (t.id === id) {
+            // Replace old transaction with new ID
+            return { ...t, ...updates };
+          }
+          return t;
+        });
+      }
+      // Normal update
+      return prev.map(t => t.id === id ? { ...t, ...updates } : t);
+    });
   };
   
   const deleteTransaction = (id) => {
